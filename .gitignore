@@ -31,3 +31,7 @@ qm9_conditional.sh
 figures/
 geom_drugs.sh
 notebooks/*
+
+# custom
+Anaconda.sh
+Anaconda2024.02-1-Linux-x86_64.sh
