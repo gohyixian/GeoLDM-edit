@@ -54,16 +54,16 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         optim.zero_grad()
 
         # ~!halfprecision
-        with torch.cuda.amp.autocast():
-            # transform batch through flow
-            nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
-                                                                    x, h, node_mask, edge_mask, context)
-            # standard nll from forward KL
-            loss = nll + args.ode_regularization * reg_term
-            
+        # with torch.cuda.amp.autocast():
+        # transform batch through flow
+        nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
+                                                                x, h, node_mask, edge_mask, context)
+        # standard nll from forward KL
+        loss = nll + args.ode_regularization * reg_term
+        
         # ~!halfprecision
-        # loss.backward()
-        scaler.scale(loss).backward()
+        loss.backward()
+        # scaler.scale(loss).backward()
         
         if args.clip_grad:
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
@@ -71,8 +71,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             grad_norm = 0.
 
         # ~!halfprecision
-        # optim.step()
-        scaler.step(optim)
+        optim.step()
+        # scaler.step(optim)
 
         # Update EMA if enabled.
         if args.ema_decay > 0:
@@ -105,7 +105,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             break
         
         # ~!halfprecision
-        scaler.update()
+        # scaler.update()
         
     wandb.log({"Train Epoch NLL": np.mean(nll_epoch)}, commit=False)
 
