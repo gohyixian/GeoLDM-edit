@@ -13,11 +13,15 @@ import torch
 
 
 def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
-                nodes_dist, gradnorm_queue, dataset_info, prop_dist):
+                nodes_dist, gradnorm_queue, dataset_info, prop_dist, scaler):
     model_dp.train()
     model.train()
     nll_epoch = []
     n_iterations = len(loader)
+    
+    # ~!halfprecision
+    # scaler = torch.cuda.amp.GradScaler()
+    
     for i, data in enumerate(loader):
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
@@ -49,19 +53,26 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 
         optim.zero_grad()
 
-        # transform batch through flow
-        nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
-                                                                x, h, node_mask, edge_mask, context)
-        # standard nll from forward KL
-        loss = nll + args.ode_regularization * reg_term
-        loss.backward()
-
+        # ~!halfprecision
+        with torch.cuda.amp.autocast():
+            # transform batch through flow
+            nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
+                                                                    x, h, node_mask, edge_mask, context)
+            # standard nll from forward KL
+            loss = nll + args.ode_regularization * reg_term
+            
+        # ~!halfprecision
+        # loss.backward()
+        scaler.scale(loss).backward()
+        
         if args.clip_grad:
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
         else:
             grad_norm = 0.
 
-        optim.step()
+        # ~!halfprecision
+        # optim.step()
+        scaler.step(optim)
 
         # Update EMA if enabled.
         if args.ema_decay > 0:
@@ -73,6 +84,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
                   f"RegTerm: {reg_term.item():.1f}, "
                   f"GradNorm: {grad_norm:.1f}")
         nll_epoch.append(nll.item())
+        
         if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
             start = time.time()
             if len(args.conditioning) > 0:
@@ -91,6 +103,10 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         wandb.log({"Batch NLL": nll.item()}, commit=True)
         if args.break_train_epoch:
             break
+        
+        # ~!halfprecision
+        scaler.update()
+        
     wandb.log({"Train Epoch NLL": np.mean(nll_epoch)}, commit=False)
 
 
@@ -102,7 +118,9 @@ def check_mask_correct(variables, node_mask):
 
 def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_dist, partition='Test'):
     eval_model.eval()
-    with torch.no_grad():
+    
+    # ~!halfprecision
+    with torch.no_grad(), torch.cuda.amp.autocast():
         nll_epoch = 0
         n_samples = 0
 
@@ -151,8 +169,10 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
 
 def save_and_sample_chain(model, args, device, dataset_info, prop_dist,
                           epoch=0, id_from=0, batch_id=''):
-    one_hot, charges, x = sample_chain(args=args, device=device, flow=model,
-                                       n_tries=1, dataset_info=dataset_info, prop_dist=prop_dist)
+    # ~!halfprecision
+    with torch.cuda.amp.autocast():
+        one_hot, charges, x = sample_chain(args=args, device=device, flow=model,
+                                        n_tries=1, dataset_info=dataset_info, prop_dist=prop_dist)
 
     vis.save_xyz_file(f'outputs/{args.exp_name}/epoch_{epoch}_{batch_id}/chain/',
                       one_hot, charges, x, dataset_info, id_from, name='chain')
@@ -165,9 +185,12 @@ def sample_different_sizes_and_save(model, nodes_dist, args, device, dataset_inf
     batch_size = min(batch_size, n_samples)
     for counter in range(int(n_samples/batch_size)):
         nodesxsample = nodes_dist.sample(batch_size)
-        one_hot, charges, x, node_mask = sample(args, device, model, prop_dist=prop_dist,
-                                                nodesxsample=nodesxsample,
-                                                dataset_info=dataset_info)
+        
+        # ~!halfprecision
+        with torch.cuda.amp.autocast():
+            one_hot, charges, x, node_mask = sample(args, device, model, prop_dist=prop_dist,
+                                                    nodesxsample=nodesxsample,
+                                                    dataset_info=dataset_info)
         print(f"Generated molecule: Positions {x[:-1, :, :]}")
         vis.save_xyz_file(f'outputs/{args.exp_name}/epoch_{epoch}_{batch_id}/', one_hot, charges, x, dataset_info,
                           batch_size * counter, name='molecule')
@@ -181,8 +204,11 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
     molecules = {'one_hot': [], 'x': [], 'node_mask': []}
     for i in range(int(n_samples/batch_size)):
         nodesxsample = nodes_dist.sample(batch_size)
-        one_hot, charges, x, node_mask = sample(args, device, model_sample, dataset_info, prop_dist,
-                                                nodesxsample=nodesxsample)
+        
+        # ~!halfprecision
+        with torch.cuda.amp.autocast():
+            one_hot, charges, x, node_mask = sample(args, device, model_sample, dataset_info, prop_dist,
+                                                    nodesxsample=nodesxsample)
 
         molecules['one_hot'].append(one_hot.detach().cpu())
         molecules['x'].append(x.detach().cpu())
@@ -198,7 +224,9 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
 
 
 def save_and_sample_conditional(args, device, model, prop_dist, dataset_info, epoch=0, id_from=0):
-    one_hot, charges, x, node_mask = sample_sweep_conditional(args, device, model, dataset_info, prop_dist)
+    # ~!halfprecision
+    with torch.cuda.amp.autocast():
+        one_hot, charges, x, node_mask = sample_sweep_conditional(args, device, model, dataset_info, prop_dist)
 
     vis.save_xyz_file(
         'outputs/%s/epoch_%d/conditional/' % (args.exp_name, epoch), one_hot, charges, x, dataset_info,

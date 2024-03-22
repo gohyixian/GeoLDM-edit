@@ -247,6 +247,9 @@ def main():
         ema = None
         model_ema = model
         model_ema_dp = model_dp
+    
+    # ~!halfprecision
+    scaler = torch.cuda.amp.GradScaler()
 
     best_nll_val = 1e8
     best_nll_test = 1e8
@@ -254,7 +257,7 @@ def main():
         start_epoch = time.time()
         train_test.train_epoch(args, dataloaders['train'], epoch, model, model_dp, model_ema, ema, device, dtype,
                                property_norms, optim, nodes_dist, gradnorm_queue, dataset_info,
-                               prop_dist)
+                               prop_dist, scaler=scaler)
         print(f"Epoch took {time.time() - start_epoch:.1f} seconds.")
 
         if epoch % args.test_epochs == 0:
