@@ -45,7 +45,7 @@ class ProcessedDataset(Dataset):
         # If included species is not specified
         if included_species is None:
             included_species = torch.unique(self.data['charges'], sorted=True)
-            if included_species[0] == 0:
+            if included_species[0] == 0:   # remove H
                 included_species = included_species[1:]
 
         if subtract_thermo:
@@ -59,7 +59,23 @@ class ProcessedDataset(Dataset):
 
         self.included_species = included_species
 
+        # unsqueeze(-1) along last dim: 
+        # from [[1-molecule],     [1-molecule]]
+        #      -------------      -------------
+        #      [[a1, a2, a3],     [b1, b2, b3]]
+        # to   [[[a1],[a2],[a3]], [[b1],[b2],[b3]]]
+        # one-hot encoding ordering: {'C': 6, 'N': 7, 'O': 8, 'F': 9}
+        # 
+        # data['charges'] has shape [m,n], m=num_of_samples, n=num_of_charges
+        # after unsqueeze(-1), has shape [m,n,1]
+        #
+        # included_species has shape [k],
+        # after unsqueeze(0)x2, has shape [1,1,k]
+        # 
+        # included_species [1,1,k] is broadcasted along 1st 2nd,dim to shape [m,n,k]
+        
         self.data['one_hot'] = self.data['charges'].unsqueeze(-1) == included_species.unsqueeze(0).unsqueeze(0)
+        print(">>> one-hot-shape:", self.data['one_hot'].shape)
 
         self.num_species = len(included_species)
         self.max_charge = max(included_species)

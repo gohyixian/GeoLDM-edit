@@ -4,7 +4,7 @@ import torch
 import tarfile
 from torch.nn.utils.rnn import pad_sequence
 
-charge_dict = {'H': 1, 'C': 6, 'N': 7, 'O': 8, 'F': 9}
+charge_dict = {'H': 1, 'C': 6, 'N': 7, 'O': 8, 'F': 9}   # defined according to periodic table elem num
 
 
 def split_dataset(data, split_idxs):
@@ -94,9 +94,18 @@ def process_xyz_files(data, process_file_fn, file_ext=None, file_idx_list=None, 
     assert all(props == mol.keys() for mol in molecules), 'All molecules must have same set of properties/keys!'
 
     # Convert list-of-dicts to dict-of-lists
+    # list-of-dicts: each dict is a different molecule's properties {prop: value}       <-- grouped by molecule
+    # dict-of-lists: each list contains all the values of all molecule's certain prop   <-- grouped by property
     molecules = {prop: [mol[prop] for mol in molecules] for prop in props}
 
     # If stacking is desireable, pad and then stack.
+    # Padding only has effect on moledule's atmic charge & atomic xyz position, because they are of different lengths and sizes
+    # atomic charge: [c1, c2, c3, c4, c5, 0, 0, 0, 0, 0]
+    # atomic xyz position: 
+    #     [[x1, y1, z1],
+    #      [x2, y2, z2],
+    #      [0,  0,  0 ],
+    #      [0,  0,  0 ]]
     if stack:
         molecules = {key: pad_sequence(val, batch_first=True) if val[0].dim() > 0 else torch.stack(val) for key, val in molecules.items()}
 
@@ -186,6 +195,9 @@ def process_xyz_gdb9(datafile):
     atom_charges, atom_positions = [], []
     for line in mol_xyz:
         atom, posx, posy, posz, _ = line.replace('*^', 'e').split()
+        
+        # charge_dict = {'H': 1, 'C': 6, 'N': 7, 'O': 8, 'F': 9}    # defined in above line 7, according to elem num in periodic table
+
         atom_charges.append(charge_dict[atom])
         atom_positions.append([float(posx), float(posy), float(posz)])
 
@@ -197,6 +209,32 @@ def process_xyz_gdb9(datafile):
 
     molecule = {'num_atoms': num_atoms, 'charges': atom_charges, 'positions': atom_positions}
     molecule.update(mol_props)
+    
     molecule = {key: torch.tensor(val) for key, val in molecule.items()}
 
     return molecule
+
+    # final dict for each molecule is  dict containing the below:
+    #
+    # - 'num_atoms': int
+    # - 'charges': charges (used to define atom type) of each atom according to values in charge_dict, atom ordering same as in raw .xyz file 
+    # - 'positions': [[x,y,z], [], [], ..] of each atom, atom ordering same as in raw .xyz file 
+    # - 'omega1': maximum value of atom frequencies (line directly after molecule xyz positions in raw .xyz file)
+    # - 'tag'
+    # - 'index'
+    # - 'A'
+    # - 'B'
+    # - 'C'
+    # - 'mu'
+    # - 'alpha'
+    # - 'homo'
+    # - 'lumo'
+    # - 'gap'
+    # - 'r2'
+    # - 'zpve'
+    # - 'U0'
+    # - 'U'
+    # - 'H'
+    # - 'G'
+    # - 'Cv'
+

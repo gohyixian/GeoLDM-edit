@@ -1,0 +1,23 @@
+from qm9 RAW .xyz data to used .npz, processing function:
+/GeoLDM-edit/qm9/data/prepare/process.py, line 161, def process_xyz_gdb9
+
+processing of above read qm9 dataset, 
+/GeoLDM-edit/qm9/data/prepare/process.py, line 36, def process_xyz_files
+
+main driver for above functions,
+/GeoLDM-edit/qm9/data/prepare/qm9.py, line 15, def download_dataset_qm9
+
+
+'Species' referred in this paper is are the atom types (H,C,N,O,F). Simply put, 
+the authors wanna make sure that in the train-test-val split, all atom types listed above
+must at least appear once in each split. How to know, refer:
+/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/qm9/data/utils.py, line 137, def _get_species
+
+train-test torch.dataset:
+/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/qm9/data/dataset_class.py
+
+hydrogen is not used in the one-hot encoding of atom charges/types, see 
+/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/qm9/data/dataset_class.py, line 47
+    included_species = torch.unique(self.data['charges'], sorted=True)
+    if included_species[0] == 0:   # remove H
+        included_species = included_species[1:]

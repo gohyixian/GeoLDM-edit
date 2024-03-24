@@ -39,7 +39,7 @@ parser.add_argument('--kl_weight', type=float, default=0.01,
 
 parser.add_argument('--model', type=str, default='egnn_dynamics',
                     help='our_dynamics | schnet | simple_dynamics | '
-                         'kernel_dynamics | egnn_dynamics |gnn_dynamics')
+                         'kernel_dynamics | egnn_dynamics | gnn_dynamics')
 parser.add_argument('--probabilistic_model', type=str, default='diffusion',
                     help='diffusion')
 
@@ -119,7 +119,7 @@ parser.add_argument('--ema_decay', type=float, default=0.999,
 parser.add_argument('--augment_noise', type=float, default=0)
 parser.add_argument('--n_stability_samples', type=int, default=500,
                     help='Number of samples to compute the stability')
-parser.add_argument('--normalize_factors', type=eval, default=[1, 4, 1],
+parser.add_argument('--normalize_factors', type=eval, default=[1, 4, 10],
                     help='normalize factors for [x, categorical, integer]')
 parser.add_argument('--remove_h', action='store_true')
 parser.add_argument('--include_charges', type=eval, default=True,
