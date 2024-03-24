@@ -19,7 +19,7 @@ def compute_mean_mad_from_dataloader(dataloader, properties):
         mad = torch.mean(ma)
         property_norms[property_key] = {}
         property_norms[property_key]['mean'] = mean
-        property_norms[property_key]['mad'] = mad
+        property_norms[property_key]['mad'] = mad       # mean absolute deviation
     return property_norms
 
 edges_dic = {}

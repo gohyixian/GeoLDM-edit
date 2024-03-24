@@ -1,5 +1,8 @@
+sample config of training, see:
+sample_config.yaml (obtained from wandb log)
+
 from qm9 RAW .xyz data to used .npz, processing function:
-/GeoLDM-edit/qm9/data/prepare/process.py, line 161, def process_xyz_gdb9
+/GeoLDM-edit/qm9/data/prepare/process.py, line 174, def process_xyz_gdb9
 
 processing of above read qm9 dataset, 
 /GeoLDM-edit/qm9/data/prepare/process.py, line 36, def process_xyz_files
@@ -11,13 +14,30 @@ main driver for above functions,
 'Species' referred in this paper is are the atom types (H,C,N,O,F). Simply put, 
 the authors wanna make sure that in the train-test-val split, all atom types listed above
 must at least appear once in each split. How to know, refer:
-/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/qm9/data/utils.py, line 137, def _get_species
+/GeoLDM-edit/qm9/data/utils.py, line 137, def _get_species
 
 train-test torch.dataset:
-/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/qm9/data/dataset_class.py
+/GeoLDM-edit/qm9/data/dataset_class.py
 
 hydrogen is not used in the one-hot encoding of atom charges/types, see 
-/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/qm9/data/dataset_class.py, line 47
+/GeoLDM-edit/qm9/data/dataset_class.py, line 47
     included_species = torch.unique(self.data['charges'], sorted=True)
     if included_species[0] == 0:   # remove H
         included_species = included_species[1:]
+
+one-hot encoding of non-H atoms, see:
+/GeoLDM-edit/qm9/data/dataset_class.py, line 62
+
+dataset return, see:
+/GeoLDM-edit/qm9/data/dataset_class.py, line 109, def __getitem__
+# returned shape {'charges': [max_molecule_num_atoms=29, HCNOF=5],
+#                 'positions': [max_molecule_num_atoms=29, xyz=3],
+#                  ...
+#                 }
+
+number of datapoints / rows used for each train-test-val split is controlled in the below, generated during the download of qm9 dataset.
+optional, to reset this split, regenerate train-test-split precomputed-presplit datafiles.npz by setting force_download=True in prepare_dataset().
+/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/qm9/data/prepare/qm9.py, line 109, def gen_splits_gdb9
+#    Ntrain = 100000
+#    Ntest = int(0.1*Nmols)
+#    Nvalid = Nmols - (Ntrain + Ntest)

@@ -66,21 +66,19 @@ class ProcessedDataset(Dataset):
         # to   [[[a1],[a2],[a3]], [[b1],[b2],[b3]]]
         # one-hot encoding ordering: {'C': 6, 'N': 7, 'O': 8, 'F': 9}
         # 
-        # data['charges'] has shape [m,n], m=num_of_samples, n=num_of_charges
+        # data['charges'] has shape [m,n], m=num_of_samples, n=max_num_of_atoms_in_a_molecule   --> [100000, 29]
         # after unsqueeze(-1), has shape [m,n,1]
         #
-        # included_species has shape [k],
+        # included_species has shape [k],   --> [5]
         # after unsqueeze(0)x2, has shape [1,1,k]
         # 
         # included_species [1,1,k] is broadcasted along 1st 2nd,dim to shape [m,n,k]
+        # data['charges'] is broadcasted along the last dim to shape [m,n,k]
         # >>> one-hot-shape: torch.Size([100000, 29, 5])
         # >>> one-hot-shape: torch.Size([17748, 29, 5])
         # >>> one-hot-shape: torch.Size([13083, 29, 5])
         
         self.data['one_hot'] = self.data['charges'].unsqueeze(-1) == included_species.unsqueeze(0).unsqueeze(0)
-        print("!!! self.data['charges'].shape", self.data['charges'].shape)
-        print("!!! included_species.shape", included_species.shape)
-        # print(">>> one-hot-shape:", self.data['one_hot'].shape)
 
         self.num_species = len(included_species)
         self.max_charge = max(included_species)
@@ -106,9 +104,14 @@ class ProcessedDataset(Dataset):
         self.calc_stats()
 
     def __len__(self):
-        return self.num_pts
+        return self.num_pts     # number of datapoints / rows
 
     def __getitem__(self, idx):
         if self.perm is not None:
             idx = self.perm[idx]
         return {key: val[idx] for key, val in self.data.items()}
+        # >>> one-hot-shape: torch.Size([100000, 29, 5])
+        # returned shape {'charges': [max_molecule_num_atoms=29, HCNOF=5],
+        #                 'positions': [max_molecule_num_atoms=29, xyz=3],
+        #                  ...
+        #                 }

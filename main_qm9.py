@@ -192,7 +192,7 @@ data_dummy = next(iter(dataloaders['train']))
 
 if len(args.conditioning) > 0:
     print(f'Conditioning on {args.conditioning}')
-    property_norms = compute_mean_mad(dataloaders, args.conditioning, args.dataset)
+    property_norms = compute_mean_mad(dataloaders, args.conditioning, args.dataset)    # property normalisation values: mean, mean_absolute_deviation
     context_dummy = prepare_context(args.conditioning, data_dummy, property_norms)
     context_node_nf = context_dummy.size(2)
 else:

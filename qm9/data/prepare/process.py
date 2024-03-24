@@ -100,12 +100,16 @@ def process_xyz_files(data, process_file_fn, file_ext=None, file_idx_list=None, 
 
     # If stacking is desireable, pad and then stack.
     # Padding only has effect on moledule's atmic charge & atomic xyz position, because they are of different lengths and sizes
-    # atomic charge: [c1, c2, c3, c4, c5, 0, 0, 0, 0, 0]
+    # atomic charge: [[c1, c2, c3, c4, c5, 0, 0, 0, 0, 0], [], [], ..]
     # atomic xyz position: 
-    #     [[x1, y1, z1],
-    #      [x2, y2, z2],
-    #      [0,  0,  0 ],
-    #      [0,  0,  0 ]]
+    #     [[[x1, y1, z1],
+    #       [x2, y2, z2],
+    #       [0,  0,  0 ],
+    #       [0,  0,  0 ]],    <-- one molecule
+    #      [[], [], [], []].
+    #       ...
+    #     ]
+    # shape: [num_samples, max_molecule_num_atoms, 3_for_xyz]
     if stack:
         molecules = {key: pad_sequence(val, batch_first=True) if val[0].dim() > 0 else torch.stack(val) for key, val in molecules.items()}
 
