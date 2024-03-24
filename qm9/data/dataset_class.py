@@ -73,9 +73,14 @@ class ProcessedDataset(Dataset):
         # after unsqueeze(0)x2, has shape [1,1,k]
         # 
         # included_species [1,1,k] is broadcasted along 1st 2nd,dim to shape [m,n,k]
+        # >>> one-hot-shape: torch.Size([100000, 29, 5])
+        # >>> one-hot-shape: torch.Size([17748, 29, 5])
+        # >>> one-hot-shape: torch.Size([13083, 29, 5])
         
         self.data['one_hot'] = self.data['charges'].unsqueeze(-1) == included_species.unsqueeze(0).unsqueeze(0)
-        print(">>> one-hot-shape:", self.data['one_hot'].shape)
+        print("!!! self.data['charges'].shape", self.data['charges'].shape)
+        print("!!! included_species.shape", included_species.shape)
+        # print(">>> one-hot-shape:", self.data['one_hot'].shape)
 
         self.num_species = len(included_species)
         self.max_charge = max(included_species)
