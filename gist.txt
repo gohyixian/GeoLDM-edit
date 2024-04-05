@@ -6,6 +6,19 @@ from qm9 RAW .xyz data to used .npz, processing function:
 
 processing of above read qm9 dataset, 
 /GeoLDM-edit/qm9/data/prepare/process.py, line 36, def process_xyz_files
+#   atom_charges used in dataset: charge_dict = {'H': 1, 'C': 6, 'N': 7, 'O': 8, 'F': 9}
+#   atom_encodings used in model: {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4},
+#                                 {'C': 0, 'N': 1, 'O': 2, 'F': 3},
+#                                  ...
+#                                 more refer: configs/datasets_config.py
+
+[WRONG] hydrogen is not used in the one-hot encoding of atom charges/types, see 
+the remove('0') here is to remove zero padding only in the above atom_charges, not after atom_encodings in the model
+/GeoLDM-edit/qm9/data/dataset_class.py, line 47
+    included_species = torch.unique(self.data['charges'], sorted=True)
+    if included_species[0] == 0:   # remove H
+        included_species = included_species[1:]
+
 
 main driver for above functions,
 /GeoLDM-edit/qm9/data/prepare/qm9.py, line 15, def download_dataset_qm9
@@ -19,12 +32,6 @@ must at least appear once in each split. How to know, refer:
 train-test torch.dataset:
 /GeoLDM-edit/qm9/data/dataset_class.py
 
-hydrogen is not used in the one-hot encoding of atom charges/types, see 
-/GeoLDM-edit/qm9/data/dataset_class.py, line 47
-    included_species = torch.unique(self.data['charges'], sorted=True)
-    if included_species[0] == 0:   # remove H
-        included_species = included_species[1:]
-
 one-hot encoding of non-H atoms, see:
 /GeoLDM-edit/qm9/data/dataset_class.py, line 62
 
@@ -35,9 +42,48 @@ dataset return, see:
 #                  ...
 #                 }
 
+dataloader return, see:
+/GeoLDM-edit/qm9/data/collate.py, line 65, def collate_fn()
+This function specifies how batch data from the dataset class are combined into one during the call of the dataloader.
+#    batch['atom_mask'] = batch['charges'] > 0                                  --> [64, about-23-29] cuz dropped 0
+#    batch['edge_mask'] = edge_mask.view(batch_size * n_nodes * n_nodes, 1)     --> [64x29x29, 1]
+#    batch['charges'] = batch['charges'].unsqueeze(2)                           --> [64, 29, 1]
+#        if include_charges=True, else torch.zeros(0)
+
 number of datapoints / rows used for each train-test-val split is controlled in the below, generated during the download of qm9 dataset.
 optional, to reset this split, regenerate train-test-split precomputed-presplit datafiles.npz by setting force_download=True in prepare_dataset().
-/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/qm9/data/prepare/qm9.py, line 109, def gen_splits_gdb9
+/GeoLDM-edit/qm9/data/prepare/qm9.py, line 109, def gen_splits_gdb9
 #    Ntrain = 100000
 #    Ntest = int(0.1*Nmols)
 #    Nvalid = Nmols - (Ntrain + Ntest)
+
+
+sample conditioning input / context, see:
+/GeoLDM-edit/qm9/utils.py, line 56, def prepare_context()
+# [64, n_nodes, nf]  --> [batch_s, n_nodes, num_feats]
+# NOTE: n_nodes here vary according to each molecule's num of atoms
+#       say if you have 3 features, num_feats might not necessarily be 3 (>=3) because some features might have dimensionality>=2
+
+
+Model runs on probabilities, hence nodes and conditioning properties have to be converted to Categorical probability distributions.
+Probability Distribution for graph nodes: qm9/models.py, line 178, class DistributionNodes
+#    sampling from this distribution returns the number of nodes. i.e. n_samples=3, return=tensor([16, 17, 15]) / tensor([14, 15, 19]) / tensor([17, 27, 18]) / ...
+#    prob dist built on simple {num_of_nodes: frequency} histogram
+
+Probability Distribution for conditioning properties: qm9/models.py, line 222, class DistributionProperty
+#    prob dist built as below:
+#    distribution[n_nodes] = {'probs': probs, 'params': params}       # for each num_of_nodes, {'probs':torch.Categorical_prob_dist_of_property_corresponding_to_that_num_of_nodes, 'params':[property_min_val, max_val]}
+#    if sampling from say n_nodes=19, then sample from the property distribution with num_of_nodes=19, returns value property, shaped [num_args_conditioning]
+#    if batch sampling, returns values shaped [bs, num_args_conditioning]
+
+!!! Autoencoder models are _not_ conditioned on time.
+
+main EGNN architecture at:
+/GeoLDM-edit/egnn/egnn_new.py
+
+EGNN Encoder/Decoder conditioning of property context via concatenation at:
+/GeoLDM-edit/egnn/models.py, line 221
+#    if context is not None:
+#        # We're conditioning, awesome!
+#        context = context.view(bs*n_nodes, self.context_node_nf)
+#        h = torch.cat([h, context], dim=1)

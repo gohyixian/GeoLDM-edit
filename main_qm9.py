@@ -94,6 +94,7 @@ parser.add_argument('--filter_n_atoms', type=int, default=None,
                     help='When set to an integer value, QM9 will only contain molecules of that amount of atoms')
 parser.add_argument('--dequantization', type=str, default='argmax_variational',
                     help='uniform | variational | argmax_variational | deterministic')
+
 parser.add_argument('--n_report_steps', type=int, default=1)
 parser.add_argument('--wandb_usr', type=str)
 parser.add_argument('--no_wandb', action='store_true', help='Disable wandb')
@@ -191,9 +192,9 @@ data_dummy = next(iter(dataloaders['train']))
 
 
 if len(args.conditioning) > 0:
-    print(f'Conditioning on {args.conditioning}')
+    print(f'Conditioning on {args.conditioning}')     # args.conditioning is a list: i.e. [homo | lumo | alpha | gap | mu | Cv]
     property_norms = compute_mean_mad(dataloaders, args.conditioning, args.dataset)    # property normalisation values: mean, mean_absolute_deviation
-    context_dummy = prepare_context(args.conditioning, data_dummy, property_norms)
+    context_dummy = prepare_context(args.conditioning, data_dummy, property_norms)     # [64, n_nodes, nf]
     context_node_nf = context_dummy.size(2)
 else:
     context_node_nf = 0

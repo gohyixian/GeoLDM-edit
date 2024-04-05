@@ -84,20 +84,21 @@ class PreprocessQM9:
 
         atom_mask = batch['charges'] > 0
         batch['atom_mask'] = atom_mask
+        # atom mask shape: [64, about-23-29] cuz dropped 0
 
         #Obtain edges
-        batch_size, n_nodes = atom_mask.size()
-        edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)
+        batch_size, n_nodes = atom_mask.size()    # assume n_nodes=29
+        edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)   # [64, 1, 29] * [64, 29, 1] = [64, 29, 29]
 
         #mask diagonal
-        diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool).unsqueeze(0)
-        edge_mask *= diag_mask
+        diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool).unsqueeze(0)  # [1, 29, 29] diagonal
+        edge_mask *= diag_mask      # remove diagonals / self connections
 
         #edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)
-        batch['edge_mask'] = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
+        batch['edge_mask'] = edge_mask.view(batch_size * n_nodes * n_nodes, 1)     # [64x29x29, 1]
 
-        if self.load_charges:
-            batch['charges'] = batch['charges'].unsqueeze(2)
+        if self.load_charges:    # include_charges=True
+            batch['charges'] = batch['charges'].unsqueeze(2)   # [64, 29, 1]
         else:
             batch['charges'] = torch.zeros(0)
         return batch

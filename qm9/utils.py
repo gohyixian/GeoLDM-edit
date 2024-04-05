@@ -54,37 +54,37 @@ def preprocess_input(one_hot, charges, charge_power, charge_scale, device):
 
 
 def prepare_context(conditioning, minibatch, property_norms):
-    batch_size, n_nodes, _ = minibatch['positions'].size()
-    node_mask = minibatch['atom_mask'].unsqueeze(2)
+    batch_size, n_nodes, _ = minibatch['positions'].size()     # [64, 29, 3]
+    node_mask = minibatch['atom_mask'].unsqueeze(2)      # [64, 29] --> [64, 29, 1]
     context_node_nf = 0
     context_list = []
-    for key in conditioning:
+    for key in conditioning:   # conditioning is a list: i.e. [homo | lumo | alpha | gap | mu | Cv]
         properties = minibatch[key]
         properties = (properties - property_norms[key]['mean']) / property_norms[key]['mad']
-        if len(properties.size()) == 1:
+        if len(properties.size()) == 1:  # only one (batch_size,)
             # Global feature.
-            assert properties.size() == (batch_size,)
-            reshaped = properties.view(batch_size, 1, 1).repeat(1, n_nodes, 1)
+            assert properties.size() == (batch_size,)   # must be
+            reshaped = properties.view(batch_size, 1, 1).repeat(1, n_nodes, 1)    # [64, n_nodes, 1]
             context_list.append(reshaped)
             context_node_nf += 1
-        elif len(properties.size()) == 2 or len(properties.size()) == 3:
+        elif len(properties.size()) == 2 or len(properties.size()) == 3:   # [64, n_nodes, ...]
             # Node feature.
-            assert properties.size()[:2] == (batch_size, n_nodes)
+            assert properties.size()[:2] == (batch_size, n_nodes)  # must be
 
             context_key = properties
 
-            # Inflate if necessary.
+            # Inflate if necessary to make it compatible with len(properties.size())==3
             if len(properties.size()) == 2:
-                context_key = context_key.unsqueeze(2)
+                context_key = context_key.unsqueeze(2)   # [64, n_nodes, 1]
 
             context_list.append(context_key)
-            context_node_nf += context_key.size(2)
+            context_node_nf += context_key.size(2)    # 1 for len(..)==2 and ? for len(..)==3
         else:
             raise ValueError('Invalid tensor size, more than 3 axes.')
     # Concatenate
-    context = torch.cat(context_list, dim=2)
+    context = torch.cat(context_list, dim=2)     # [64, n_nodes, 1] + [64, n_nodes, 1] =  [64, n_nodes, 2] or [64, n_nodes, nf]
     # Mask disabled nodes!
     context = context * node_mask
-    assert context.size(2) == context_node_nf
+    assert context.size(2) == context_node_nf  # [64, n_nodes, nf]     [batch_s, n_nodes, num_feats]
     return context
 

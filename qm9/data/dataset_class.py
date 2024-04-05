@@ -45,7 +45,7 @@ class ProcessedDataset(Dataset):
         # If included species is not specified
         if included_species is None:
             included_species = torch.unique(self.data['charges'], sorted=True)
-            if included_species[0] == 0:   # remove H
+            if included_species[0] == 0:   # remove zero padding in atom_charges, not after atom_encodings in model
                 included_species = included_species[1:]
 
         if subtract_thermo:

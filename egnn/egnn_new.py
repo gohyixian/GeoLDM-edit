@@ -6,30 +6,31 @@ class GCL(nn.Module):
     def __init__(self, input_nf, output_nf, hidden_nf, normalization_factor, aggregation_method,
                  edges_in_d=0, nodes_att_dim=0, act_fn=nn.SiLU(), attention=False):
         super(GCL, self).__init__()
-        input_edge = input_nf * 2
-        self.normalization_factor = normalization_factor
-        self.aggregation_method = aggregation_method
-        self.attention = attention
+        input_edge = input_nf * 2     # 256*2 = 512
+        self.normalization_factor = normalization_factor    # 1
+        self.aggregation_method = aggregation_method   # sum
+        self.attention = attention   # true
 
         self.edge_mlp = nn.Sequential(
-            nn.Linear(input_edge + edges_in_d, hidden_nf),
+            nn.Linear(input_edge + edges_in_d, hidden_nf),   # 256*2+0=512, 256
             act_fn,
-            nn.Linear(hidden_nf, hidden_nf),
+            nn.Linear(hidden_nf, hidden_nf),    # 256, 256
             act_fn)
 
         self.node_mlp = nn.Sequential(
-            nn.Linear(hidden_nf + input_nf + nodes_att_dim, hidden_nf),
+            nn.Linear(hidden_nf + input_nf + nodes_att_dim, hidden_nf),    # 256+256+0=512, 256
             act_fn,
-            nn.Linear(hidden_nf, output_nf))
+            nn.Linear(hidden_nf, output_nf))    # 256, 256
 
         if self.attention:
             self.att_mlp = nn.Sequential(
-                nn.Linear(hidden_nf, 1),
+                nn.Linear(hidden_nf, 1),   # 256, 1
                 nn.Sigmoid())
 
     def edge_model(self, source, target, edge_attr, edge_mask):
+        # h[row]=source, h[col]=target
         if edge_attr is None:  # Unused.
-            out = torch.cat([source, target], dim=1)
+            out = torch.cat([source, target], dim=1)  # torch.Size([46656, 256+256])
         else:
             out = torch.cat([source, target, edge_attr], dim=1)
         mij = self.edge_mlp(out)
@@ -46,9 +47,10 @@ class GCL(nn.Module):
 
     def node_model(self, x, edge_index, edge_attr, node_attr):
         row, col = edge_index
+        # aggregate: sum / normalization_factor=1
         agg = unsorted_segment_sum(edge_attr, row, num_segments=x.size(0),
-                                   normalization_factor=self.normalization_factor,
-                                   aggregation_method=self.aggregation_method)
+                                   normalization_factor=self.normalization_factor,  # 1
+                                   aggregation_method=self.aggregation_method)      # sum
         if node_attr is not None:
             agg = torch.cat([x, agg, node_attr], dim=1)
         else:
@@ -58,6 +60,11 @@ class GCL(nn.Module):
 
     def forward(self, h, edge_index, edge_attr=None, node_attr=None, node_mask=None, edge_mask=None):
         row, col = edge_index
+        # bs=64, n_nodes=27
+        # 256 because there is an embedding layer in EGNN called self.embedding
+        # print(">>", h.shape,       row.shape,          col.shape,          h[row].shape,            h[col].shape,            edge_attr.shape,       edge_mask.shape)
+        # >> torch.Size([1728, 256]) torch.Size([46656]) torch.Size([46656]) torch.Size([46656, 256]) torch.Size([46656, 256]) torch.Size([46656, 2]) torch.Size([46656, 1])
+        #                64x27
         edge_feat, mij = self.edge_model(h[row], h[col], edge_attr, edge_mask)
         h, agg = self.node_model(h, edge_index, edge_feat, node_attr)
         if node_mask is not None:
@@ -70,8 +77,8 @@ class EquivariantUpdate(nn.Module):
                  edges_in_d=1, act_fn=nn.SiLU(), tanh=False, coords_range=10.0):
         super(EquivariantUpdate, self).__init__()
         self.tanh = tanh
-        self.coords_range = coords_range
-        input_edge = hidden_nf * 2 + edges_in_d
+        self.coords_range = coords_range     # 15
+        input_edge = hidden_nf * 2 + edges_in_d    # 256*2 + 2 = 514
         layer = nn.Linear(hidden_nf, 1, bias=False)
         torch.nn.init.xavier_uniform_(layer.weight, gain=0.001)
         self.coord_mlp = nn.Sequential(
@@ -86,7 +93,7 @@ class EquivariantUpdate(nn.Module):
     def coord_model(self, h, coord, edge_index, coord_diff, edge_attr, edge_mask):
         row, col = edge_index
         input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
-        if self.tanh:
+        if self.tanh:  # true
             trans = coord_diff * torch.tanh(self.coord_mlp(input_tensor)) * self.coords_range
         else:
             trans = coord_diff * self.coord_mlp(input_tensor)
@@ -110,21 +117,21 @@ class EquivariantBlock(nn.Module):
                  norm_diff=True, tanh=False, coords_range=15, norm_constant=1, sin_embedding=None,
                  normalization_factor=100, aggregation_method='sum'):
         super(EquivariantBlock, self).__init__()
-        self.hidden_nf = hidden_nf
+        self.hidden_nf = hidden_nf  # 256
         self.device = device
-        self.n_layers = n_layers
-        self.coords_range_layer = float(coords_range)
-        self.norm_diff = norm_diff
-        self.norm_constant = norm_constant
-        self.sin_embedding = sin_embedding
-        self.normalization_factor = normalization_factor
-        self.aggregation_method = aggregation_method
+        self.n_layers = n_layers    # 1
+        self.coords_range_layer = float(coords_range)   # 15
+        self.norm_diff = norm_diff   # true
+        self.norm_constant = norm_constant  # 1
+        self.sin_embedding = sin_embedding  # false
+        self.normalization_factor = normalization_factor  # 1
+        self.aggregation_method = aggregation_method  # sum
 
-        for i in range(0, n_layers):
-            self.add_module("gcl_%d" % i, GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=edge_feat_nf,
-                                              act_fn=act_fn, attention=attention,
-                                              normalization_factor=self.normalization_factor,
-                                              aggregation_method=self.aggregation_method))
+        for i in range(0, n_layers):  # 1
+            self.add_module("gcl_%d" % i, GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=edge_feat_nf,  # 2
+                                              act_fn=act_fn, attention=attention,  #
+                                              normalization_factor=self.normalization_factor,  # 1
+                                              aggregation_method=self.aggregation_method))     # sum
         self.add_module("gcl_equiv", EquivariantUpdate(hidden_nf, edges_in_d=edge_feat_nf, act_fn=nn.SiLU(), tanh=tanh,
                                                        coords_range=self.coords_range_layer,
                                                        normalization_factor=self.normalization_factor,
@@ -154,37 +161,43 @@ class EGNN(nn.Module):
         super(EGNN, self).__init__()
         if out_node_nf is None:
             out_node_nf = in_node_nf
-        self.hidden_nf = hidden_nf
+        self.hidden_nf = hidden_nf  # 256
         self.device = device
-        self.n_layers = n_layers
-        self.coords_range_layer = float(coords_range/n_layers) if n_layers > 0 else float(coords_range)
-        self.norm_diff = norm_diff
-        self.normalization_factor = normalization_factor
-        self.aggregation_method = aggregation_method
+        self.n_layers = n_layers    # 1
+        self.coords_range_layer = float(coords_range/n_layers) if n_layers > 0 else float(coords_range)  # 15
+        self.norm_diff = norm_diff  # True
+        self.normalization_factor = normalization_factor  # 1
+        self.aggregation_method = aggregation_method      # sum
 
-        if sin_embedding:
+        if sin_embedding:   # false
             self.sin_embedding = SinusoidsEmbeddingNew()
             edge_feat_nf = self.sin_embedding.dim * 2
         else:
             self.sin_embedding = None
             edge_feat_nf = 2
 
-        self.embedding = nn.Linear(in_node_nf, self.hidden_nf)
-        self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)
-        for i in range(0, n_layers):
-            self.add_module("e_block_%d" % i, EquivariantBlock(hidden_nf, edge_feat_nf=edge_feat_nf, device=device,
-                                                               act_fn=act_fn, n_layers=inv_sublayers,
-                                                               attention=attention, norm_diff=norm_diff, tanh=tanh,
-                                                               coords_range=coords_range, norm_constant=norm_constant,
-                                                               sin_embedding=self.sin_embedding,
-                                                               normalization_factor=self.normalization_factor,
-                                                               aggregation_method=self.aggregation_method))
+        self.embedding = nn.Linear(in_node_nf, self.hidden_nf)        # 6+(nf+?), 256
+        self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)   # 256,    256
+        for i in range(0, n_layers):   # 1
+            self.add_module("e_block_%d" % i, EquivariantBlock(hidden_nf,     # 256
+                                                               edge_feat_nf=edge_feat_nf,    # 2
+                                                               device=device,
+                                                               act_fn=act_fn,     # torch.nn.SiLU()
+                                                               n_layers=inv_sublayers,  # 1
+                                                               attention=attention,  # true
+                                                               norm_diff=norm_diff,  # true
+                                                               tanh=tanh,
+                                                               coords_range=coords_range,   # 15
+                                                               norm_constant=norm_constant,  # 1
+                                                               sin_embedding=self.sin_embedding,  # false
+                                                               normalization_factor=self.normalization_factor, # 1
+                                                               aggregation_method=self.aggregation_method))  # sum
         self.to(self.device)
 
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None):
         # Edit Emiel: Remove velocity as input
         distances, _ = coord2diff(x, edge_index)
-        if self.sin_embedding is not None:
+        if self.sin_embedding is not None:      # none
             distances = self.sin_embedding(distances)
         h = self.embedding(h)
         for i in range(0, self.n_layers):
@@ -248,13 +261,36 @@ class SinusoidsEmbeddingNew(nn.Module):
 
 def coord2diff(x, edge_index, norm_constant=1):
     row, col = edge_index
-    coord_diff = x[row] - x[col]
+    coord_diff = x[row] - x[col]     # feeding this to model, relative difference
     radial = torch.sum((coord_diff) ** 2, 1).unsqueeze(1)
     norm = torch.sqrt(radial + 1e-8)
     coord_diff = coord_diff/(norm + norm_constant)
     return radial, coord_diff
 
 
+# In summary, this function takes input data along with segment IDs and aggregates the data 
+# based on these segment IDs using either sum or mean aggregation methods. It's a useful 
+# operation for tasks such as grouping or pooling in neural network architectures.
+#
+# does addition using scatter_add_():
+# Initialize a result tensor
+    # result = torch.zeros(3)
+
+    # # Indices where elements will be scattered
+    # indices = torch.tensor([0, 1, 1])
+
+    # # Values to scatter
+    # values = torch.tensor([1, 2, 3])
+
+    # # Perform scatter-add operation
+    # result.scatter_add_(0, indices, values)  <-- 0=dim to perform scatter operation
+
+    # print(result)   >>> tensor([1., 5., 0.])
+    # idx: [0, 1, 1]
+    # val: [1, 2, 3]
+    # scattering: [1, 2+3, 0]   <-- 1 kept at position 0, while 2 3 scattered/moved to position 1, position 2 empty
+    #           = [1, 5,   0]
+    
 def unsorted_segment_sum(data, segment_ids, num_segments, normalization_factor, aggregation_method: str):
     """Custom PyTorch op to replicate TensorFlow's `unsorted_segment_sum`.
         Normalization: 'sum' or 'mean'.
