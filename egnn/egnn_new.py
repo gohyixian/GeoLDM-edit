@@ -160,10 +160,10 @@ class EGNN(nn.Module):
                  sin_embedding=False, normalization_factor=100, aggregation_method='sum'):
         super(EGNN, self).__init__()
         if out_node_nf is None:
-            out_node_nf = in_node_nf
+            out_node_nf = in_node_nf  # 2+(nf+?) for ldm
         self.hidden_nf = hidden_nf  # 256
         self.device = device
-        self.n_layers = n_layers    # 1
+        self.n_layers = n_layers    # 1 for enc, 9 for dec & ldm
         self.coords_range_layer = float(coords_range/n_layers) if n_layers > 0 else float(coords_range)  # 15
         self.norm_diff = norm_diff  # True
         self.normalization_factor = normalization_factor  # 1
@@ -176,9 +176,9 @@ class EGNN(nn.Module):
             self.sin_embedding = None
             edge_feat_nf = 2
 
-        self.embedding = nn.Linear(in_node_nf, self.hidden_nf)        # 6+(nf+?), 256
-        self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)   # 256,    256
-        for i in range(0, n_layers):   # 1
+        self.embedding = nn.Linear(in_node_nf, self.hidden_nf)        # [6+(nf+?), 256] for enc, [1+(nf+?), 256] for dec, # [2+(nf+?), 256] for ldm
+        self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)   # [256,256] for enc [256,6] for dec, [256, 2+(nf+?)] for ldm
+        for i in range(0, n_layers):   # 1 for enc, 9 for dec & ldm
             self.add_module("e_block_%d" % i, EquivariantBlock(hidden_nf,     # 256
                                                                edge_feat_nf=edge_feat_nf,    # 2
                                                                device=device,
@@ -186,7 +186,7 @@ class EGNN(nn.Module):
                                                                n_layers=inv_sublayers,  # 1
                                                                attention=attention,  # true
                                                                norm_diff=norm_diff,  # true
-                                                               tanh=tanh,
+                                                               tanh=tanh,    # true
                                                                coords_range=coords_range,   # 15
                                                                norm_constant=norm_constant,  # 1
                                                                sin_embedding=self.sin_embedding,  # false

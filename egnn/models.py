@@ -15,12 +15,20 @@ class EGNN_dynamics_QM9(nn.Module):
         self.mode = mode
         if mode == 'egnn_dynamics':
             self.egnn = EGNN(
-                in_node_nf=in_node_nf + context_node_nf, in_edge_nf=1,
-                hidden_nf=hidden_nf, device=device, act_fn=act_fn,
-                n_layers=n_layers, attention=attention, tanh=tanh, norm_constant=norm_constant,
-                inv_sublayers=inv_sublayers, sin_embedding=sin_embedding,
-                normalization_factor=normalization_factor,
-                aggregation_method=aggregation_method)
+                in_node_nf=in_node_nf + context_node_nf,   # (args.latent_nf+time) + (nf+?) = 2+0 = 2
+                in_edge_nf=1,  # unused
+                hidden_nf=hidden_nf,   # 256
+                device=device, 
+                act_fn=act_fn,  # torch.nn.SiLU()
+                n_layers=n_layers,    # 9
+                attention=attention,  # true
+                tanh=tanh,            # true
+                norm_constant=norm_constant,  # 1
+                inv_sublayers=inv_sublayers,  # 1
+                sin_embedding=sin_embedding,  # false
+                normalization_factor=normalization_factor, # 1
+                aggregation_method=aggregation_method # sum
+                )
             self.in_node_nf = in_node_nf
         elif mode == 'gnn_dynamics':
             self.gnn = GNN(
@@ -48,35 +56,48 @@ class EGNN_dynamics_QM9(nn.Module):
 
     def _forward(self, t, xh, node_mask, edge_mask, context):
         bs, n_nodes, dims = xh.shape
-        h_dims = dims - self.n_dims
+        # 64, 25, 4
+        h_dims = dims - self.n_dims  # 4-3 = 1
+        # 1
         edges = self.get_adj_matrix(n_nodes, bs, self.device)
         edges = [x.to(self.device) for x in edges]
-        node_mask = node_mask.view(bs*n_nodes, 1)
-        edge_mask = edge_mask.view(bs*n_nodes*n_nodes, 1)
+        node_mask = node_mask.view(bs*n_nodes, 1)    # [1600, 1]
+        edge_mask = edge_mask.view(bs*n_nodes*n_nodes, 1)  # [40000, 1]
         xh = xh.view(bs*n_nodes, -1).clone() * node_mask
         x = xh[:, 0:self.n_dims].clone()
+        # [1600, 3]
         if h_dims == 0:
             h = torch.ones(bs*n_nodes, 1).to(self.device)
         else:
             h = xh[:, self.n_dims:].clone()
+            # [1600, 1]
+        
+        # t.size()
+        # random time samples of shape [64, 1] : bs, values ranging from 0. - 1.
 
         if self.condition_time:
             if np.prod(t.size()) == 1:
-                # t is the same for all elements in batch.
+                # t value is the same for all elements in batch.
                 h_time = torch.empty_like(h[:, 0:1]).fill_(t.item())
-            else:
-                # t is different over the batch dimension.
-                h_time = t.view(bs, 1).repeat(1, n_nodes)
-                h_time = h_time.view(bs * n_nodes, 1)
+            else:  # this
+                # t value is different over the batch dimension.
+                h_time = t.view(bs, 1).repeat(1, n_nodes)   # [64, 25]
+                h_time = h_time.view(bs * n_nodes, 1) # [1600, 1]
+            # h_time.shape
+            # [1600, 1]
             h = torch.cat([h, h_time], dim=1)
+            # [1600, 2]
 
         if context is not None:
             # We're conditioning, awesome!
             context = context.view(bs*n_nodes, self.context_node_nf)
             h = torch.cat([h, context], dim=1)
+        # h.shape
+        # [1600, 2+nf+?]
 
         if self.mode == 'egnn_dynamics':
             h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
+            # [1600, 2]  [1600, 3]
             vel = (x_final - x) * node_mask  # This masking operation is redundant but just in case
         elif self.mode == 'gnn_dynamics':
             xh = torch.cat([x, h], dim=1)
@@ -90,12 +111,18 @@ class EGNN_dynamics_QM9(nn.Module):
         if context is not None:
             # Slice off context size:
             h_final = h_final[:, :-self.context_node_nf]
+            
+        # h_final.shape
+        # [1600, 2]
 
         if self.condition_time:
             # Slice off last dimension which represented time.
             h_final = h_final[:, :-1]
+        # h_final.shape
+        # [1600, 1]
 
         vel = vel.view(bs, n_nodes, -1)
+        # [64, 25, 3]
 
         if torch.any(torch.isnan(vel)):
             print('Warning: detected nan, resetting EGNN output to zero.')
@@ -108,7 +135,7 @@ class EGNN_dynamics_QM9(nn.Module):
 
         if h_dims == 0:
             return vel
-        else:
+        else: # this
             h_final = h_final.view(bs, n_nodes, -1)
             return torch.cat([vel, h_final], dim=2)
 
@@ -324,6 +351,8 @@ class EGNN_encoder_QM9(nn.Module):
                             # example: n_nodes=5, batch_size=2
                             # since here we have n_nodes=5, meaning each molecule has 5 atoms / 5 nodes
                             #
+                            #               Molecule 1: [0,1,2,3,4]                                                        Molecule 2: [5,6,7,8,9]
+                            #
                             #  row: tensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4,     5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9]), 
                             #  col: tensor([0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4,     5, 6, 7, 8, 9, 5, 6, 7, 8, 9, 5, 6, 7, 8, 9, 5, 6, 7, 8, 9, 5, 6, 7, 8, 9])]
                             #               <----------->  <----------->  <----------->  <----------->  <----------->      <----------->  <----------->  <----------->  <----------->  <----------->  
@@ -365,18 +394,27 @@ class EGNN_decoder_QM9(nn.Module):
                  include_charges=True):
         super().__init__()
 
-        include_charges = int(include_charges)
-        num_classes = out_node_nf - include_charges
+        include_charges = int(include_charges)        # 1
+        num_classes = out_node_nf - include_charges   # 6-1 = 5 [HCNOF]
 
         self.mode = mode
-        if mode == 'egnn_dynamics':
+        if mode == 'egnn_dynamics':  # this
             self.egnn = EGNN(
-                in_node_nf=in_node_nf + context_node_nf, out_node_nf=out_node_nf, 
-                in_edge_nf=1, hidden_nf=hidden_nf, device=device, act_fn=act_fn,
-                n_layers=n_layers, attention=attention, tanh=tanh, norm_constant=norm_constant,
-                inv_sublayers=inv_sublayers, sin_embedding=sin_embedding,
-                normalization_factor=normalization_factor,
-                aggregation_method=aggregation_method)
+                in_node_nf=in_node_nf + context_node_nf,    # 1+nf+?
+                out_node_nf=out_node_nf,                    # 6
+                in_edge_nf=1, 
+                hidden_nf=hidden_nf,     # 256
+                device=device, 
+                act_fn=act_fn,           # torch.nn.SiLU()
+                n_layers=n_layers,       # 9
+                attention=attention,     # true
+                tanh=tanh, 
+                norm_constant=norm_constant,   # 1
+                inv_sublayers=inv_sublayers,   # 1
+                sin_embedding=sin_embedding,   # false
+                normalization_factor=normalization_factor,   # 1
+                aggregation_method=aggregation_method        # sum
+                )
             self.in_node_nf = in_node_nf
         elif mode == 'gnn_dynamics':
             self.gnn = GNN(
@@ -385,11 +423,11 @@ class EGNN_decoder_QM9(nn.Module):
                 act_fn=act_fn, n_layers=n_layers, attention=attention,
                 normalization_factor=normalization_factor, aggregation_method=aggregation_method)
 
-        self.num_classes = num_classes
-        self.include_charges = include_charges
-        self.context_node_nf = context_node_nf
+        self.num_classes = num_classes   # 5
+        self.include_charges = include_charges # 1
+        self.context_node_nf = context_node_nf # nf+?
         self.device = device
-        self.n_dims = n_dims
+        self.n_dims = n_dims  # 3
         self._edges_dict = {}
         # self.condition_time = condition_time
 
@@ -406,7 +444,11 @@ class EGNN_decoder_QM9(nn.Module):
 
     def _forward(self, xh, node_mask, edge_mask, context):
         bs, n_nodes, dims = xh.shape
+        # 64, 27, 4
+        
         h_dims = dims - self.n_dims
+        # 4-3 = 1
+        
         edges = self.get_adj_matrix(n_nodes, bs, self.device)
         edges = [x.to(self.device) for x in edges]
         node_mask = node_mask.view(bs*n_nodes, 1)
@@ -417,14 +459,19 @@ class EGNN_decoder_QM9(nn.Module):
             h = torch.ones(bs*n_nodes, 1).to(self.device)
         else:
             h = xh[:, self.n_dims:].clone()
+            # [1728, 1]  64*27
+        
 
         if context is not None:
             # We're conditioning, awesome!
             context = context.view(bs*n_nodes, self.context_node_nf)
             h = torch.cat([h, context], dim=1)
+            # [1728, 1]
+        
 
         if self.mode == 'egnn_dynamics':
             h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
+            # [1728, 6]    [1728, 3]
             vel = x_final * node_mask  # This masking operation is redundant but just in case
         elif self.mode == 'gnn_dynamics':
             xh = torch.cat([x, h], dim=1)
@@ -436,6 +483,7 @@ class EGNN_decoder_QM9(nn.Module):
             raise Exception("Wrong mode %s" % self.mode)
 
         vel = vel.view(bs, n_nodes, -1)
+        # [64, 27, 3]
 
         if torch.any(torch.isnan(vel)):
             print('Warning: detected nan, resetting EGNN output to zero.')
@@ -443,13 +491,15 @@ class EGNN_decoder_QM9(nn.Module):
 
         if node_mask is None:
             vel = remove_mean(vel)
-        else:
+        else: # this
             vel = remove_mean_with_mask(vel, node_mask.view(bs, n_nodes, 1))
 
         if node_mask is not None:
             h_final = h_final * node_mask
         h_final = h_final.view(bs, n_nodes, -1)
 
+        #      x,   h
+        #      [64, 27, 3], [64, 27, 6]
         return vel, h_final
     
     def get_adj_matrix(self, n_nodes, batch_size, device):

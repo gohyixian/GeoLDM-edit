@@ -249,7 +249,8 @@ def main():
         model_ema_dp = model_dp
     
     # ~!halfprecision
-    scaler = torch.cuda.amp.GradScaler()
+    # scaler = torch.cuda.amp.GradScaler()
+    scaler = None
 
     best_nll_val = 1e8
     best_nll_test = 1e8

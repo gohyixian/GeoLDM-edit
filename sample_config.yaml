@@ -29,7 +29,7 @@ diffusion_steps:
   value: 1000
 diffusion_noise_schedule:
   desc: null
-  value: polynomial_2
+  value: polynomial_2       # polynomial power 2
 diffusion_noise_precision:
   desc: null
   value: 1.0e-05
@@ -69,7 +69,7 @@ trace:
 n_layers:
   desc: null
   value: 9
-inv_sublayers:
+inv_sublayers:     # number of GCL blocks in each EquivariantBlocks in EGNN
   desc: null
   value: 1
 nf:
@@ -153,9 +153,9 @@ n_stability_samples:
 normalize_factors:
   desc: null
   value:
-  - 1
-  - 4
-  - 10
+  - 1      # x
+  - 4      # h_cat (one-hot)
+  - 10     # h_int (charges)
 remove_h:
   desc: null
   value: false

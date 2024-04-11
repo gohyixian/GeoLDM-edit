@@ -1,0 +1,166 @@
+
+exp_name: geoldm_qm9
+
+# ========================================================================================================== Training Mode (ldm/vae/both)
+# Train second stage LatentDiffusionModel model
+train_diffusion: true
+
+# Specify first stage model path
+ae_path: null
+
+# Train first stage AutoEncoder model
+trainable_ae: true
+
+# can contain multiple: homo | lumo | alpha | gap | mu | Cv
+conditioning: []
+
+# include atom charge, according to periodic table
+include_charges: true
+
+condition_time: true
+
+
+
+
+# ========================================================================================================== Dataset
+# qm9 | qm9_second_half (train only on the last 50K samples of the training dataset), default qm9
+dataset: qm9
+
+# qm9 directory
+datadir: qm9/temp
+
+# When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
+filter_n_atoms: null
+
+# Number of worker for the dataloader
+num_workers: 0
+
+# use data augmentation (i.e. random rotation of x atom coordinates)
+data_augmentation: false
+
+# remove hydrogen atoms
+remove_h: false
+
+
+
+
+# ========================================================================================================== Training Params
+start_epoch: 0
+test_epochs: 20
+generate_epochs: 1
+
+n_epochs: 3000
+batch_size: 64
+lr: 0.0001
+
+# weight of KL term in ELBO, default 0.01
+kl_weight: 0.01
+
+# ode_regularization weightage, default 1e-3
+ode_regularization: 0.001
+brute_force: false
+actnorm: true
+break_train_epoch: false
+dp: true
+clip_grad: true
+
+# Amount of EMA decay, 0 means off. A reasonable value is 0.999.
+ema_decay: 0.9999
+augment_noise: 0
+
+# Number of samples to compute the stability, default 500
+n_stability_samples: 1000
+
+
+# enables CUDA training
+no_cuda: false
+
+# hutch | exact
+trace: hutch
+
+
+
+
+# ========================================================================================================== LDM
+# our_dynamics | schnet | simple_dynamics | kernel_dynamics | egnn_dynamics | gnn_dynamics
+model: egnn_dynamics
+
+probabilistic_model: diffusion
+
+# Training complexity is O(1) (unaffected), but sampling complexity is O(steps), default 500
+diffusion_steps: 1000
+
+# learned, cosine, polynomial_<power>
+diffusion_noise_schedule: polynomial_2       # polynomial power 2
+
+# default 1e-5
+diffusion_noise_precision: 1.0e-05
+
+# vlb | l2
+diffusion_loss_type: l2
+
+# number of latent features, default 4
+latent_nf: 1
+
+# normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
+normalize_factors: [1, 4, 10]
+
+
+
+
+# ========================================================================================================== Network Architecture
+# number of layers of EquivariantBlock to use in LDM and VAE's Decoder
+n_layers: 9
+
+# number of GCL Blocks to use in each EquivariantBlock
+inv_sublayers: 1
+
+# model's internal operating number of features
+nf: 256
+
+# use tanh in the coord_mlp
+tanh: true
+
+# use attention in the EGNN
+attention: true
+
+# diff/(|diff| + norm_constant)
+norm_constant: 1
+
+# whether using or not the sin embedding
+sin_embedding: false
+
+# uniform | variational | argmax_variational | deterministic
+dequantization: argmax_variational
+
+# Normalize the sum aggregation of EGNN
+normalization_factor: 1
+
+# EGNN aggregation method: sum | mean
+aggregation_method: sum
+
+
+
+
+# ========================================================================================================== Logging
+# Can be used to visualize multiple times per epoch, default 1e8
+visualize_every_batch: 100000000.0
+n_report_steps: 1
+
+
+
+
+# ========================================================================================================== Saving & Resuming
+# str
+resume: null
+save_model: true
+
+
+
+
+# ========================================================================================================== Wandb
+# disable wandb
+no_wandb: false
+wandb_usr: null
+# True = wandb online -- False = wandb offline
+online: true

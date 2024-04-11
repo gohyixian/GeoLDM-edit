@@ -31,7 +31,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 
         x = remove_mean_with_mask(x, node_mask)
 
-        if args.augment_noise > 0:
+        if args.augment_noise > 0:  # 0
             # Add noise eps ~ N(0, augment_noise) around points.
             eps = sample_center_gravity_zero_gaussian_with_mask(x.size(), x.device, node_mask)
             x = x + eps * args.augment_noise
@@ -120,7 +120,8 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
     eval_model.eval()
     
     # ~!halfprecision
-    with torch.no_grad(), torch.cuda.amp.autocast():
+    # with torch.no_grad(), torch.cuda.amp.autocast():
+    with torch.no_grad():
         nll_epoch = 0
         n_samples = 0
 
@@ -170,9 +171,9 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
 def save_and_sample_chain(model, args, device, dataset_info, prop_dist,
                           epoch=0, id_from=0, batch_id=''):
     # ~!halfprecision
-    with torch.cuda.amp.autocast():
-        one_hot, charges, x = sample_chain(args=args, device=device, flow=model,
-                                        n_tries=1, dataset_info=dataset_info, prop_dist=prop_dist)
+    # with torch.cuda.amp.autocast():
+    one_hot, charges, x = sample_chain(args=args, device=device, flow=model,
+                                    n_tries=1, dataset_info=dataset_info, prop_dist=prop_dist)
 
     vis.save_xyz_file(f'outputs/{args.exp_name}/epoch_{epoch}_{batch_id}/chain/',
                       one_hot, charges, x, dataset_info, id_from, name='chain')
@@ -187,10 +188,10 @@ def sample_different_sizes_and_save(model, nodes_dist, args, device, dataset_inf
         nodesxsample = nodes_dist.sample(batch_size)
         
         # ~!halfprecision
-        with torch.cuda.amp.autocast():
-            one_hot, charges, x, node_mask = sample(args, device, model, prop_dist=prop_dist,
-                                                    nodesxsample=nodesxsample,
-                                                    dataset_info=dataset_info)
+        # with torch.cuda.amp.autocast():
+        one_hot, charges, x, node_mask = sample(args, device, model, prop_dist=prop_dist,
+                                                nodesxsample=nodesxsample,
+                                                dataset_info=dataset_info)
         print(f"Generated molecule: Positions {x[:-1, :, :]}")
         vis.save_xyz_file(f'outputs/{args.exp_name}/epoch_{epoch}_{batch_id}/', one_hot, charges, x, dataset_info,
                           batch_size * counter, name='molecule')
@@ -206,9 +207,9 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
         nodesxsample = nodes_dist.sample(batch_size)
         
         # ~!halfprecision
-        with torch.cuda.amp.autocast():
-            one_hot, charges, x, node_mask = sample(args, device, model_sample, dataset_info, prop_dist,
-                                                    nodesxsample=nodesxsample)
+        # with torch.cuda.amp.autocast():
+        one_hot, charges, x, node_mask = sample(args, device, model_sample, dataset_info, prop_dist,
+                                                nodesxsample=nodesxsample)
 
         molecules['one_hot'].append(one_hot.detach().cpu())
         molecules['x'].append(x.detach().cpu())
@@ -225,8 +226,8 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
 
 def save_and_sample_conditional(args, device, model, prop_dist, dataset_info, epoch=0, id_from=0):
     # ~!halfprecision
-    with torch.cuda.amp.autocast():
-        one_hot, charges, x, node_mask = sample_sweep_conditional(args, device, model, dataset_info, prop_dist)
+    # with torch.cuda.amp.autocast():
+    one_hot, charges, x, node_mask = sample_sweep_conditional(args, device, model, dataset_info, prop_dist)
 
     vis.save_xyz_file(
         'outputs/%s/epoch_%d/conditional/' % (args.exp_name, epoch), one_hot, charges, x, dataset_info,

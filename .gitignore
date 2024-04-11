@@ -31,6 +31,8 @@ qm9_conditional.sh
 figures/
 geom_drugs.sh
 notebooks/*
+slurm_err/*
+slurm_out/*
 
 # custom
 Anaconda.sh

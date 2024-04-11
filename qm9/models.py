@@ -87,34 +87,34 @@ def get_autoencoder(args, device, dataset_info, dataloader_train):
         )
     
     decoder = EGNN_decoder_QM9(
-        in_node_nf=args.latent_nf, 
-        context_node_nf=args.context_node_nf, 
-        out_node_nf=in_node_nf,
+        in_node_nf=args.latent_nf,      # 1
+        context_node_nf=args.context_node_nf,     # nf: len(args.conditioning) + ?
+        out_node_nf=in_node_nf,      # 6
         n_dims=3, 
         device=device, 
-        hidden_nf=args.nf,
+        hidden_nf=args.nf,     # 256
         act_fn=torch.nn.SiLU(), 
-        n_layers=args.n_layers,
-        attention=args.attention, 
+        n_layers=args.n_layers,   # 9
+        attention=args.attention,    # true
         tanh=args.tanh, 
-        mode=args.model, 
-        norm_constant=args.norm_constant,
-        inv_sublayers=args.inv_sublayers, 
-        sin_embedding=args.sin_embedding,
-        normalization_factor=args.normalization_factor, 
-        aggregation_method=args.aggregation_method,
-        include_charges=args.include_charges
+        mode=args.model,    # egnn_dynamics
+        norm_constant=args.norm_constant,  # 1
+        inv_sublayers=args.inv_sublayers,  # 1
+        sin_embedding=args.sin_embedding,  # false
+        normalization_factor=args.normalization_factor,   # 1
+        aggregation_method=args.aggregation_method,   # sum
+        include_charges=args.include_charges    # true
         )
 
     vae = EnHierarchicalVAE(
         encoder=encoder,
         decoder=decoder,
-        in_node_nf=in_node_nf,
+        in_node_nf=in_node_nf,  # 6
         n_dims=3,
-        latent_node_nf=args.latent_nf,
-        kl_weight=args.kl_weight,
-        norm_values=args.normalize_factors,
-        include_charges=args.include_charges
+        latent_node_nf=args.latent_nf,  # 1
+        kl_weight=args.kl_weight,   # 0.01
+        norm_values=args.normalize_factors,   # 1,4,10
+        include_charges=args.include_charges  # true
         )
 
     return vae, nodes_dist, prop_dist
@@ -141,7 +141,7 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
         first_stage_args, device, dataset_info, dataloader_train)
     first_stage_model.to(device)
 
-    if args.ae_path is not None:
+    if args.ae_path is not None:   # null
         fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
         flow_state_dict = torch.load(join(args.ae_path, fn),
                                         map_location=device)
@@ -149,35 +149,45 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
 
     # Create the second stage model (Latent Diffusions).
     args.latent_nf = first_stage_args.latent_nf
-    in_node_nf = args.latent_nf
+    in_node_nf = args.latent_nf  # 1
 
-    if args.condition_time:
-        dynamics_in_node_nf = in_node_nf + 1
+    if args.condition_time:   # true
+        dynamics_in_node_nf = in_node_nf + 1  # 2
     else:
         print('Warning: dynamics model is _not_ conditioned on time.')
         dynamics_in_node_nf = in_node_nf
-
+    
     net_dynamics = EGNN_dynamics_QM9(
-        in_node_nf=dynamics_in_node_nf, context_node_nf=args.context_node_nf,
-        n_dims=3, device=device, hidden_nf=args.nf,
-        act_fn=torch.nn.SiLU(), n_layers=args.n_layers,
-        attention=args.attention, tanh=args.tanh, mode=args.model, norm_constant=args.norm_constant,
-        inv_sublayers=args.inv_sublayers, sin_embedding=args.sin_embedding,
-        normalization_factor=args.normalization_factor, aggregation_method=args.aggregation_method)
+        in_node_nf=dynamics_in_node_nf,  # args.latent_nf + time = 2
+        context_node_nf=args.context_node_nf,  # nf+? = 0
+        n_dims=3, 
+        device=device, # cuda
+        hidden_nf=args.nf,  # 256
+        act_fn=torch.nn.SiLU(), 
+        n_layers=args.n_layers,  # 9
+        attention=args.attention,  # true
+        tanh=args.tanh,    # true
+        mode=args.model,   # egnn_dynamics
+        norm_constant=args.norm_constant,  # 1
+        inv_sublayers=args.inv_sublayers,  # 1
+        sin_embedding=args.sin_embedding,  # false
+        normalization_factor=args.normalization_factor, # 1
+        aggregation_method=args.aggregation_method  # sum
+        )
 
     if args.probabilistic_model == 'diffusion':
         vdm = EnLatentDiffusion(
-            vae=first_stage_model,
-            trainable_ae=args.trainable_ae,
-            dynamics=net_dynamics,
-            in_node_nf=in_node_nf,
+            vae=first_stage_model,    # VAE model
+            trainable_ae=args.trainable_ae,    # true
+            dynamics=net_dynamics,    # LDM model
+            in_node_nf=in_node_nf,    # 1
             n_dims=3,
-            timesteps=args.diffusion_steps,
-            noise_schedule=args.diffusion_noise_schedule,
-            noise_precision=args.diffusion_noise_precision,
-            loss_type=args.diffusion_loss_type,
-            norm_values=args.normalize_factors,
-            include_charges=args.include_charges
+            timesteps=args.diffusion_steps,    # 1000
+            noise_schedule=args.diffusion_noise_schedule,  # polynomial_2
+            noise_precision=args.diffusion_noise_precision, # 1.0e-05
+            loss_type=args.diffusion_loss_type,  # L2
+            norm_values=args.normalize_factors,  # [1,4,10]
+            include_charges=args.include_charges # true
             )
 
         return vdm, nodes_dist, prop_dist

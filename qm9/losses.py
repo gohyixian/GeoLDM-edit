@@ -20,6 +20,7 @@ def compute_loss_and_nll(args, generative_model, nodes_dist, x, h, node_mask, ed
 
         # Here x is a position tensor, and h is a dictionary with keys
         # 'categorical' and 'integer'.
+        # returns neg_log_pxh / negatve log likelihood
         nll = generative_model(x, h, node_mask, edge_mask, context)
 
         N = node_mask.squeeze(2).sum(1).long()

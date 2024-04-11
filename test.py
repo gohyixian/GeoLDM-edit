@@ -1,11 +1,21 @@
-import torch
-import numpy as np
+import yaml
+import argparse
 
-atom_mask = torch.from_numpy(np.array([1,2,3]))
+# config object for yaml
+class Config:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
 
-edge_mask = atom_mask.unsqueeze(0) * atom_mask.unsqueeze(1)
 
-diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool)  # [1, 29, 29] diagonal
-edge_mask *= diag_mask      # remove diagonals / self connections
-        
-print(edge_mask)
+parser = argparse.ArgumentParser(description='E3Diffusion')
+parser.add_argument('--config_file', type=str, default='custom_config/base_qm9_config.yaml')
+
+opt = parser.parse_args()
+
+with open(opt.config_file, 'r') as file:
+    args_dict = yaml.safe_load(file)
+
+args = Config(**args_dict)
+
+print(args.ode_regularization)
+print(type(args.ode_regularization))
