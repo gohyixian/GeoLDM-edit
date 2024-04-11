@@ -12,7 +12,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 80463
-module load miniconda/24.1.2
+# 80466
+module load miniconda/miniconda3
 conda activate geoldm
-python build_geom_dataset.py --data_dir /scr/user/yixian.goh/geoldm-edit-data/geom --data_file drugs_crude.msgpack
+python build_geom_dataset.py --data_dir /lustre/user/yixian.goh/geoldm-edit-data/geom --data_file drugs_crude.msgpack
