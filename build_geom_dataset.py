@@ -242,3 +242,4 @@ if __name__ == '__main__':
     parser.add_argument("--data_file", type=str, default="drugs_crude.msgpack")
     args = parser.parse_args()
     extract_conformers(args)
+    print("DONE.")
