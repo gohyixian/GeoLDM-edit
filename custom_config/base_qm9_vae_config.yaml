@@ -3,7 +3,7 @@ exp_name: geoldm_qm9
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
-train_diffusion: true
+train_diffusion: false
 
 # Specify first stage model path
 ae_path: null

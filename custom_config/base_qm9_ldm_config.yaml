@@ -6,10 +6,10 @@ exp_name: geoldm_qm9
 train_diffusion: true
 
 # Specify first stage model path
-ae_path: null
+ae_path: null  # TODO: udpate
 
 # Train first stage AutoEncoder model
-trainable_ae: true
+trainable_ae: false
 
 # can contain multiple: homo | lumo | alpha | gap | mu | Cv
 conditioning: []
