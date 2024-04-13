@@ -100,7 +100,7 @@ diffusion_noise_precision: 1.0e-05
 diffusion_loss_type: l2
 
 # number of latent features, default 4
-latent_nf: 1
+latent_nf: 2  # 1
 
 # normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
 normalize_factors: [1, 4, 10]
