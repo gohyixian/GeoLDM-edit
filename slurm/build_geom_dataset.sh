@@ -12,7 +12,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 80466
+# 80538
 module load miniconda/miniconda3
 conda activate geoldm
 cd /home/user/yixian.goh/geoldm-edit

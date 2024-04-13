@@ -13,7 +13,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 80536
+# 80548
 module load cuda/cuda-11.8
 module load miniconda/miniconda3
 conda activate geoldm

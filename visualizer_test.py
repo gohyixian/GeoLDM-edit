@@ -427,13 +427,14 @@ if __name__ == '__main__':
 
             plot_data3d(
                 positions_centered, atom_type, dataset_info=dataset_info,
-                spheres_3d=True)
+                spheres_3d=True,
+                save_path='/home/user/yixian.goh/geoldm-edit/visualizer_test_qm9.png')
             print("DONE.")
             exit()
 
     elif task_dataset == 'geom':
         files = load_xyz_files('outputs/data')
-        matplotlib.use('macosx')
+        # matplotlib.use('macosx')
         for file in files:
             x, one_hot, _ = load_molecule_xyz(file, dataset_info=geom_with_h)
 
