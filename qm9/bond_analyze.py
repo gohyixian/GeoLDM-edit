@@ -2,6 +2,10 @@
 # http://www.wiredchemist.com/chemistry/data/bond_energies_lengths.html
 # And:
 # http://chemistry-reference.com/tables/Bond%20Lengths%20and%20Enthalpies.pdf
+
+# bond lengths in pm (picometers), 1 angstrom (Å) = 100 picometers (pm)
+
+# single bonds
 bonds1 = {'H': {'H': 74, 'C': 109, 'N': 101, 'O': 96, 'F': 92,
                 'B': 119, 'Si': 148, 'P': 144, 'As': 152, 'S': 134,
                 'Cl': 127, 'Br': 141, 'I': 161},
@@ -34,13 +38,14 @@ bonds1 = {'H': {'H': 74, 'C': 109, 'N': 101, 'O': 96, 'F': 92,
           'As': {'H': 152}
           }
 
+# double bonds
 bonds2 = {'C': {'C': 134, 'N': 129, 'O': 120, 'S': 160},
           'N': {'C': 129, 'N': 125, 'O': 121},
           'O': {'C': 120, 'N': 121, 'O': 121, 'P': 150},
           'P': {'O': 150, 'S': 186},
           'S': {'P': 186}}
 
-
+# triple bonds
 bonds3 = {'C': {'C': 120, 'N': 116, 'O': 113},
           'N': {'C': 116, 'N': 110},
           'O': {'C': 113}}

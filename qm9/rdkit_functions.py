@@ -141,6 +141,7 @@ def mol2smiles(mol):
     return Chem.MolToSmiles(mol)
 
 
+# single molecule
 def build_molecule(positions, atom_types, dataset_info):
     atom_decoder = dataset_info["atom_decoder"]
     X, A, E = build_xae_molecule(positions, atom_types, dataset_info)
@@ -151,14 +152,16 @@ def build_molecule(positions, atom_types, dataset_info):
 
     all_bonds = torch.nonzero(A)
     for bond in all_bonds:
+        #                                           none / single / double / triple / aromatic
         mol.AddBond(bond[0].item(), bond[1].item(), bond_dict[E[bond[0], bond[1]].item()])
     return mol
 
 
+# single molecule
 def build_xae_molecule(positions, atom_types, dataset_info):
     """ Returns a triplet (X, A, E): atom_types, adjacency matrix, edge_types
         args:
-        positions: N x 3  (already masked to keep final number nodes)
+        positions: N x 3  (already masked to keep final number nodes), i.e. 29x3
         atom_types: N
         returns:
         X: N         (int)
@@ -167,16 +170,22 @@ def build_xae_molecule(positions, atom_types, dataset_info):
     """
     atom_decoder = dataset_info['atom_decoder']
     n = positions.shape[0]
-    X = atom_types
-    A = torch.zeros((n, n), dtype=torch.bool)
-    E = torch.zeros((n, n), dtype=torch.int)
+    X = atom_types                              # atom types
+    A = torch.zeros((n, n), dtype=torch.bool)   # adjacency matrix
+    E = torch.zeros((n, n), dtype=torch.int)    # edge types
 
-    pos = positions.unsqueeze(0)
+    pos = positions.unsqueeze(0)   # [0,N,3]
+    # computes the pairwise distance between points in two sets of points
+    # pos should be of shape (n, 3) / (m, 3), where n is the number of points and d is the dimensionality of each point.
+    # p is the order of the norm used to compute the distance. When p=2, it computes the Euclidean distance.
+    # returns a tensor of shape (n, m)
     dists = torch.cdist(pos, pos, p=2).squeeze(0)
     for i in range(n):
         for j in range(i):
             pair = sorted([atom_types[i], atom_types[j]])
             if dataset_info['name'] == 'qm9' or dataset_info['name'] == 'qm9_second_half' or dataset_info['name'] == 'qm9_first_half':
+                # based on the types of atoms of the 2 adjacent atoms, and the Euclidean distances between them, 
+                # we can know if they have a bond connection, and also the bond type: i.e. none / single / double / triple / aromatic
                 order = get_bond_order(atom_decoder[pair[0]], atom_decoder[pair[1]], dists[i, j])
             elif dataset_info['name'] == 'geom':
                 order = geom_predictor((atom_decoder[pair[0]], atom_decoder[pair[1]]), dists[i, j], limit_bonds_to_one=True)

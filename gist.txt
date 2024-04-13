@@ -87,3 +87,61 @@ EGNN Encoder/Decoder conditioning of property context via concatenation at:
 #        # We're conditioning, awesome!
 #        context = context.view(bs*n_nodes, self.context_node_nf)
 #        h = torch.cat([h, context], dim=1)
+
+
+
+
+
+
+EVALUATION:
+===========
+Validity: if molecule can be converted to SMILES succesfully
+          qm9/rdkit_functions.py, line 87, def compute_validity()
+
+Uniqueness: after validity check, len(set(valid)) / len(valid)
+          qm9/rdkit_functions.py, line 102, def compute_uniqueness()
+
+Novelty: if smiles not in self.dataset_smiles_list
+          qm9/rdkit_functions.py, line 106, def compute_novelty()
+
+
+
+=======================================================================================================
+How to build 3D molecule & SMILES from (x,y,z) coordinates and atom types only?
+
+Since we have the (x,y,z) coordinates, we first calculate the pairwise Euclidean distances
+between all atoms. Then, based on the types of atoms of the 2 adjacent atoms, and the Euclidean 
+distances between them, we can know if they have a bond connection, and also the bond type: 
+i.e. none / single / double / triple / aromatic
+
+This can be done due to known values of bond lengths between atoms and bond types, avail in:
+qm9/bond_analyze.py
+
+http://www.wiredchemist.com/chemistry/data/bond_energies_lengths.html
+http://chemistry-reference.com/tables/Bond%20Lengths%20and%20Enthalpies.pdf
+
+# bond lengths in pm (picometers), 1 angstrom (Å) = 100 picometers (pm)
+
+# i.e. single bonds
+bonds1 = {'H': {'H': 74, 'C': 109, 'N': 101, 'O': 96, 'F': 92,
+                'B': 119, 'Si': 148, 'P': 144, 'As': 152, 'S': 134,
+                'Cl': 127, 'Br': 141, 'I': 161},
+          'C': {'H': 109, 'C': 154, 'N': 147, 'O': 143, 'F': 135,
+                'Si': 185, 'P': 184, 'S': 182, 'Cl': 177, 'Br': 194,
+                'I': 214},
+          'N': {'H': 101, 'C': 147, 'N': 145, 'O': 140, 'F': 136,
+                'Cl': 175, 'Br': 214, 'S': 168, 'I': 222, 'P': 177},
+          ...
+          'As': {'H': 152}
+          }
+
+Then, with the atom_types, Adjacency_Matrix and Edge_Type, we can build a molecule
+with rdkit.Chem.RWMol(), from that, we can convert it to SMILES. A successful convertion
+means a valid molecule, while a failed one means invalid.
+
+details in qm9/rdkit_functions.py, line 136 onwards:
+
+def build_molecule(...):
+    -> def build_xae_molecule(...):
+
+def mol2smiles(...)
