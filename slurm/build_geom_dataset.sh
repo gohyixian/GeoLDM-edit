@@ -15,4 +15,5 @@
 # 80466
 module load miniconda/miniconda3
 conda activate geoldm
+cd /home/user/yixian.goh/geoldm-edit
 python build_geom_dataset.py --data_dir /lustre/user/yixian.goh/geoldm-edit-data/geom --data_file drugs_crude.msgpack

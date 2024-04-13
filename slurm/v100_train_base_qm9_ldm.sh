@@ -16,5 +16,6 @@
 module load cuda/cuda-11.8
 module load miniconda/miniconda3
 conda activate geoldm
+cd /home/user/yixian.goh/geoldm-edit
 python check_gpu.py
 python main_qm9.py --config_file custom_config/base_qm9_ldm_config.yaml
