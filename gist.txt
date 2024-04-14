@@ -66,6 +66,8 @@ sample conditioning input / context, see:
 
 
 Model runs on probabilities, hence nodes and conditioning properties have to be converted to Categorical probability distributions.
+      Correction, Categorical probability distributions of nodes and conditioning properties are used as distributions to sample 
+      number_of_nodes (what about conditioning properties?) during sampling from the model.
 Probability Distribution for graph nodes: qm9/models.py, line 178, class DistributionNodes
 #    sampling from this distribution returns the number of nodes. i.e. n_samples=3, return=tensor([16, 17, 15]) / tensor([14, 15, 19]) / tensor([17, 27, 18]) / ...
 #    prob dist built on simple {num_of_nodes: frequency} histogram
@@ -89,6 +91,18 @@ EGNN Encoder/Decoder conditioning of property context via concatenation at:
 #        h = torch.cat([h, context], dim=1)
 
 
+Conditioning is only done for the QM9 dataset, in the preprocessed GEOM dataset, no conditional properties from the 
+raw drugs_crude.msgpack file is saved. If needed, have to modify the original script to save some. How to? refer to 
+official tutorial of GEOM dataset @ https://github.com/learningmatter-mit/geom, tutorials/01_loading_data.ipynb
+
+In the preprocessed datafiles built using build_geom_dataset.py, a maximum of 30 conformations with the lowest 
+'totalenergy' is saved for the same molecule.
+
+geom_drugs_30.npy       - contains a large array in the form: [[molecule_id, atomic_num, x, y, z], [..], [..]]
+                          NOTE that all atoms of all molecules are combined into a single array. However, atoms
+                          from the same molecule will have the same molecule_id.
+geom_drugs_smiles.txt   - SMILES of each of the unique molecules (conformers have the same SMILES notations)
+geom_drugs_n_30.npy     - holds a list about the number of atoms each molecule holds.
 
 
 

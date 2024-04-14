@@ -33,9 +33,9 @@ def extract_conformers(args):
             lowest_energies = argsort[:args.conformations]
             for id in lowest_energies:
                 conformer = conformers[id]
-                coords = np.array(conformer['xyz']).astype(float)        # n x 4
+                coords = np.array(conformer['xyz']).astype(float)        # n x 4   [atomic_num, x, y, z]
                 if args.remove_h:
-                    mask = coords[:, 0] != 1.0
+                    mask = coords[:, 0] != 1.0    # hydrogen's atomic_num = 1
                     coords = coords[mask]
                 n = coords.shape[0]
                 all_number_atoms.append(n)
@@ -235,6 +235,8 @@ class GeomDrugsTransform(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    # quick note: conformations = possible 3D arrangements of a molecule due to factors like
+    #             single bonds are rotateble bonds.
     parser.add_argument("--conformations", type=int, default=30,
                         help="Max number of conformations kept for each molecule.")
     parser.add_argument("--remove_h", action='store_true', help="Remove hydrogens from the dataset.")
