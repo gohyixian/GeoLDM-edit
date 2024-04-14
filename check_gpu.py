@@ -13,7 +13,7 @@ def check_gpu_availability(gpu_ids):
             print(f"GPU {gpu_id} is not available.")
 
 # Specify the GPU IDs to check
-gpu_ids = [0, 1]
+gpu_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 # Check GPU availability
 check_gpu_availability(gpu_ids)

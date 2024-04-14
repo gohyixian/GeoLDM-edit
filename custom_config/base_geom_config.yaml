@@ -23,11 +23,12 @@ condition_time: true
 
 
 # ========================================================================================================== Dataset
-# qm9 | qm9_second_half (train only on the last 50K samples of the training dataset), default qm9
+# geom
 dataset: geom
 
-# qm9 directory  ~!geom
-data_file: ./data/geom/geom_drugs_30.npy
+# geom directory  ~!geom
+# data_file: ./data/geom/geom_drugs_30.npy
+data_file: /lustre/user/yixian.goh/geoldm-edit-data/geom/geom_drugs_30.npy
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
@@ -35,7 +36,7 @@ filter_n_atoms: null
 # Only use molecules below this size. Int, default null  ~!geom
 filter_molecule_size: null
 
-# Organize data by size to reduce average memory usage.
+# Organize data by size to reduce average memory usage. ~!geom
 sequential: false
 
 # Number of worker for the dataloader
