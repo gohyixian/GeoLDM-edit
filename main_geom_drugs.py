@@ -7,6 +7,7 @@ import build_geom_dataset
 from configs.datasets_config import geom_with_h
 import copy
 import utils
+import yaml
 import argparse
 import wandb
 from os.path import join
@@ -22,115 +23,24 @@ from qm9.utils import prepare_context, compute_mean_mad
 import train_test
 
 
+# config object for yaml
+class Config:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+
 parser = argparse.ArgumentParser(description='e3_diffusion')
-parser.add_argument('--exp_name', type=str, default='debug_10')
+parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
+opt = parser.parse_args()
 
-# Latent Diffusion args
-parser.add_argument('--train_diffusion', action='store_true', 
-                    help='Train second stage LatentDiffusionModel model')
-parser.add_argument('--ae_path', type=str, default=None,
-                    help='Specify first stage model path')
-parser.add_argument('--trainable_ae', action='store_true',
-                    help='Train first stage AutoEncoder model')
+with open(opt.config_file, 'r') as file:
+    args_dict = yaml.safe_load(file)
+    
+args = Config(**args_dict)
 
-# VAE args
-parser.add_argument('--latent_nf', type=int, default=4,
-                    help='number of latent features')
-parser.add_argument('--kl_weight', type=float, default=0.01,
-                    help='weight of KL term in ELBO')
 
-parser.add_argument('--model', type=str, default='egnn_dynamics',
-                    help='our_dynamics | schnet | simple_dynamics | '
-                         'kernel_dynamics | egnn_dynamics |gnn_dynamics')
-parser.add_argument('--probabilistic_model', type=str, default='diffusion',
-                    help='diffusion')
 
-# Training complexity is O(1) (unaffected), but sampling complexity O(steps).
-parser.add_argument('--diffusion_steps', type=int, default=500)
-parser.add_argument('--diffusion_noise_schedule', type=str, default='polynomial_2',
-                    help='learned, cosine')
-parser.add_argument('--diffusion_loss_type', type=str, default='l2',
-                    help='vlb, l2')
-parser.add_argument('--diffusion_noise_precision', type=float, default=1e-5)
-
-parser.add_argument('--n_epochs', type=int, default=10000)
-parser.add_argument('--batch_size', type=int, default=64)
-parser.add_argument('--lr', type=float, default=5e-5)
-parser.add_argument('--break_train_epoch', type=eval, default=False,
-                    help='True | False')
-parser.add_argument('--dp', type=eval, default=True,
-                    help='True | False')
-parser.add_argument('--condition_time', type=eval, default=True,
-                    help='True | False')
-parser.add_argument('--clip_grad', type=eval, default=True,
-                    help='True | False')
-parser.add_argument('--trace', type=str, default='hutch',
-                    help='hutch | exact')
-# EGNN args -->
-parser.add_argument('--n_layers', type=int, default=6,
-                    help='number of layers')
-parser.add_argument('--inv_sublayers', type=int, default=1,
-                    help='number of layers')
-parser.add_argument('--nf', type=int, default=192,
-                    help='number of layers')
-parser.add_argument('--tanh', type=eval, default=True,
-                    help='use tanh in the coord_mlp')
-parser.add_argument('--attention', type=eval, default=True,
-                    help='use attention in the EGNN')
-parser.add_argument('--norm_constant', type=float, default=1,
-                    help='diff/(|diff| + norm_constant)')
-parser.add_argument('--sin_embedding', type=eval, default=False,
-                    help='whether using or not the sin embedding')
-# <-- EGNN args
-parser.add_argument('--ode_regularization', type=float, default=1e-3)
-parser.add_argument('--dataset', type=str, default='geom',
-                    help='dataset name')
-parser.add_argument('--filter_n_atoms', type=int, default=None,
-                    help='When set to an integer value, QM9 will only contain molecules of that amount of atoms')
-parser.add_argument('--dequantization', type=str, default='argmax_variational',
-                    help='uniform | variational | argmax_variational | deterministic')
-parser.add_argument('--n_report_steps', type=int, default=50)
-parser.add_argument('--wandb_usr', type=str)
-parser.add_argument('--no_wandb', action='store_true', help='Disable wandb')
-parser.add_argument('--online', type=bool, default=True, help='True = wandb online -- False = wandb offline')
-parser.add_argument('--no-cuda', action='store_true', default=False, help='disable CUDA training')
-parser.add_argument('--save_model', type=eval, default=True, help='save model')
-parser.add_argument('--generate_epochs', type=int, default=1)
-parser.add_argument('--num_workers', type=int, default=0,
-                    help='Number of worker for the dataloader')
-parser.add_argument('--test_epochs', type=int, default=1)
-parser.add_argument('--data_augmentation', type=eval, default=False,
-                    help='use attention in the EGNN')
-parser.add_argument("--conditioning", nargs='+', default=[],
-                    help='multiple arguments can be passed, '
-                         'including: homo | onehot | lumo | num_atoms | etc. '
-                         'usage: "--conditioning H_thermo homo onehot H_thermo"')
-parser.add_argument('--resume', type=str, default=None,
-                    help='')
-parser.add_argument('--start_epoch', type=int, default=0,
-                    help='')
-parser.add_argument('--ema_decay', type=float, default=0,           # TODO
-                    help='Amount of EMA decay, 0 means off. A reasonable value'
-                         ' is 0.999.')
-parser.add_argument('--augment_noise', type=float, default=0)
-parser.add_argument('--n_stability_samples', type=int, default=20,
-                    help='Number of samples to compute the stability')
-parser.add_argument('--normalize_factors', type=eval, default=[1, 4, 10],
-                    help='normalize factors for [x, categorical, integer]')
-parser.add_argument('--remove_h', action='store_true')
-parser.add_argument('--include_charges', type=eval, default=False, help='include atom charge or not')
-parser.add_argument('--visualize_every_batch', type=int, default=5000)
-parser.add_argument('--normalization_factor', type=float,
-                    default=100, help="Normalize the sum aggregation of EGNN")
-parser.add_argument('--aggregation_method', type=str, default='sum',
-                    help='"sum" or "mean" aggregation for the graph network')
-parser.add_argument('--filter_molecule_size', type=int, default=None,
-                    help="Only use molecules below this size.")
-parser.add_argument('--sequential', action='store_true',
-                    help='Organize data by size to reduce average memory usage.')
-args = parser.parse_args()
-
-data_file = './data/geom/geom_drugs_30.npy'
+data_file = args.data_file
 
 if args.remove_h:
     raise NotImplementedError()
