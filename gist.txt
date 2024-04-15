@@ -66,8 +66,9 @@ sample conditioning input / context, see:
 
 
 Model runs on probabilities, hence nodes and conditioning properties have to be converted to Categorical probability distributions.
-      Correction, Categorical probability distributions of nodes and conditioning properties are used as distributions to sample 
-      number_of_nodes (what about conditioning properties?) during sampling from the model.
+      CORRECTION, Categorical probability distributions of nodes and conditioning properties are used as distributions to sample 
+      number_of_nodes - node_mask during sampling from the model.    (what about conditioning properties?)
+      edge_mask = node_mask.unsqueeze(1) * node_mask.unsqueeze(2)
 Probability Distribution for graph nodes: qm9/models.py, line 178, class DistributionNodes
 #    sampling from this distribution returns the number of nodes. i.e. n_samples=3, return=tensor([16, 17, 15]) / tensor([14, 15, 19]) / tensor([17, 27, 18]) / ...
 #    prob dist built on simple {num_of_nodes: frequency} histogram
