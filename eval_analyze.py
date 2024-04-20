@@ -109,6 +109,12 @@ def test(args, flow_dp, nodes_dist, device, dtype, loader, partition='Test', num
     return nll_epoch/n_samples
 
 
+# config object for yaml
+class Config:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str, default="outputs/edm_1",

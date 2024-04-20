@@ -199,6 +199,12 @@ def main_qualitative(args):
         save_and_sample_conditional(args_gen, device, model, prop_dist, dataset_info, epoch=i, id_from=0)
 
 
+# config object for yaml
+class Config:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--exp_name', type=str, default='debug_alpha')

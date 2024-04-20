@@ -1,4 +1,4 @@
 geoldm_qm9_2024_04_13:
 =====================
-python eval_analyze.py --model_path outputs/geoldm_qm9_2024_04_13 --n_samples 10_000 --batch_size_gen 100 --save_to_xyz True
+python eval_analyze.py --model_path outputs/geoldm_qm9_2024_04_13 --n_samples 10000 --batch_size_gen 100 --save_to_xyz True
 python eval_sample.py --model_path outputs/geoldm_qm9_2024_04_13 --n_tries 10 --visualize_chain False

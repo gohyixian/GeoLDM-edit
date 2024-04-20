@@ -94,6 +94,12 @@ def sample_only_stable_different_sizes_and_save(
                 break
 
 
+# config object for yaml
+class Config:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str,
