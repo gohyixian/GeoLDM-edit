@@ -328,7 +328,9 @@ class EGNN_encoder_QM9(nn.Module):
             else:
                 # get edges for a single sample
                 rows, cols = [], []
+                # for this batch of molecules
                 for batch_idx in range(batch_size):    # [0-64]
+                    # for each molecule
                     for i in range(n_nodes):           # 29
                         for j in range(n_nodes):       # 29
                             rows.append(i + batch_idx * n_nodes)    # [0-29) + (batch_idx * 29)

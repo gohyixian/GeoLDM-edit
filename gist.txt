@@ -2,9 +2,12 @@ sample config of training, see:
 sample_config.yaml (obtained from wandb log)
 
 from qm9 RAW .xyz data to used .npz, processing function:
+to see keys in .npz dict file:
+['tag', 'index', 'A', 'B', 'C', 'mu', 'alpha', 'homo', 'lumo', 'gap', 'r2', 'zpve', 'U0', 'U', 'H', 'G', 'Cv', 'omega1']
+['num_atoms', 'charges', 'positions']
 /GeoLDM-edit/qm9/data/prepare/process.py, line 174, def process_xyz_gdb9
 
-processing of above read qm9 dataset, 
+processing of above read qm9 dataset (zero-padding), 
 /GeoLDM-edit/qm9/data/prepare/process.py, line 36, def process_xyz_files
 #   atom_charges used in dataset: charge_dict = {'H': 1, 'C': 6, 'N': 7, 'O': 8, 'F': 9}
 #   atom_encodings used in model: {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4},
@@ -18,6 +21,11 @@ the remove('0') here is to remove zero padding only in the above atom_charges, n
     included_species = torch.unique(self.data['charges'], sorted=True)
     if included_species[0] == 0:   # remove H
         included_species = included_species[1:]
+
+
+max number of atoms in molecule is determined by:
+/GeoLDM-edit/qm9/data/utils.py, line 130, def initialize_datasets
+max_charge = datasets['train'].max_charge
 
 
 main driver for above functions,
@@ -45,10 +53,27 @@ dataset return, see:
 dataloader return, see:
 /GeoLDM-edit/qm9/data/collate.py, line 65, def collate_fn()
 This function specifies how batch data from the dataset class are combined into one during the call of the dataloader.
+This function also generates the edge_mask by:
+#    #Obtain edges
+#    batch_size, n_nodes = atom_mask.size()    # assume n_nodes=29
+#    edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)   # [64, 1, 29] * [64, 29, 1] = [64, 29, 29]
+#
+#    #mask diagonal
+#    inv_diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool).unsqueeze(0)  # [1, 29, 29] diagonal
+#    edge_mask *= inv_diag_mask      # remove diagonals / self connections
+#
+#    #edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)
+#    batch['edge_mask'] = edge_mask.view(batch_size * n_nodes * n_nodes, 1)     # [64x29x29, 1]
+#
 #    batch['atom_mask'] = batch['charges'] > 0                                  --> [64, about-23-29] cuz dropped 0
 #    batch['edge_mask'] = edge_mask.view(batch_size * n_nodes * n_nodes, 1)     --> [64x29x29, 1]
 #    batch['charges'] = batch['charges'].unsqueeze(2)                           --> [64, 29, 1]
 #        if include_charges=True, else torch.zeros(0)
+#
+
+This function too removes the additional zero padding, from max_num_atoms_in_whole_dataset to max_num_atoms_in_batch:
+/GeoLDM-edit/qm9/data/collate.py
+
 
 number of datapoints / rows used for each train-test-val split is controlled in the below, generated during the download of qm9 dataset.
 optional, to reset this split, regenerate train-test-split precomputed-presplit datafiles.npz by setting force_download=True in prepare_dataset().

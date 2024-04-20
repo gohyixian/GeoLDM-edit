@@ -31,6 +31,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 
         x = remove_mean_with_mask(x, node_mask)
 
+        # not used
         if args.augment_noise > 0:  # 0
             # Add noise eps ~ N(0, augment_noise) around points.
             eps = sample_center_gravity_zero_gaussian_with_mask(x.size(), x.device, node_mask)

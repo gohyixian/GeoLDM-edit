@@ -91,6 +91,7 @@ wandb.init(**kwargs)
 wandb.save('*.txt')
 
 # Retrieve QM9 dataloaders
+#            max number of atoms in molecule (determined from dataset)
 dataloaders, charge_scale = dataset.retrieve_dataloaders(args)
 
 data_dummy = next(iter(dataloaders['train']))

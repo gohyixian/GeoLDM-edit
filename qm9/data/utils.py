@@ -56,7 +56,7 @@ def initialize_datasets(args, datadir, dataset, subset=None, splits=None,
     num_pts = {'train': args.num_train,
                'test': args.num_test, 'valid': args.num_valid}
 
-    # Download and process dataset. Returns datafiles.
+    # Download and process dataset. Returns paths to datafiles.
     datafiles = prepare_dataset(
         datadir, 'qm9', subset, splits, force_download=force_download)
 

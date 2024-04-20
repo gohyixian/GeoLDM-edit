@@ -76,11 +76,15 @@ class PreprocessQM9:
         batch : dict of Pytorch tensors
             The collated data.
         """
+        # list of [bs * [max_num_nodes=29, 3]]
         batch = {prop: batch_stack([mol[prop] for mol in batch]) for prop in batch[0].keys()}
+        # [bs, max_num_nodes=29, 3]
 
-        to_keep = (batch['charges'].sum(0) > 0)
+        # batch['charges']: [64, 29] --sum--> [29]
+        to_keep = (batch['charges'].sum(0) > 0)   # [29]
 
-        batch = {key: drop_zeros(prop, to_keep) for key, prop in batch.items()}
+        # excess ZEROs dropped here, keep only size for max molecule size in this batch
+        batch = {key: drop_zeros(prop, to_keep) for key, prop in batch.items()}  # [bs, <=29, 3]
 
         atom_mask = batch['charges'] > 0
         batch['atom_mask'] = atom_mask
@@ -90,9 +94,9 @@ class PreprocessQM9:
         batch_size, n_nodes = atom_mask.size()    # assume n_nodes=29
         edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)   # [64, 1, 29] * [64, 29, 1] = [64, 29, 29]
 
-        #mask diagonal
-        diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool).unsqueeze(0)  # [1, 29, 29] diagonal
-        edge_mask *= diag_mask      # remove diagonals / self connections
+        #mask diagonal (remove atom self-to-self connections)
+        inv_diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool).unsqueeze(0)  # [1, 29, 29] diagonal
+        edge_mask *= inv_diag_mask      # remove diagonals / self connections
 
         #edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)
         batch['edge_mask'] = edge_mask.view(batch_size * n_nodes * n_nodes, 1)     # [64x29x29, 1]

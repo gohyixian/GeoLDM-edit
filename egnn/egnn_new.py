@@ -30,7 +30,7 @@ class GCL(nn.Module):
     def edge_model(self, source, target, edge_attr, edge_mask):
         # h[row]=source, h[col]=target
         if edge_attr is None:  # Unused.
-            out = torch.cat([source, target], dim=1)  # torch.Size([46656, 256+256])
+            out = torch.cat([source, target], dim=1)  # torch.Size([bs*27*27, 256+256])
         else:
             out = torch.cat([source, target, edge_attr], dim=1)
         mij = self.edge_mlp(out)
@@ -47,11 +47,12 @@ class GCL(nn.Module):
 
     def node_model(self, x, edge_index, edge_attr, node_attr):
         row, col = edge_index
+        # edge_attr: [bs*27*27, 256]
         # aggregate: sum / normalization_factor=1
         agg = unsorted_segment_sum(edge_attr, row, num_segments=x.size(0),
                                    normalization_factor=self.normalization_factor,  # 1
                                    aggregation_method=self.aggregation_method)      # sum
-        if node_attr is not None:
+        if node_attr is not None: # None
             agg = torch.cat([x, agg, node_attr], dim=1)
         else:
             agg = torch.cat([x, agg], dim=1)
@@ -60,11 +61,12 @@ class GCL(nn.Module):
 
     def forward(self, h, edge_index, edge_attr=None, node_attr=None, node_mask=None, edge_mask=None):
         row, col = edge_index
+        # node_attr = None
         # bs=64, n_nodes=27
         # 256 because there is an embedding layer in EGNN called self.embedding
         # print(">>", h.shape,       row.shape,          col.shape,          h[row].shape,            h[col].shape,            edge_attr.shape,       edge_mask.shape)
         # >> torch.Size([1728, 256]) torch.Size([46656]) torch.Size([46656]) torch.Size([46656, 256]) torch.Size([46656, 256]) torch.Size([46656, 2]) torch.Size([46656, 1])
-        #                64x27
+        #                64x27                   64x27x27                                64x27x27
         edge_feat, mij = self.edge_model(h[row], h[col], edge_attr, edge_mask)
         h, agg = self.node_model(h, edge_index, edge_feat, node_attr)
         if node_mask is not None:
@@ -286,25 +288,42 @@ def coord2diff(x, edge_index, norm_constant=1):
     # result.scatter_add_(0, indices, values)  <-- 0=dim to perform scatter operation
 
     # print(result)   >>> tensor([1., 5., 0.])
-    # idx: [0, 1, 1]
+    # idx: [0, 1, 1]    <-- index position of where elem at this positions (the idx takes) would end up on
     # val: [1, 2, 3]
+    #
+    #              0, 1,   2
     # scattering: [1, 2+3, 0]   <-- 1 kept at position 0, while 2 3 scattered/moved to position 1, position 2 empty
     #           = [1, 5,   0]
     
 def unsorted_segment_sum(data, segment_ids, num_segments, normalization_factor, aggregation_method: str):
+    # unsorted_segment_sum(edge_attr, row, num_segments=x.size(0),..)
     """Custom PyTorch op to replicate TensorFlow's `unsorted_segment_sum`.
         Normalization: 'sum' or 'mean'.
     """
+    # num_segments: bs * num_nodes
+    # data.size(1): 256
     result_shape = (num_segments, data.size(1))
-    result = data.new_full(result_shape, 0)  # Init empty result tensor.
-    segment_ids = segment_ids.unsqueeze(-1).expand(-1, data.size(1))
-    result.scatter_add_(0, segment_ids, data)
+    result = data.new_full(result_shape, 0)  # Init empty result tensor of shape result_shape, all with value 0, and same data type as data
+    #         say (100)       (100, 1)      (100, 256)
+    segment_ids = segment_ids.unsqueeze(-1).expand(-1, data.size(1))   # [bs*n_nodes*n_nodes, 256]
+    # since here we have n_nodes=5, meaning each molecule has 5 atoms / 5 nodes
+    #
+    #               Molecule 1: [0,1,2,3,4]                                                        Molecule 2: [5,6,7,8,9]
+    #
+    #  row: tensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4,     5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9]), 
+    #               <----------->  <----------->  <----------->  <----------->  <----------->      <----------->  <----------->  <----------->  <----------->  <----------->  
+    #               sum-to-idx-0   sum-to-idx-1   sum-to-idx-2   sum-to-idx-3   sum-to-idx-4       sum-to-idx-5   sum-to-idx-6   sum-to-idx-7   sum-to-idx-8   sum-to-idx-9   
+    #               <----------------------------------------------------------------------->      <----------------------------------------------------------------------->
+    #                           all possible node combinations in molecule 1                                   all possible node combinations in molecule 2
+    #               <------------------------------------------------------------------------------------------------------------------------------------------------------>
+    #                                                                        batch size = 2   (2 molecules per batch)
+    result.scatter_add_(0, segment_ids, data)      # runs on dim=0, collapes dim 0 from bs*n_nodes*n_nodes to bs*n_nodes
     if aggregation_method == 'sum':
         result = result / normalization_factor
 
     if aggregation_method == 'mean':
         norm = data.new_zeros(result.shape)
-        norm.scatter_add_(0, segment_ids, data.new_ones(data.shape))
-        norm[norm == 0] = 1
+        norm.scatter_add_(0, segment_ids, data.new_ones(data.shape))   # N, sum up number of elems, i.e.  (..sum..) / N  <--
+        norm[norm == 0] = 1  # 0 div error
         result = result / norm
     return result

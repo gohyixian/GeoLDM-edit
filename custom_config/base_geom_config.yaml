@@ -73,6 +73,8 @@ clip_grad: true
 
 # Amount of EMA decay, 0 means off. A reasonable value is 0.999.
 ema_decay: 0.9999
+
+# add noise to x before encoding, data augmenting
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
