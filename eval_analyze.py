@@ -201,8 +201,9 @@ def main():
 
     print(f'Overview: val nll {val_nll} test nll {test_nll}', stability_dict)
     with open(join(eval_args.model_path, 'eval_log.txt'), 'w') as f:
-        print(f'Overview: val nll {val_nll} test nll {test_nll}',
+        print(f"Overview: val nll {val_nll} test nll {test_nll}\n",
               stability_dict,
+              f"\nValidity {rdkit_metrics[0]} \nUniqueness: {rdkit_metrics[1]} \nNovelty: {rdkit_metrics[2]}",
               file=f)
 
 
