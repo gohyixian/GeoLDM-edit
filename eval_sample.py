@@ -26,7 +26,7 @@ def check_mask_correct(variables, node_mask):
 
 
 def save_and_sample_chain(args, eval_args, device, flow,
-                          n_tries, n_nodes, dataset_info, id_from=0,
+                          n_tries, dataset_info, id_from=0,
                           num_chains=100):
 
     for i in range(num_chains):
@@ -99,13 +99,18 @@ def main():
     parser.add_argument('--model_path', type=str,
                         default="outputs/edm_1",
                         help='Specify model path')
-    parser.add_argument(
-        '--n_tries', type=int, default=10,
-        help='N tries to find stable molecule for gif animation')
-    parser.add_argument('--n_nodes', type=int, default=19,
-                        help='number of atoms in molecule for gif animation')
+    parser.add_argument('--n_tries', type=int, 
+                        default=10,
+                        help='N tries to find stable molecule for gif animation')
+    parser.add_argument('--visualize_chain', type=eval, default=False, 
+                        help="Visualize each of model's denoising steps in the form of .xyz & .gif files (A very slow process).")
 
     eval_args, unparsed_args = parser.parse_known_args()
+    
+    print(f"Eval Args (model_path)     : {eval_args.model_path}")
+    print(f"Eval Args (n_tries)        : {eval_args.n_tries}")
+    print(f"Eval Args (visualize_chain): {eval_args.visualize_chain}")
+    
 
     assert eval_args.model_path is not None
 
@@ -153,12 +158,13 @@ def main():
         join(eval_args.model_path, 'eval/molecules/'), dataset_info,
         max_num=100, spheres_3d=True)
 
-    # # takes a very long time to run: need to decode every sampling timestep
-    # print('Sampling visualization chain.')
-    # save_and_sample_chain(
-    #     args, eval_args, device, flow,
-    #     n_tries=eval_args.n_tries, n_nodes=eval_args.n_nodes,
-    #     dataset_info=dataset_info)
+    if eval_args.visualize_chain:
+        # takes a very long time to run: need to decode every sampling timestep
+        print('Sampling visualization chain.')
+        save_and_sample_chain(
+            args, eval_args, device, flow,
+            n_tries=eval_args.n_tries,
+            dataset_info=dataset_info)
 
 
 if __name__ == "__main__":

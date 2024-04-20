@@ -43,7 +43,7 @@ To analyze the sample quality of molecules:
 
 To visualize some molecules:
 
-```python eval_sample.py --model_path outputs/$exp_name --n_samples 10_000```
+```python eval_sample.py --model_path outputs/$exp_name```
 
 Small note: The GPUs used for these experiment were pretty large. If you run out of GPU memory, try running at a smaller size.
 <!-- The main reason is that the EGNN runs with fully connected message passing, which becomes very memory intensive. -->

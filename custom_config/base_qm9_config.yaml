@@ -1,5 +1,5 @@
 
-exp_name: geoldm_qm9
+exp_name: geoldm_qm9_2024_04_13
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model

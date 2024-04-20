@@ -108,6 +108,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         # scaler.update()
         
     wandb.log({"Train Epoch NLL": np.mean(nll_epoch)}, commit=False)
+    
+    return n_iterations
 
 
 def check_mask_correct(variables, node_mask):

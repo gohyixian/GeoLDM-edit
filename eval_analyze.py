@@ -121,6 +121,12 @@ def main():
                         help='Should save samples to xyz files.')
 
     eval_args, unparsed_args = parser.parse_known_args()
+    
+    print(f"Eval Args (model_path)    : {eval_args.model_path}")
+    print(f"Eval Args (n_samples)     : {eval_args.n_samples}")
+    print(f"Eval Args (batch_size_gen): {eval_args.batch_size_gen}")
+    print(f"Eval Args (save_to_xyz)   : {eval_args.save_to_xyz}")
+    
 
     assert eval_args.model_path is not None
 
