@@ -48,7 +48,14 @@ args.wandb_usr = utils.get_wandb_username(args.wandb_usr)
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if args.cuda else "cpu")
-dtype = torch.float32
+
+if args.half_precision:
+    dtype = torch.float16
+    torch.set_default_dtype(torch.float16)
+    if args.cuda:
+        torch.set_default_tensor_type(torch.cuda.HalfTensor)
+else:
+    dtype = torch.float32
 
 if args.resume is not None:
     exp_name = args.exp_name + '_resume'

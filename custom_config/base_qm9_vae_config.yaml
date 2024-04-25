@@ -80,6 +80,9 @@ no_cuda: false
 # hutch | exact
 trace: hutch
 
+# whether to use half precision (float16), else full precision (float32)
+half_precision: true
+
 
 
 
