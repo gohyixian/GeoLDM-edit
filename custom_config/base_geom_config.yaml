@@ -1,5 +1,5 @@
 
-exp_name: geoldm_geom
+exp_name: geoldm_geom_DATE
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -28,7 +28,8 @@ dataset: geom
 
 # geom directory  ~!geom
 # data_file: ./data/geom/geom_drugs_30.npy
-data_file: /lustre/user/yixian.goh/geoldm-edit-data/geom/geom_drugs_30.npy
+data_file: /lustre/user/yixian.goh/geoldm-edit/data/geom/geom_drugs_30.npy
+permutation_file_path: null
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null

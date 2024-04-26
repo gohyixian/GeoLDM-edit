@@ -66,10 +66,12 @@ def extract_conformers(args):
 
 
 def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
-                    filter_size=None):
+                    filter_size=None, permutation_file_path=None, dataset_name=None):
     from pathlib import Path
     path = Path(conformation_file)
     base_path = path.parent.absolute()
+    if dataset_name is None:
+        dataset_name = 'geom'
 
     # base_path = os.path.dirname(conformation_file)
     all_data = np.load(conformation_file)  # 2d array: num_atoms x 5
@@ -88,16 +90,31 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
 
         assert len(data_list) > 0, 'No molecules left after filter.'
 
-    # CAREFUL! Only for first time run:
-    # perm = np.random.permutation(len(data_list)).astype('int32')
-    # print('Warning, currently taking a random permutation for '
-    #       'train/val/test partitions, this needs to be fixed for'
-    #       'reproducibility.')
-    # assert not os.path.exists(os.path.join(base_path, 'geom_permutation.npy'))
-    # np.save(os.path.join(base_path, 'geom_permutation.npy'), perm)
-    # del perm
 
-    perm = np.load(os.path.join(base_path, 'geom_permutation.npy'))
+    if permutation_file_path is not None:
+        if not os.path.exists(permutation_file_path):
+            # CAREFUL! Only for first time run:
+            perm = np.random.permutation(len(data_list)).astype('int32')
+            print('Warning, currently taking a random permutation for '
+                  'train/val/test partitions, this needs to be fixed for'
+                  'reproducibility.')
+            # assert not os.path.exists(os.path.join(base_path, 'geom_permutation.npy'))
+            np.save(permutation_file_path, perm)
+        else:
+            perm = np.load(permutation_file_path)
+    else:
+        default_permutation_file_path = os.path.join(base_path, f'{dataset_name}_permutation.npy')
+        if not os.path.exists(default_permutation_file_path):
+            # CAREFUL! Only for first time run:
+            perm = np.random.permutation(len(data_list)).astype('int32')
+            print('Warning, currently taking a random permutation for '
+                  'train/val/test partitions, this needs to be fixed for'
+                  'reproducibility.')
+            # assert not os.path.exists(os.path.join(base_path, 'geom_permutation.npy'))
+            np.save(default_permutation_file_path, perm)
+        else:
+            perm = np.load(default_permutation_file_path)
+        
     data_list = [data_list[i] for i in perm]
 
     num_mol = len(data_list)

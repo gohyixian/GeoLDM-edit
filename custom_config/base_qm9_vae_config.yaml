@@ -1,5 +1,5 @@
 
-exp_name: base_qm9_vae_config
+exp_name: base_geoldm_qm9_vae
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model

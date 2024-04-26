@@ -38,14 +38,19 @@ def retrieve_dataloaders(cfg):
     elif 'geom' in cfg.dataset:
         import build_geom_dataset
         from configs.datasets_config import get_dataset_info
-        data_file = './data/geom/geom_drugs_30.npy'
+        if cfg.data_file is not None:
+            data_file = cfg.data_file
+        else:
+            data_file = './data/geom/geom_drugs_30.npy'
         dataset_info = get_dataset_info(cfg.dataset, cfg.remove_h)
 
         # Retrieve QM9 dataloaders
         split_data = build_geom_dataset.load_split_data(data_file,
                                                         val_proportion=0.1,
                                                         test_proportion=0.1,
-                                                        filter_size=cfg.filter_molecule_size)
+                                                        filter_size=cfg.filter_molecule_size,
+                                                        permutation_file_path=cfg.permutation_file_path,
+                                                        dataset_name=cfg.dataset)
         transform = build_geom_dataset.GeomDrugsTransform(dataset_info,
                                                           cfg.include_charges,
                                                           cfg.device,

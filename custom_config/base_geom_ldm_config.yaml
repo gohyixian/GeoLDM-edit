@@ -1,5 +1,5 @@
 
-exp_name: base_geoldm_qm9_ldm
+exp_name: base_geoldm_geom_ldm
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -11,11 +11,11 @@ ae_path: null  # TODO: udpate: path to trained weights & args folder
 # Train first stage AutoEncoder model
 trainable_ae: false
 
-# can contain multiple: homo | lumo | alpha | gap | mu | Cv
+# can contain multiple: homo | onehot | lumo | num_atoms | etc
 conditioning: []
 
 # include atom charge, according to periodic table
-include_charges: true
+include_charges: false   # true for qm9
 
 condition_time: true
 
@@ -23,14 +23,22 @@ condition_time: true
 
 
 # ========================================================================================================== Dataset
-# qm9 | qm9_second_half (train only on the last 50K samples of the training dataset), default qm9
-dataset: qm9
+# geom
+dataset: geom
 
-# qm9 directory
-datadir: qm9/temp
+# geom directory  ~!geom
+# data_file: ./data/geom/geom_drugs_30.npy
+data_file: /lustre/user/yixian.goh/geoldm-edit/data/geom/geom_drugs_30.npy
+permutation_file_path: null
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
+
+# Only use molecules below this size. Int, default null  ~!geom
+filter_molecule_size: null
+
+# Organize data by size to reduce average memory usage. ~!geom
+sequential: false
 
 # Number of worker for the dataloader
 num_workers: 0
@@ -46,11 +54,11 @@ remove_h: false
 
 # ========================================================================================================== Training Params
 start_epoch: 0
-test_epochs: 20
+test_epochs: 1
 generate_epochs: 1
 
 n_epochs: 3000
-batch_size: 64
+batch_size: 32
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01
@@ -58,8 +66,8 @@ kl_weight: 0.01
 
 # ode_regularization weightage, default 1e-3
 ode_regularization: 0.001
-brute_force: false
-actnorm: true
+# brute_force: false
+# actnorm: true
 break_train_epoch: false
 dp: true
 clip_grad: true
@@ -71,7 +79,7 @@ ema_decay: 0.9999
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 1000
+n_stability_samples: 500
 
 
 # enables CUDA training
@@ -112,7 +120,7 @@ normalize_factors: [1, 4, 10]
 
 # ========================================================================================================== Network Architecture
 # number of layers of EquivariantBlock to use in LDM and VAE's Decoder
-n_layers: 9
+n_layers: 4  # 9 for qm9
 
 # number of GCL Blocks to use in each EquivariantBlock
 inv_sublayers: 1
@@ -146,8 +154,8 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_every_batch: 100000000.0
-n_report_steps: 1
+visualize_every_batch: 10000.0
+n_report_steps: 50
 
 
 

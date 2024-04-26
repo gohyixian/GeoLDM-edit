@@ -35,12 +35,11 @@ import os
 import subprocess
 from tqdm import tqdm
 
-input_dir = "/Users/gohyixian/Downloads/PDBBind2020/refined-set"
-output_dir = "/Users/gohyixian/Downloads/PDBBind2020/refined-set-xyz"
-allowed_files = ['sdf', 'pdb']   # drop mol2
+input_dir = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/00-combined-refined-and-core-set"
+output_dir = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/01-combined-refined-and-core-set-xyz"
+allowed_files = ['mol2', 'pdb']
 out_ext = 'xyz'
-# babel_path = '/opt/homebrew/Cellar/open-babel/3.1.1_2/bin/obabel'
-# /opt/homebrew/Cellar/open-babel/3.1.1_2/bin/obabel -i pdb /Users/gohyixian/Downloads/1a1e/1a1e_pocket.pdb -o xyz -O /Users/gohyixian/Downloads/1a1e/1a1e_pocket.xyz
+# usage: obabel -i pdb /Users/gohyixian/Downloads/1a1e/1a1e_pocket.pdb -o xyz -O /Users/gohyixian/Downloads/1a1e/1a1e_pocket.xyz
 
 all_protein_ligand = sorted(os.listdir(input_dir))
 all_protein_ligand.remove('.DS_Store') # mac
@@ -58,7 +57,6 @@ for folder in tqdm(all_protein_ligand):
                 
             in_file = os.path.join(input_dir, folder, f)
             out_file = os.path.join(output_dir, folder, f.split('.')[0] + '.' + out_ext)
-            # command = f"{babel_path} -i {ext} {in_file} -o {out_ext} -O {out_file}"
             command = f"obabel -i {ext} {in_file} -o {out_ext} -O {out_file}"
             subprocess.run(command, shell=True)
             print(f"{in_file} -> {out_file}")

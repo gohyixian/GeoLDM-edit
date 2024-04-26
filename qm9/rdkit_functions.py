@@ -25,6 +25,10 @@ def compute_qm9_smiles(dataset_name, remove_h):
             self.datadir = 'qm9/temp'
             self.remove_h = remove_h
             self.include_charges = True
+            self.permutation_file_path = None
+            self.data_file = None
+            
+            
     args_dataset = StaticArgs(dataset_name, remove_h)
     dataloaders, charge_scale = dataset.retrieve_dataloaders(args_dataset)
     dataset_info = get_dataset_info(args_dataset.dataset, args_dataset.remove_h)

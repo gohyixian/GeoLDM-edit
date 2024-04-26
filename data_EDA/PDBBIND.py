@@ -71,25 +71,27 @@ if __name__ == "__main__":
     
     # mode = 'ligand'
     # mode = 'pocket'
-    mode = 'protein'
-    pdbbind_data_obj = PDBBIND()
-    for folder in tqdm(ligand_pocket_pair_folders):
-        files = [s for s in sorted(os.listdir(folder)) if mode in s]
-        f = os.path.join(folder, files[0])
-        with open(f, 'r') as openfile:
-            pdbbind_data_obj.process_xyz_gdb9(openfile)
-    
-    # Store the object to a file using pickle
-    pdbbind_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/PDBBIND_{mode.upper()}_data_object.pkl'
-    with open(pdbbind_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
-        pickle.dump(pdbbind_data_obj, file)
-    del pdbbind_data_obj
+    # mode = 'protein'
+    modes = ['ligand', 'pocket', 'protein']
+    for mode in modes:
+        pdbbind_data_obj = PDBBIND()
+        for folder in tqdm(ligand_pocket_pair_folders):
+            files = [s for s in sorted(os.listdir(folder)) if mode in s]
+            f = os.path.join(folder, files[0])
+            with open(f, 'r') as openfile:
+                pdbbind_data_obj.process_xyz_gdb9(openfile)
+        
+        # Store the object to a file using pickle
+        pdbbind_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/PDBBIND_{mode.upper()}_data_object.pkl'
+        with open(pdbbind_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
+            pickle.dump(pdbbind_data_obj, file)
+        del pdbbind_data_obj
 
-    # Load the object back from the file
-    with open(pdbbind_data_object_pkl, 'rb') as file:  # Use 'rb' mode for binary reading
-        qm9_data_obj = pickle.load(file)
-    
-    attributes_values = vars(qm9_data_obj)
-    for attr, value in attributes_values.items():
-        print(f"{attr}: {value}")
+        # Load the object back from the file
+        with open(pdbbind_data_object_pkl, 'rb') as file:  # Use 'rb' mode for binary reading
+            pdbbind_data_obj = pickle.load(file)
+        
+        attributes_values = vars(pdbbind_data_obj)
+        for attr, value in attributes_values.items():
+            print(f"{attr}: {value}")
     

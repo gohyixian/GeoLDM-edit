@@ -163,6 +163,8 @@ def main_analyze_qm9(remove_h: bool, dataset_name='qm9', n_atoms=None):
             self.include_charges = True
             self.dataset = dataset_name  #could be qm9, qm9_first_half or qm9_second_half
             self.datadir = 'qm9/temp'
+            self.permutation_file_path = None
+            self.data_file = None
 
     cfg = DataLoaderConfig()
 
@@ -274,6 +276,8 @@ def main_check_stability(remove_h: bool, batch_size=32):
             self.include_charges = True
             self.filter_molecule_size = None
             self.sequential = False
+            self.permutation_file_path = None
+            self.data_file = None
 
     cfg = Config()
 
