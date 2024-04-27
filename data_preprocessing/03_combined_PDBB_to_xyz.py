@@ -35,14 +35,15 @@ import os
 import subprocess
 from tqdm import tqdm
 
-input_dir = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/00-combined-refined-and-core-set"
-output_dir = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/01-combined-refined-and-core-set-xyz"
+input_dir = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/00-combined-full-refined-and-core-set'
+output_dir = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/00-combined-full-refined-and-core-set-xyz'
 allowed_files = ['mol2', 'pdb']
 out_ext = 'xyz'
+to_remove = ['.DS_store'] # mac
 # usage: obabel -i pdb /Users/gohyixian/Downloads/1a1e/1a1e_pocket.pdb -o xyz -O /Users/gohyixian/Downloads/1a1e/1a1e_pocket.xyz
 
 all_protein_ligand = sorted(os.listdir(input_dir))
-all_protein_ligand.remove('.DS_Store') # mac
+all_protein_ligand = [f for f in all_protein_ligand if f not in to_remove]
 
 for folder in tqdm(all_protein_ligand):
     print(f">>> {folder}")
