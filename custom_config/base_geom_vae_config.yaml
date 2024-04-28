@@ -62,8 +62,8 @@ start_epoch: 0
 test_epochs: 1
 generate_epochs: 1
 
-n_epochs: 3000
-batch_size: 32
+n_epochs: 12000  # 3000
+batch_size: 8    # 32
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01

@@ -64,7 +64,7 @@ class GCL(nn.Module):
         # node_attr = None
         # bs=64, n_nodes=27
         # 256 because there is an embedding layer in EGNN called self.embedding
-        # print(">>", h.shape,       row.shape,          col.shape,          h[row].shape,            h[col].shape,            edge_attr.shape,       edge_mask.shape)
+        print(">>", h.shape,       row.shape,          col.shape,          h[row].shape,            h[col].shape,            edge_attr.shape,       edge_mask.shape)
         # >> torch.Size([1728, 256]) torch.Size([46656]) torch.Size([46656]) torch.Size([46656, 256]) torch.Size([46656, 256]) torch.Size([46656, 2]) torch.Size([46656, 1])
         #                64x27                   64x27x27                                64x27x27
         edge_feat, mij = self.edge_model(h[row], h[col], edge_attr, edge_mask)

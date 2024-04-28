@@ -50,6 +50,8 @@ else:
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if args.cuda else "cpu")
 dtype = torch.float32
+args.device = device
+args.dtype = dtype
 
 split_data = build_geom_dataset.load_split_data(data_file, val_proportion=0.1, test_proportion=0.1, filter_size=args.filter_molecule_size, permutation_file_path=args.permutation_file_path, dataset_name=args.dataset)
 transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, device, args.sequential)
