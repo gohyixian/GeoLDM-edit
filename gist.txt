@@ -90,8 +90,7 @@ sample conditioning input / context, see:
 #       say if you have 3 features, num_feats might not necessarily be 3 (>=3) because some features might have dimensionality>=2
 
 
-Model runs on probabilities, hence nodes and conditioning properties have to be converted to Categorical probability distributions.
-      CORRECTION, Categorical probability distributions of nodes and conditioning properties are used as distributions to sample 
+Categorical probability distributions of nodes and conditioning properties are used as distributions to sample 
       number_of_nodes - node_mask during sampling from the model.    (what about conditioning properties?)
       edge_mask = node_mask.unsqueeze(1) * node_mask.unsqueeze(2)
 Probability Distribution for graph nodes: qm9/models.py, line 178, class DistributionNodes
@@ -103,6 +102,31 @@ Probability Distribution for conditioning properties: qm9/models.py, line 222, c
 #    distribution[n_nodes] = {'probs': probs, 'params': params}       # for each num_of_nodes, {'probs':torch.Categorical_prob_dist_of_property_corresponding_to_that_num_of_nodes, 'params':[property_min_val, max_val]}
 #    if sampling from say n_nodes=19, then sample from the property distribution with num_of_nodes=19, returns value property, shaped [num_args_conditioning]
 #    if batch sampling, returns values shaped [bs, num_args_conditioning]
+
+#      VAE (including the its losses) code have zero relation to the precomputed data distributions.
+#      VAE's losses comprises of:
+#      - KL divergence between encoded h features and mean=0, std=1
+#      - KL divergence between encoded x features and mean=0, std=1
+#      - reconstruction error
+#            - error on positions/coordinates (x-x^)**2
+#            - error on classes/one-hot node features F.cross_entropy()
+#            - error on charges/periodic table atom charges (c-c^)**2       <-- if self.include_charges (QM9 only)
+#            
+#      However, in the driving script's train_test.train_epoch(), we calculate the nll defined in
+#      the below. This means that loss still has relation to the node distribution.
+#      - GeoLDM-edit/qm9/losses.py, line 12
+#      where the log_pN value is computed using the node_dist's log_prob() method:
+#      - GeoLDM-edit/qm9/models.py, line 237
+#      
+#      However, for our use case, this might not be an issue because for each of the following trainings,
+#      each of them has their independent datasets and the weights of each component is not further trained
+#      anymore:
+#      - VAE Encoder Decoder (GEOM, PDBB-LG, PDBB-PKT)
+#      - LDM (GEOM, PDBB-LG)       VAE frozen
+#      - Controlnet-LDM-VAE (PDBB-LG)       optional VAE frozen
+
+
+
 
 !!! Autoencoder models are _not_ conditioned on time.
 

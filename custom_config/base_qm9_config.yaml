@@ -17,6 +17,7 @@ conditioning: []
 # include atom charge, according to periodic table
 include_charges: true
 
+# only works for ldm, not for VAE
 condition_time: true
 
 
@@ -74,7 +75,7 @@ augment_noise: 0
 n_stability_samples: 1000
 
 
-# enables CUDA training
+# disables CUDA training
 no_cuda: false
 
 # hutch | exact

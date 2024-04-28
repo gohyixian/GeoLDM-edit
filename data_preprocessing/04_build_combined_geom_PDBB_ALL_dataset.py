@@ -113,6 +113,8 @@ def extract_conformers(args):
     print("PDBB count", PDBB_count)
 
     # Save conformations
+    if not os.path.exists(args.save_dir):
+        os.makedirs(args.save_dir)
     np.save(os.path.join(args.save_dir, save_file), dataset)
     # Save SMILES
     # with open(os.path.join(args.data_dir, smiles_list_file), 'w') as f:
@@ -140,13 +142,18 @@ if __name__ == '__main__':
     parser.add_argument("--save_dir", type=str, default="data/combined_geom_PDBB_refined_core_LG_PKT")
     parser.add_argument("--save_dataset_name", type=str, default="combined_geom_PDBB_refined_core_LG_PKT")
     
-    # python build_combined_geom_PDBB_ALL_dataset.py --geom_conformations 30 --geom_data_file /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/GEOM/drugs_crude.msgpack --PDBB_refined_core_folder /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/01-combined-refined-and-core-set-xyz --save_dir /Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data/combined_geom_PDBB_refined_core_LG_PKT --save_dataset_name combined_geom_PDBB_refined_core_LG_PKT
+    # python build_combined_geom_PDBB_ALL_dataset.py --geom_conformations 30 --geom_data_file /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/GEOM/drugs_crude.msgpack --PDBB_refined_core_folder /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/01-combined-full-refined-and-core-set-xyz --save_dir /Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT --save_dataset_name d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT
     
     # proportion of PDBB-LG & PDBB-PKT (5620*2) occupies too less in total of ((5,620*2)+6,922,516) 
     # samples if we set geom_conformations to 30, hence the minimum value of 1. With 1, we get
     # around (5620*2) / ((5,620*2)+(6,922,516/30)) = 0.04644809797 for PDBB-LG & PDBB-PKT
-    # python build_combined_geom_PDBB_ALL_dataset.py --geom_conformations 1 --geom_data_file /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/GEOM/drugs_crude.msgpack --PDBB_refined_core_folder /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/01-combined-refined-and-core-set-xyz --save_dir /Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data/combined_geom_PDBB_refined_core_LG_PKT --save_dataset_name combined_geom_PDBB_refined_core_LG_PKT
+    # python build_combined_geom_PDBB_ALL_dataset.py --geom_conformations 1 --geom_data_file /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/GEOM/drugs_crude.msgpack --PDBB_refined_core_folder /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/01-combined-full-refined-and-core-set-xyz --save_dir /Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT --save_dataset_name d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT
     
+    # Total number of molecules (geom-conformers, PDBB-LG, PDBB-PKT) saved 331491
+    # Total number of atoms in the dataset 136291128
+    # Average number of atoms per molecule 411.14578676344155
+    # Geom count 292035
+    # PDBB count 39456
     
     args = parser.parse_args()
     extract_conformers(args)

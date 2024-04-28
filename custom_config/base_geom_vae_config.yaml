@@ -17,6 +17,7 @@ conditioning: []
 # include atom charge, according to periodic table
 include_charges: false   # true for qm9
 
+# only works for ldm, not for VAE
 condition_time: true
 
 
@@ -29,7 +30,11 @@ dataset: geom
 # geom directory  ~!geom
 # data_file: ./data/geom/geom_drugs_30.npy
 data_file: /lustre/user/yixian.goh/geoldm-edit/data/geom/geom_drugs_30.npy
-permutation_file_path: null
+# set to null if you're running this dataset for the first time. 
+# Script will generate a random permutation to shuffle the dataset.
+# Please set the path to the DATASET_permutation.npy file after it is generated.
+# permutation_file_path: ./data/geom/geom_permutation.npy
+permutation_file_path: permutation_file_path: /lustre/user/yixian.goh/geoldm-edit/data/geom/geom_permutation.npy
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
@@ -82,7 +87,7 @@ augment_noise: 0
 n_stability_samples: 500
 
 
-# enables CUDA training
+# disables CUDA training
 no_cuda: false
 
 # hutch | exact

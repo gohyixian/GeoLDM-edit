@@ -1,9 +1,12 @@
+import pickle
+from configs.constants_colors_radius import get_radius, get_colors
 
 
+qm9_with_h_atom_decoder = ['H', 'C', 'N', 'O', 'F']
 qm9_with_h = {
     'name': 'qm9',
     'atom_encoder': {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4},
-    'atom_decoder': ['H', 'C', 'N', 'O', 'F'],
+    'atom_decoder': qm9_with_h_atom_decoder,
     # {number of nodes: frequency count}
     'n_nodes': {22: 3393, 17: 13025, 23: 4848, 21: 9970, 19: 13832, 20: 9482, 16: 10644, 13: 3060,
                 15: 7796, 25: 1506, 18: 13364, 12: 1689, 11: 807, 24: 539, 14: 5136, 26: 48, 7: 16, 10: 362,
@@ -26,18 +29,21 @@ qm9_with_h = {
                   0, 0, 0, 0,
                   0,
                   0, 0],
-    'colors_dic': ['#FFFFFF99', 'C7', 'C0', 'C3', 'C1'],
-    'radius_dic': [0.46, 0.77, 0.77, 0.77, 0.77],
+    'colors_dic': [get_colors(a) for a in qm9_with_h_atom_decoder],
+    'radius_dic': [get_radius(a) for a in qm9_with_h_atom_decoder],
     'with_h': True}
     # 'bond1_radius': {'H': 31, 'C': 76, 'N': 71, 'O': 66, 'F': 57},
     # 'bond1_stdv': {'H': 5, 'C': 2, 'N': 2, 'O': 2, 'F': 3},
     # 'bond2_radius': {'H': -1000, 'C': 67, 'N': 60, 'O': 57, 'F': 59},
     # 'bond3_radius': {'H': -1000, 'C': 60, 'N': 54, 'O': 53, 'F': 53}}
 
+
+
+qm9_without_h_atom_decoder = ['C', 'N', 'O', 'F']
 qm9_without_h = {
     'name': 'qm9',
     'atom_encoder': {'C': 0, 'N': 1, 'O': 2, 'F': 3},
-    'atom_decoder': ['C', 'N', 'O', 'F'],
+    'atom_decoder': qm9_without_h_atom_decoder,
     'max_n_nodes': 29,
     'n_nodes': {9: 83366, 8: 13625, 7: 2404, 6: 475, 5: 91, 4: 25, 3: 7, 1: 2, 2: 5},
     'atom_types': {0: 635559, 2: 140202, 1: 101476, 3: 2323},
@@ -50,8 +56,8 @@ qm9_without_h = {
                     3906, 4416, 4306, 4110, 3700, 3592, 3134, 2268, 774, 674, 514, 594, 622,
                     672, 642, 472, 300, 170, 104, 48, 54, 78, 78, 56, 48, 36, 26, 4, 2, 4,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    'colors_dic': ['C7', 'C0', 'C3', 'C1'],
-    'radius_dic': [0.77, 0.77, 0.77, 0.77],
+    'colors_dic': [get_colors(a) for a in qm9_without_h_atom_decoder],
+    'radius_dic': [get_radius(a) for a in qm9_without_h_atom_decoder],
     'with_h': False}
     # 'bond1_radius': {'C': 76, 'N': 71, 'O': 66, 'F': 57},
     # 'bond1_stdv': {'C': 2, 'N': 2, 'O': 2, 'F': 3},
@@ -59,15 +65,17 @@ qm9_without_h = {
     # 'bond3_radius': {'C': 60, 'N': 54, 'O': 53, 'F': 53}}
 
 
+
+qm9_second_half_atom_decoder = ['H', 'C', 'N', 'O', 'F']
 qm9_second_half = {
     'name': 'qm9_second_half',
     'atom_encoder': {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4},
-    'atom_decoder': ['H', 'C', 'N', 'O', 'F'],
+    'atom_decoder': qm9_second_half_atom_decoder,
     'n_nodes': {19: 6944, 12: 845, 20: 4794, 21: 4962, 27: 132, 25: 754, 18: 6695, 14: 2587, 15: 3865, 22: 1701, 17: 6461, 16: 5344, 23: 2380, 13: 1541, 24: 267, 10: 178, 7: 7, 11: 412, 8: 25, 9: 62, 29: 15, 26: 17, 4: 3, 3: 1, 6: 5, 5: 3},
     'atom_types': {1: 317604, 2: 50852, 3: 70033, 0: 461622, 4: 1164},
     'distances': [457374, 153688, 55626, 28284, 20414, 15010, 24412, 208012, 1105440, 285830, 748876, 1496486, 384178, 484194, 245688, 635534, 2307642, 1603762, 1231044, 1329758, 1053612, 1006742, 813504, 880670, 811616, 855082, 1066434, 931672, 709810, 711032, 608446, 660538, 692382, 619084, 544200, 490740, 450576, 380662, 328150, 303008, 263888, 218820, 207414, 175452, 145636, 135646, 116184, 94622, 80358, 68230, 58706, 51216, 44020, 38212, 30492, 24886, 21210, 17270, 13056, 11156, 9082, 7534, 6958, 6060, 4632, 3760, 2500, 2342, 1816, 1726, 1768, 1102, 974, 670, 474, 446, 286, 246, 242, 156, 176, 90, 66, 66, 38, 28, 24, 14, 10, 2, 6, 0, 2, 0, 0, 0, 0, 0, 0, 0],
-    'colors_dic': ['#FFFFFF99', 'C7', 'C0', 'C3', 'C1'],
-    'radius_dic': [0.46, 0.77, 0.77, 0.77, 0.77],
+    'colors_dic': [get_colors(f) for f in qm9_second_half_atom_decoder],
+    'radius_dic': [get_radius(f) for f in qm9_second_half_atom_decoder],
     'max_n_nodes': 29,
     'with_h': True}
     # 'bond1_radius': {'H': 31, 'C': 76, 'N': 71, 'O': 66, 'F': 57},
@@ -76,12 +84,14 @@ qm9_second_half = {
     # 'bond3_radius': {'H': -1000, 'C': 60, 'N': 54, 'O': 53, 'F': 53}}
 
 
+
+geom_with_h_atom_decoder = ['H', 'B', 'C', 'N', 'O', 'F', 'Al', 'Si', 'P', 'S', 'Cl', 'As', 'Br', 'I', 'Hg', 'Bi']
 geom_with_h = {
     'name': 'geom',
     'atom_encoder': {'H': 0, 'B': 1, 'C': 2, 'N': 3, 'O': 4, 'F': 5, 'Al': 6, 'Si': 7,
     'P': 8, 'S': 9, 'Cl': 10, 'As': 11, 'Br': 12, 'I': 13, 'Hg': 14, 'Bi': 15},
     'atomic_nb': [1,  5,  6,  7,  8,  9, 13, 14, 15, 16, 17, 33, 35, 53, 80, 83],
-    'atom_decoder': ['H', 'B', 'C', 'N', 'O', 'F', 'Al', 'Si', 'P', 'S', 'Cl', 'As', 'Br', 'I', 'Hg', 'Bi'],
+    'atom_decoder': geom_with_h_atom_decoder,
     'max_n_nodes': 181,
     'n_nodes': {3: 1, 4: 3, 5: 9, 6: 2, 7: 8, 8: 23, 9: 23, 10: 50, 11: 109, 12: 168, 13: 280, 14: 402, 15: 583, 16: 597,
                 17: 949, 18: 1284, 19: 1862, 20: 2674, 21: 3599, 22: 6109, 23: 8693, 24: 13604, 25: 17419, 26: 25672,
@@ -101,23 +111,19 @@ geom_with_h = {
                 151: 30, 152: 60, 155: 90, 159: 30, 160: 60, 165: 30, 171: 30, 175: 30, 176: 60, 181: 30},
     'atom_types':{0: 143905848, 1: 290, 2: 129988623, 3: 20266722, 4: 21669359, 5: 1481844, 6: 1,
                   7: 250, 8: 36290, 9: 3999872, 10: 1224394, 11: 4, 12: 298702, 13: 5377, 14: 13, 15: 34},
-    'colors_dic': ['#FFFFFF99',
-                   'C2', 'C7', 'C0', 'C3', 'C1', 'C5',
-                   'C6', 'C4', 'C8', 'C9', 'C10',
-                   'C11', 'C12', 'C13', 'C14'],
-    'radius_dic': [0.3, 0.6, 0.6, 0.6, 0.6,
-                   0.6, 0.6, 0.6, 0.6, 0.6,
-                   0.6, 0.6, 0.6, 0.6, 0.6,
-                   0.6],
+    'colors_dic': [get_colors(f) for f in geom_with_h_atom_decoder],
+    'radius_dic': [get_radius(f) for f in geom_with_h_atom_decoder],
     'with_h': True}
 
 
+
+geom_no_h_atom_decoder = ['B', 'C', 'N', 'O', 'F', 'Al', 'Si', 'P', 'S', 'Cl', 'As', 'Br', 'I', 'Hg', 'Bi']
 geom_no_h = {
     'name': 'geom',
     'atom_encoder': {'B': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4, 'Al': 5, 'Si': 6, 'P': 7, 'S': 8, 'Cl': 9, 'As': 10,
                      'Br': 11, 'I': 12, 'Hg': 13, 'Bi': 14},
     'atomic_nb': [5,  6,  7,  8,  9, 13, 14, 15, 16, 17, 33, 35, 53, 80, 83],
-    'atom_decoder': ['B', 'C', 'N', 'O', 'F', 'Al', 'Si', 'P', 'S', 'Cl', 'As', 'Br', 'I', 'Hg', 'Bi'],
+    'atom_decoder': geom_no_h_atom_decoder,
     'max_n_nodes': 91,
     'n_nodes': {1: 3, 2: 5, 3: 8, 4: 89, 5: 166, 6: 370, 7: 613, 8: 1214, 9: 1680, 10: 3315, 11: 5115, 12: 9873,
                 13: 15422, 14: 28088, 15: 50643, 16: 82299, 17: 124341, 18: 178417, 19: 240446, 20: 308209, 21: 372900,
@@ -130,12 +136,47 @@ geom_no_h = {
                 85: 60, 86: 6, 87: 60, 90: 60, 91: 30},
     'atom_types': {0: 290, 1: 129988623, 2: 20266722, 3: 21669359, 4: 1481844, 5: 1, 6: 250, 7: 36290, 8: 3999872,
                    9: 1224394, 10: 4, 11: 298702, 12: 5377, 13: 13, 14: 34},
-    'colors_dic': ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'C11', 'C12', 'C13', 'C14'],
-    'radius_dic': [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+    'colors_dic': [get_colors(f) for f in geom_no_h_atom_decoder],
+    'radius_dic': [get_radius(f) for f in geom_no_h_atom_decoder],
     'with_h': False}
 
 
-def get_dataset_info(dataset_name, remove_h):
+
+
+# too large to put in script
+with open('configs/n_nodes__d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT.pkl', 'rb') as file:
+    d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_n_nodes_dict = pickle.load(file)
+
+d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_atom_decoder = \
+    ['H', 'Li', 'Be',  'B',  'C',  'N',  'O',  'F', 'Na', 'Mg',  'Al', 'Si', 'P',  'S',  'Cl', 'K',  'Ca', 'V',  
+     'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga',  'As', 'Se',  'Br', 'Rb', 'Sr', 'Ru', 'Rh', 'Cd', 'In', 'Sb', 'Te',  
+     'I',  'Cs', 'Ba', 'Re', 'Os', 'Ir', 'Pt', 'Au',  'Hg',  'Bi', 'Og']
+
+d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT = {
+    'name': 'combined_geom_PDBB_full_refined_core_LG_PKT',
+    'atom_encoder': {'H': 0, 'Li': 1, 'Be': 2, 'B': 3, 'C': 4, 'N': 5, 'O': 6, 'F': 7, 'Na': 8, 'Mg': 9, 'Al': 10, 'Si': 11, 
+                     'P': 12, 'S': 13, 'Cl': 14, 'K': 15, 'Ca': 16, 'V': 17, 'Mn': 18, 'Fe': 19, 'Co': 20, 'Ni': 21, 'Cu': 22, 
+                     'Zn': 23, 'Ga': 24, 'As': 25, 'Se': 26, 'Br': 27, 'Rb': 28, 'Sr': 29, 'Ru': 30, 'Rh': 31, 'Cd': 32, 'In': 33, 
+                     'Sb': 34, 'Te': 35, 'I': 36, 'Cs': 37, 'Ba': 38, 'Re': 39, 'Os': 40, 'Ir': 41, 'Pt': 42, 'Au': 43, 'Hg': 44, 
+                     'Bi': 45, 'Og': 46},
+    'atomic_nb': [1, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 19, 20, 23, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 37, 38, 
+                  44, 45, 48, 49, 51, 52, 53, 55, 56, 75, 76, 77, 78, 79, 80, 83, 118],
+    'atom_decoder': d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_atom_decoder,
+    'max_n_nodes': 75944,
+    'n_nodes': d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_n_nodes_dict,
+    'atom_types': {0: 53453229, 1: 14, 2: 1, 3: 278, 4: 50498410, 5: 12954304, 6: 18703098, 7: 69713, 8: 1398, 9: 3795, 10: 1, 
+                   11: 17, 12: 6188, 13: 515574, 14: 56434, 15: 474, 16: 3759, 17: 2, 18: 1126, 19: 276, 20: 218, 21: 278, 22: 65, 
+                   23: 5321, 24: 1, 25: 6, 26: 1482, 27: 14585, 28: 3, 29: 2, 30: 16, 31: 2, 32: 506, 33: 1, 34: 1, 35: 1, 36: 417, 
+                   37: 15, 38: 1, 39: 1, 40: 1, 41: 6, 42: 2, 43: 6, 44: 95, 45: 3, 46: 2},
+    'colors_dic': [get_colors(f) for f in d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_atom_decoder],
+    'radius_dic': [get_radius(f) for f in d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_atom_decoder],
+    'with_h': True
+}
+
+
+
+
+def get_dataset_info(dataset_name, remove_h=False):
     if dataset_name == 'qm9':
         if not remove_h:
             return qm9_with_h
@@ -151,5 +192,7 @@ def get_dataset_info(dataset_name, remove_h):
             return qm9_second_half
         else:
             raise Exception('Missing config for %s without hydrogens' % dataset_name)
+    elif dataset_name == 'd_20240428_combined_geom_PDBB_full_refined_core_LG_PKT':
+        return d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT
     else:
         raise Exception("Wrong dataset %s" % dataset_name)
