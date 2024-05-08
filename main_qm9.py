@@ -175,7 +175,7 @@ def main():
                     nodes_dist=nodes_dist, dataset_info=dataset_info,
                     gradnorm_queue=gradnorm_queue, optim=optim, prop_dist=prop_dist, 
                     scaler=scaler)
-        print(f"Epoch took {time.time() - start_epoch:.1f} seconds.")
+        print(f">>> Epoch took {time.time() - start_epoch:.1f} seconds.")
         nth_iter += n_iters
 
         if epoch % args.test_epochs == 0:
@@ -183,16 +183,24 @@ def main():
                 wandb.log(model.log_info(), commit=True)
 
             if not args.break_train_epoch and args.train_diffusion:
+                start = time.time()
                 analyze_and_save(args=args, epoch=epoch, model_sample=model_ema, nodes_dist=nodes_dist,
                                  dataset_info=dataset_info, device=device,
                                  prop_dist=prop_dist, n_samples=args.n_stability_samples)
+                print(f">>> analyze_and_save took {time.time() - start:.1f} seconds.")
+                
+            start  = time.time()
             nll_val = test(args=args, loader=dataloaders['valid'], epoch=epoch, eval_model=model_ema_dp,
                            partition='Val', device=device, dtype=dtype, nodes_dist=nodes_dist,
                            property_norms=property_norms)
+            print(f">>> validation set test took {time.time() - start:.1f} seconds.")
+            
+            start  = time.time()
             nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
                             partition='Test', device=device, dtype=dtype,
                             nodes_dist=nodes_dist, property_norms=property_norms)
-
+            print(f">>> testing set test took {time.time() - start:.1f} seconds.")
+            
             if nll_val < best_nll_val:
                 best_nll_val = nll_val
                 best_nll_test = nll_test
