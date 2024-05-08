@@ -29,12 +29,12 @@ dataset: geom
 
 # geom directory  ~!geom
 # data_file: ./data/geom/geom_drugs_30.npy
-data_file: /lustre/user/yixian.goh/geoldm-edit/data/geom/geom_drugs_30.npy
+data_file: /scr/user/yixian.goh/geoldm-edit-data/geom/geom_drugs_30.npy
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
 # Please set the path to the DATASET_permutation.npy file after it is generated.
 # permutation_file_path: ./data/geom/geom_permutation.npy
-permutation_file_path: permutation_file_path: /lustre/user/yixian.goh/geoldm-edit/data/geom/geom_permutation.npy
+permutation_file_path: /home/user/yixian.goh/geoldm-edit/data/geom/geom_permutation.npy
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
