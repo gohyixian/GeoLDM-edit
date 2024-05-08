@@ -178,8 +178,8 @@ def main():
         if epoch % args.test_epochs == 0:
             if isinstance(model, en_diffusion.EnVariationalDiffusion):
                 wandb.log(model.log_info(), commit=True)
-
-            if not args.break_train_epoch:
+            
+            if not args.break_train_epoch and args.train_diffusion:
                 train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
                                             dataset_info, prop_dist, n_samples=args.n_stability_samples)
             nll_val = train_test.test(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
