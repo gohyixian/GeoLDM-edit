@@ -2,6 +2,28 @@ from torch import nn
 import torch
 import math
 
+
+def low_vram_forward(layer, tensor, max_tensor_size=50000):
+    """Chunks tensor into smaller sizes along dim=0, and performs forward 
+       propagation before combining them back together.
+
+    Args:
+        layer (nn.module): Layer for forward propagation.
+        tensor (nn.tensor): Input to layer.
+        max_tensor_size (int, optional): Maximum chunk size, defaults to 50000.
+
+    Returns:
+        _type_: _description_
+    """
+    splits = list(torch.split(tensor, max_tensor_size, dim=0))
+    
+    for i, split in enumerate(splits):
+        splits[i] = layer(split)
+    
+    tensor = torch.cat(splits, dim=0)
+    return tensor
+
+
 class GCL(nn.Module):
     def __init__(self, input_nf, output_nf, hidden_nf, normalization_factor, aggregation_method,
                  edges_in_d=0, nodes_att_dim=0, act_fn=nn.SiLU(), attention=False):
@@ -33,10 +55,13 @@ class GCL(nn.Module):
             out = torch.cat([source, target], dim=1)  # torch.Size([bs*27*27, 256+256])
         else:
             out = torch.cat([source, target, edge_attr], dim=1)
-        mij = self.edge_mlp(out)
+        # mij = self.edge_mlp(out)
+        mij = low_vram_forward(self.edge_mlp, out)
 
         if self.attention:
-            att_val = self.att_mlp(mij)
+            # att_val = self.att_mlp(mij)
+            att_val = low_vram_forward(self.att_mlp, mij)
+            
             out = mij * att_val
         else:
             out = mij
@@ -56,7 +81,9 @@ class GCL(nn.Module):
             agg = torch.cat([x, agg, node_attr], dim=1)
         else:
             agg = torch.cat([x, agg], dim=1)
-        out = x + self.node_mlp(agg)
+        # out = x + self.node_mlp(agg)
+        out = x + low_vram_forward(self.node_mlp, agg)
+        
         return out, agg
 
     def forward(self, h, edge_index, edge_attr=None, node_attr=None, node_mask=None, edge_mask=None):
@@ -96,9 +123,12 @@ class EquivariantUpdate(nn.Module):
         row, col = edge_index
         input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
         if self.tanh:  # true
-            trans = coord_diff * torch.tanh(self.coord_mlp(input_tensor)) * self.coords_range
+            # trans = coord_diff * torch.tanh(self.coord_mlp(input_tensor)) * self.coords_range
+            trans = coord_diff * low_vram_forward(torch.tanh, low_vram_forward(self.coord_mlp, input_tensor)) * self.coords_range
+            
         else:
-            trans = coord_diff * self.coord_mlp(input_tensor)
+            # trans = coord_diff * self.coord_mlp(input_tensor)
+            trans = coord_diff * low_vram_forward(self.coord_mlp, input_tensor)
         if edge_mask is not None:
             trans = trans * edge_mask
         agg = unsorted_segment_sum(trans, row, num_segments=coord.size(0),

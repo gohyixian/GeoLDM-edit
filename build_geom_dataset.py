@@ -125,7 +125,7 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
     print("!!!", len(data_list), [val_index, test_index])
     # !!!                                      6922516    [692251, 1384502]
     # val_data, test_data, train_data = np.split(data_list, [val_index, test_index])
-    val_data, test_data, train_data = data_list[:692251], data_list[692251:1384502], data_list[1384502:]
+    val_data, test_data, train_data = data_list[:val_index], data_list[val_index:test_index], data_list[test_index:]
     return train_data, val_data, test_data
 
 

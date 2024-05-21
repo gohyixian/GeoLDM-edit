@@ -1,34 +1,24 @@
-import numpy as np
+import torch
 
-coords = [[0,   1.0, 0, 0, 0],       # 0
-         [0,   1.0, 0, 0, 0],        # 0
-         [0,   9.0, 0, 0, 0],   # 3    -1   2
-         
-         [1,   1.0, 1, 1, 1],        # 0         3
-         [1,   1.0, 1, 1, 1],        # 0
-         [1,   1.0, 1, 1, 1],        # 0
-         [1,   9.0, 1, 1, 1],   # 4    -1   6
-         
-         [2,   1.0, 2, 2, 2],        # 0         7
-         [2,   1.0, 2, 2, 2],        # 0
-         [2,   1.0, 2, 2, 2],        # 0
-         [2,   1.0, 2, 2, 2],        # 0
-         [2,   9.0, 2, 2, 2],]  # 5
+# Create a tensor of shape [999, 512]
+tensor = torch.randn(999, 512)
 
-coords = np.array(coords)
+# Define the chunk size
+chunk_size = 100
 
-mol_id = coords[:, 0].astype(int)
-conformers = coords[:, 1:]
-# Get ids corresponding to new molecules
-split_indices = np.nonzero(mol_id[:-1] - mol_id[1:])[0] + 1
-print(split_indices)     # [3, 7]
-data_list = np.split(conformers, split_indices)
+# Split the tensor into chunks
+chunks = list(torch.split(tensor, chunk_size, dim=0))
+print(len(chunks))
 
+for i, c in enumerate(chunks):
+    print(i, c.shape)
+    tmp = torch.randn(c.shape)
+    print(tmp == c)
+    chunks[i] = tmp
 
-perm = np.random.permutation(len(data_list)).astype('int32')
-print(perm)
-data_list = [data_list[i] for i in perm]
-[print(d) for d in data_list]
+# Combine the chunks back into a single tensor
+combined_tensor = torch.cat(chunks, dim=0)
 
-
-# print(data_list)
+# Verify the shape of the combined tensor
+print(f"Combined tensor shape: {combined_tensor.shape}")
+print(combined_tensor == tensor)
