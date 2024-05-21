@@ -15,10 +15,12 @@ def low_vram_forward(layer, tensor, max_tensor_size=50000):
     Returns:
         _type_: _description_
     """
+    tensor_device = tensor.device
     splits = list(torch.split(tensor, max_tensor_size, dim=0))
     
     for i, split in enumerate(splits):
-        splits[i] = layer(split)
+        # ~!to
+        splits[i] = layer(split.to(layer.device)).to(tensor_device)
     
     tensor = torch.cat(splits, dim=0)
     return tensor
@@ -231,12 +233,16 @@ class EGNN(nn.Module):
         distances, _ = coord2diff(x, edge_index)
         if self.sin_embedding is not None:      # none
             distances = self.sin_embedding(distances)
-        h = self.embedding(h)
+        # h = self.embedding(h)
+        h = low_vram_forward(self.embedding, h)
+        
         for i in range(0, self.n_layers):
             h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
 
         # Important, the bias of the last linear might be non-zero
-        h = self.embedding_out(h)
+        # h = self.embedding_out(h)
+        h = low_vram_forward(self.embedding_out, h)
+        
         if node_mask is not None:
             h = h * node_mask
         return h, x

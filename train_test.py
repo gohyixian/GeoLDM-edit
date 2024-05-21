@@ -23,11 +23,18 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     # scaler = torch.cuda.amp.GradScaler()
     
     for i, data in enumerate(loader):
-        x = data['positions'].to(device, dtype)
-        node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
-        edge_mask = data['edge_mask'].to(device, dtype)
-        one_hot = data['one_hot'].to(device, dtype)
-        charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
+        # ~!to
+        # x = data['positions'].to(device, dtype)
+        # node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
+        # edge_mask = data['edge_mask'].to(device, dtype)
+        # one_hot = data['one_hot'].to(device, dtype)
+        # charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
+        x = data['positions'].to(dtype)
+        node_mask = data['atom_mask'].to(dtype).unsqueeze(2)
+        edge_mask = data['edge_mask'].to(dtype)
+        one_hot = data['one_hot'].to(dtype)
+        charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(dtype)
+
 
         x = remove_mean_with_mask(x, node_mask)
 
@@ -47,7 +54,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         h = {'categorical': one_hot, 'integer': charges}
 
         if len(args.conditioning) > 0:
-            context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(device, dtype)
+            # ~!to
+            # context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(device, dtype)
+            context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(dtype)
             assert_correctly_masked(context, node_mask)
         else:
             context = None
