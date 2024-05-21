@@ -129,7 +129,7 @@ n_layers: 4  # 9 for qm9
 inv_sublayers: 1
 
 # model's internal operating number of features
-nf: 64  # 256 !altered
+nf: 256  # 256 !altered
 
 # use tanh in the coord_mlp
 tanh: true
