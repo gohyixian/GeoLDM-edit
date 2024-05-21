@@ -16,11 +16,12 @@ def low_vram_forward(layer, tensor, max_tensor_size=50000):
         _type_: _description_
     """
     tensor_device = tensor.device
+    layer_device = next(layer.parameters()).device
     splits = list(torch.split(tensor, max_tensor_size, dim=0))
     
     for i, split in enumerate(splits):
         # ~!to
-        splits[i] = layer(split.to(layer.device)).to(tensor_device)
+        splits[i] = layer(split.to(layer_device)).to(tensor_device)
     
     tensor = torch.cat(splits, dim=0)
     return tensor
@@ -126,7 +127,7 @@ class EquivariantUpdate(nn.Module):
         input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
         if self.tanh:  # true
             # trans = coord_diff * torch.tanh(self.coord_mlp(input_tensor)) * self.coords_range
-            trans = coord_diff * low_vram_forward(torch.tanh, low_vram_forward(self.coord_mlp, input_tensor)) * self.coords_range
+            trans = coord_diff * torch.tanh(low_vram_forward(self.coord_mlp, input_tensor)) * self.coords_range
             
         else:
             # trans = coord_diff * self.coord_mlp(input_tensor)
@@ -342,6 +343,7 @@ def unsorted_segment_sum(data, segment_ids, num_segments, normalization_factor, 
     result = data.new_full(result_shape, 0)  # Init empty result tensor of shape result_shape, all with value 0, and same data type as data
     #         say (100)       (100, 1)      (100, 256)
     segment_ids = segment_ids.unsqueeze(-1).expand(-1, data.size(1))   # [bs*n_nodes*n_nodes, 256]
+    segment_ids = segment_ids.to(data.device)
     # since here we have n_nodes=5, meaning each molecule has 5 atoms / 5 nodes
     #
     #               Molecule 1: [0,1,2,3,4]                                                        Molecule 2: [5,6,7,8,9]

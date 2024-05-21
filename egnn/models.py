@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from egnn.egnn_new import EGNN, GNN
+from egnn.egnn_new import EGNN, GNN, low_vram_forward
 from equivariant_diffusion.utils import remove_mean, remove_mean_with_mask
 import numpy as np
 
@@ -293,7 +293,7 @@ class EGNN_encoder_QM9(nn.Module):
             vel = remove_mean_with_mask(vel, node_mask.view(bs, n_nodes, 1))    # same remove mean, but mean of masked item only
 
         # final out mlp
-        h_final = self.final_mlp(h_final)      # h_final still flat
+        h_final = low_vram_forward(self.final_mlp, h_final)      # h_final still flat
         h_final = h_final * node_mask if node_mask is not None else h_final
         h_final = h_final.view(bs, n_nodes, -1)    # reshape back
 
