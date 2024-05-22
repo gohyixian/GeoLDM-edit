@@ -255,9 +255,11 @@ class EGNN(nn.Module):
         
         for i in range(0, self.n_layers):
             # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
-            if self.n_layers > 1 and ((i+1) % math.sqrt(self.n_layers) == 0):
+            if self.n_layers > 1 and ((i+1) % int(math.sqrt(self.n_layers)) == 0):
+                print(f">>> EGNN e_block_{i} checkpointing...")
                 h, x = checkpoint(checkpoint_equiv_block, (self._modules["e_block_%d" % i], h, x, edge_index, node_mask, edge_mask, distances))
             else:
+                print(f">>> EGNN e_block_{i} ...")
                 h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
 
         # Important, the bias of the last linear might be non-zero
