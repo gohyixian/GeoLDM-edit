@@ -158,9 +158,9 @@ if __name__ == "__main__":
     parser.add_argument('--include_charges', type=eval, default=True, help='include atom charge or not')
     parser.add_argument('--node_attr', type=int, default=0, metavar='N',
                         help='node_attr or not')
-    parser.add_argument('--weight_decay', type=float, default=1e-16, metavar='N',
-                        help='weight decay')
-    parser.add_argument('--save_path', type=float, default=1e-16, metavar='N',
+    parser.add_argument('--weight_decay', type=float, default=1e-4, metavar='N',
+                        help='weight decay, default 1e-16')
+    parser.add_argument('--save_path', type=float, default='', metavar='N',
                         help='weight decay')
     parser.add_argument('--model_name', type=str, default='numnodes', metavar='N',
                         help='egnn | naive | numnodes')

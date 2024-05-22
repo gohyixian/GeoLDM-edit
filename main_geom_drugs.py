@@ -49,7 +49,12 @@ else:
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if args.cuda else "cpu")
-dtype = torch.float32
+
+# ~!fp16
+# dtype = torch.float32
+dtype = torch.float16
+torch.set_default_dtype(dtype)
+
 args.device = device
 args.dtype = dtype
 
@@ -135,7 +140,7 @@ optim = get_optim(args, model)
 # print(model)
 
 
-gradnorm_queue = utils.Queue()
+gradnorm_queue = utils.Queue(dtype=args.dtype)
 gradnorm_queue.add(3000)  # Add large value that will be flushed.
 
 

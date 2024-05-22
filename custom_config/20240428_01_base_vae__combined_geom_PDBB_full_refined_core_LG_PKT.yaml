@@ -107,7 +107,7 @@ diffusion_steps: 1000
 diffusion_noise_schedule: polynomial_2       # polynomial power 2
 
 # default 1e-5
-diffusion_noise_precision: 1.0e-05
+diffusion_noise_precision: 1.0e-04  # ~!fp16
 
 # vlb | l2
 diffusion_loss_type: l2

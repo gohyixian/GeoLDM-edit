@@ -31,7 +31,11 @@ def remove_mean(x):
 def remove_mean_with_mask(x, node_mask):    # node_mask shape: [bs, n_nodes, 1]
     # check if sum of unmasked item passes a threshold
     masked_max_abs_value = (x * (1 - node_mask)).abs().sum().item()
-    assert masked_max_abs_value < 1e-5, f'Error {masked_max_abs_value} too high'
+    # assert masked_max_abs_value < 1e-5, f'Error {masked_max_abs_value} too high'
+    
+    # ~!fp16
+    assert masked_max_abs_value < 1e-4, f'Error {masked_max_abs_value} too high'
+    
     
     # calculate mean on masked item only
     N = node_mask.sum(1, keepdims=True)
@@ -45,7 +49,9 @@ def assert_mean_zero(x):
     assert mean.abs().max().item() < 1e-4
 
 
-def assert_mean_zero_with_mask(x, node_mask, eps=1e-10):
+# ~!fp16
+# def assert_mean_zero_with_mask(x, node_mask, eps=1e-10):
+def assert_mean_zero_with_mask(x, node_mask, eps=1e-4):
     assert_correctly_masked(x, node_mask)
     largest_value = x.abs().max().item()
     error = torch.sum(x, dim=1, keepdim=True).abs().max().item()

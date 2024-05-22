@@ -32,7 +32,7 @@ def setup_shared_args(parser):
                         help='Set the weight decay used in optimizer for learnable radial cutoffs (default: 0)')
     parser.add_argument('--lr-init', type=float, default=1e-3, metavar='N',
                         help='Initial learning rate (default: 1e-3)')
-    parser.add_argument('--lr-final', type=float, default=1e-5, metavar='N',
+    parser.add_argument('--lr-final', type=float, default=1e-4, metavar='N',
                         help='Final (held) learning rate (default: 1e-5)')
     parser.add_argument('--lr-decay', type=int, default=inf, metavar='N',
                         help='Timescale over which to decay the learning rate (default: inf)')

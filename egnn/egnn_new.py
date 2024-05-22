@@ -18,6 +18,9 @@ def low_vram_forward(layer, tensor, max_tensor_size=50000):
     """
     tensor_device = tensor.device
     layer_device = next(layer.parameters()).device
+    
+    print(f">>> model:{next(layer.parameters()).dtype}, tensor:{tensor.dtype}")
+    
     splits = list(torch.split(tensor, max_tensor_size, dim=0))
     
     for i, split in enumerate(splits):
@@ -256,12 +259,12 @@ class EGNN(nn.Module):
         for i in range(0, self.n_layers):
             # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
             if self.n_layers > 1 and ((i+1) % int(math.sqrt(self.n_layers)) == 0):
-                print(f">>> EGNN e_block_{i} checkpointing...")
+                # print(f">>> EGNN e_block_{i} checkpointing...")
                 h, x = checkpoint(checkpoint_equiv_block, 
                                   (self._modules["e_block_%d" % i], h, x, edge_index, node_mask, edge_mask, distances), 
                                   use_reentrant=False)
             else:
-                print(f">>> EGNN e_block_{i} ...")
+                # print(f">>> EGNN e_block_{i} ...")
                 h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
 
         # Important, the bias of the last linear might be non-zero
@@ -316,7 +319,9 @@ class SinusoidsEmbeddingNew(nn.Module):
         self.dim = len(self.frequencies) * 2
 
     def forward(self, x):
-        x = torch.sqrt(x + 1e-8)
+        # x = torch.sqrt(x + 1e-8)
+        x = torch.sqrt(x + 1e-4)  # ~!fp16
+        
         emb = x * self.frequencies[None, :].to(x.device)
         emb = torch.cat((emb.sin(), emb.cos()), dim=-1)
         return emb.detach()
@@ -326,7 +331,9 @@ def coord2diff(x, edge_index, norm_constant=1):
     row, col = edge_index
     coord_diff = x[row] - x[col]     # feeding this to model, relative difference
     radial = torch.sum((coord_diff) ** 2, 1).unsqueeze(1)
-    norm = torch.sqrt(radial + 1e-8)
+    # norm = torch.sqrt(radial + 1e-8)
+    norm = torch.sqrt(radial + 1e-4)  # ~!fp16
+    
     coord_diff = coord_diff/(norm + norm_constant)
     return radial, coord_diff
 

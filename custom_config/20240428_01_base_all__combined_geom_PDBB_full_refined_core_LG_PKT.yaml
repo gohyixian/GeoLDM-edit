@@ -1,9 +1,9 @@
 
-exp_name: base_geoldm_geom_vae_20240502
+exp_name: 20240428_01_base_all__combined_geom_PDBB_full_refined_core_LG_PKT
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
-train_diffusion: false
+train_diffusion: true
 
 # Specify first stage model path
 ae_path: null
@@ -17,24 +17,22 @@ conditioning: []
 # include atom charge, according to periodic table
 include_charges: false   # true for qm9
 
-# only works for ldm, not for VAE
-condition_time: true
+condition_time: true   # only works for ldm, not for VAE
 
 
 
 
 # ========================================================================================================== Dataset
 # geom
-dataset: geom
+dataset: d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT
 
 # geom directory  ~!geom
-# data_file: ./data/geom/geom_drugs_30.npy
-data_file: /scr/user/yixian.goh/geoldm-edit-data/geom/geom_drugs_30.npy
+data_file: ./data/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT__geom_1.npy
+# data_file: /lustre/user/yixian.goh/geoldm-edit/data/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT__geom_1.npy
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
 # Please set the path to the DATASET_permutation.npy file after it is generated.
-# permutation_file_path: ./data/geom/geom_permutation.npy
-permutation_file_path: /home/user/yixian.goh/geoldm-edit/data/geom/geom_permutation.npy
+permutation_file_path: ./data/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_permutation.npy
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
@@ -62,8 +60,8 @@ start_epoch: 0
 test_epochs: 1
 generate_epochs: 1
 
-n_epochs: 12000  # 3000
-batch_size: 8    # 32
+n_epochs: 12000  # 3000  !altered
+batch_size: 1    # 8  32    !altered
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01
@@ -109,7 +107,7 @@ diffusion_steps: 1000
 diffusion_noise_schedule: polynomial_2       # polynomial power 2
 
 # default 1e-5
-diffusion_noise_precision: 1.0e-04 # ~!fp16
+diffusion_noise_precision: 1.0e-04   # ~!fp16
 
 # vlb | l2
 diffusion_loss_type: l2
@@ -131,7 +129,7 @@ n_layers: 4  # 9 for qm9
 inv_sublayers: 1
 
 # model's internal operating number of features
-nf: 256
+nf: 256  # 256 !altered
 
 # use tanh in the coord_mlp
 tanh: true
@@ -175,7 +173,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: false
+no_wandb: true   # !altered
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true

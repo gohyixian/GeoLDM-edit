@@ -46,9 +46,10 @@ def load_model(model, path):
 
 #Gradient clipping
 class Queue():
-    def __init__(self, max_len=50):
+    def __init__(self, dtype=torch.float32, max_len=50):
         self.items = []
         self.max_len = max_len
+        self._dtype = dtype
 
     def __len__(self):
         return len(self.items)
@@ -68,19 +69,28 @@ class Queue():
 def gradient_clipping(flow, gradnorm_queue):
     """performs gradient clipping based on history of gradient norms."""
     
+    # ~!fp16
+    max_grad_val = torch.finfo(gradnorm_queue._dtype).max
+    _dtype = gradnorm_queue._dtype
+    
     # Allow gradient norm to be 150% + 2 * stdev of the recent history.
     max_grad_norm = 1.5 * gradnorm_queue.mean() + 2 * gradnorm_queue.std()
+    
+    # ~!fp16
+    if max_grad_norm >= max_grad_val:
+        print(f">>> Grad Clipping: {max_grad_norm} > allowed {max_grad_val}, setting max to {max_grad_val} ...")
+        max_grad_norm = max_grad_val
 
     # Clips gradient and returns the norm
     grad_norm = torch.nn.utils.clip_grad_norm_(
         flow.parameters(), max_norm=max_grad_norm, norm_type=2.0)
 
-    if float(grad_norm) > max_grad_norm:
-        gradnorm_queue.add(float(max_grad_norm))
+    if torch.tensor(float(grad_norm), dtype=_dtype) > max_grad_norm:
+        gradnorm_queue.add(torch.tensor(float(max_grad_norm), dtype=_dtype))
     else:
-        gradnorm_queue.add(float(grad_norm))
+        gradnorm_queue.add(torch.tensor(float(grad_norm), dtype=_dtype))
 
-    if float(grad_norm) > max_grad_norm:
+    if torch.tensor(float(grad_norm), dtype=_dtype) > max_grad_norm:
         print(f'Clipped gradient with value {grad_norm:.1f} '
               f'while allowed {max_grad_norm:.1f}')
     return grad_norm

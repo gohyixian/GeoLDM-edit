@@ -6,7 +6,10 @@ def sum_except_batch(x):
 
 
 def assert_correctly_masked(variable, node_mask):
-    assert (variable * (1 - node_mask)).abs().sum().item() < 1e-8
+    # ~!fp16
+    # assert (variable * (1 - node_mask)).abs().sum().item() < 1e-8
+    assert (variable * (1 - node_mask)).abs().sum().item() < 1e-4
+    
 
 
 def compute_loss_and_nll(args, generative_model, nodes_dist, x, h, node_mask, edge_mask, context):

@@ -110,9 +110,18 @@ def gaussian_KL(q_mu, q_sigma, p_mu, p_sigma, node_mask):
         Returns:
             The KL distance, summed over all dimensions except the batch dim.
         """
+    # return sum_except_batch(
+    #         (
+    #             torch.log(p_sigma / (q_sigma + 1e-8) + 1e-8)
+    #             + 0.5 * (q_sigma**2 + (q_mu - p_mu)**2) / (p_sigma**2)
+    #             - 0.5
+    #         ) * node_mask
+    #     )
+    
+    # ~!fp16
     return sum_except_batch(
             (
-                torch.log(p_sigma / (q_sigma + 1e-8) + 1e-8)
+                torch.log(p_sigma / (q_sigma + 1e-4) + 1e-4)
                 + 0.5 * (q_sigma**2 + (q_mu - p_mu)**2) / (p_sigma**2)
                 - 0.5
             ) * node_mask
@@ -133,7 +142,13 @@ def gaussian_KL_for_dimension(q_mu, q_sigma, p_mu, p_sigma, d):
     mu_norm2 = sum_except_batch((q_mu - p_mu)**2)
     assert len(q_sigma.size()) == 1
     assert len(p_sigma.size()) == 1
-    return (d * torch.log(p_sigma / (q_sigma + 1e-8) + 1e-8) 
+    # return (d * torch.log(p_sigma / (q_sigma + 1e-8) + 1e-8) 
+    #         + 0.5 * (d * q_sigma**2 + mu_norm2) / (p_sigma**2) 
+    #         - 0.5 * d
+    #         )
+    
+    # ~!fp16
+    return (d * torch.log(p_sigma / (q_sigma + 1e-4) + 1e-4) 
             + 0.5 * (d * q_sigma**2 + mu_norm2) / (p_sigma**2) 
             - 0.5 * d
             )
@@ -509,7 +524,10 @@ class EnVariationalDiffusion(torch.nn.Module):
         eps = self.sample_combined_position_feature_noise(bs, mu.size(1), node_mask)
         return mu + sigma * eps
 
-    def log_pxh_given_z0_without_constants(self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-10):
+    # def log_pxh_given_z0_without_constants(self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-10):
+    # ~!fp16
+    def log_pxh_given_z0_without_constants(self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-4):
+    
         """Calculates loss_term_0 at timestep t=0."""
         
         # Discrete properties are predicted directly from z_t.
@@ -616,9 +634,13 @@ class EnVariationalDiffusion(torch.nn.Module):
             lowest_t = 0
 
         # Sample a timestep t.
-        t_int = torch.randint(lowest_t, self.T + 1, size=(x.size(0), 1), device=x.device).float()
+        # ~!fp16
+        # t_int = torch.randint(lowest_t, self.T + 1, size=(x.size(0), 1), device=x.device).float()
+        # s_int = t_int - 1
+        # t_is_zero = (t_int == 0).float()  # Important to compute log p(x | z0).
+        t_int = torch.randint(lowest_t, self.T + 1, size=(x.size(0), 1), device=x.device).float().to(x.dtype)
         s_int = t_int - 1
-        t_is_zero = (t_int == 0).float()  # Important to compute log p(x | z0).
+        t_is_zero = (t_int == 0).float().to(x.dtype)  # Important to compute log p(x | z0).
 
         # Normalize t to [0, 1]. Note that the negative
         # step of s will never be used, since then p(x | z0) is computed.
@@ -1004,7 +1026,11 @@ class EnHierarchicalVAE(torch.nn.Module):
         # --LOSS 01
         loss_kl_h = gaussian_KL(z_h_mu, ones, zeros, ones, node_mask)
         # KL for equivariant features. x
-        assert z_x_sigma.mean(dim=(1,2), keepdim=True).expand_as(z_x_sigma).allclose(z_x_sigma, atol=1e-7)
+        # assert z_x_sigma.mean(dim=(1,2), keepdim=True).expand_as(z_x_sigma).allclose(z_x_sigma, atol=1e-7)
+        
+        # ~!fp16
+        assert z_x_sigma.mean(dim=(1,2), keepdim=True).expand_as(z_x_sigma).allclose(z_x_sigma, atol=1e-4)
+        
         zeros, ones = torch.zeros_like(z_x_mu), torch.ones_like(z_x_sigma.mean(dim=(1,2)))
         subspace_d = self.subspace_dimensionality(node_mask)  # (29-1)*3, int
         # --LOSS 02
@@ -1231,8 +1257,12 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         
         return x, h
     
+    # def log_pxh_given_z0_without_constants(
+    #         self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-10):
+    
+    # ~!fp16
     def log_pxh_given_z0_without_constants(
-            self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-10):
+            self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-4):
 
         # Computes the error for the distribution N(latent | 1 / alpha_0 z_0 + sigma_0/alpha_0 eps_0, sigma_0 / alpha_0),
         # the weighting in the epsilon parametrization is exactly '1'.
