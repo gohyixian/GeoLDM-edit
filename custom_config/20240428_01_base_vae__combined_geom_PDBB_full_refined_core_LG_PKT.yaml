@@ -61,7 +61,7 @@ test_epochs: 1
 generate_epochs: 1
 
 n_epochs: 12000  # 3000  !altered
-batch_size: 1    # 8  32    !altered
+batch_size: 2    # 8  32    !altered min=2 1 will have errors
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01

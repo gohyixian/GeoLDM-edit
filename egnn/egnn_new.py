@@ -19,7 +19,7 @@ def low_vram_forward(layer, tensor, max_tensor_size=50000):
     tensor_device = tensor.device
     layer_device = next(layer.parameters()).device
     
-    print(f">>> model:{next(layer.parameters()).dtype}, tensor:{tensor.dtype}")
+    # print(f">>> model:{next(layer.parameters()).dtype}, tensor:{tensor.dtype}")
     
     splits = list(torch.split(tensor, max_tensor_size, dim=0))
     
@@ -259,12 +259,12 @@ class EGNN(nn.Module):
         for i in range(0, self.n_layers):
             # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
             if self.n_layers > 1 and ((i+1) % int(math.sqrt(self.n_layers)) == 0):
-                # print(f">>> EGNN e_block_{i} checkpointing...")
+                print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape} ... CHECKPOINTING")
                 h, x = checkpoint(checkpoint_equiv_block, 
                                   (self._modules["e_block_%d" % i], h, x, edge_index, node_mask, edge_mask, distances), 
                                   use_reentrant=False)
             else:
-                # print(f">>> EGNN e_block_{i} ...")
+                print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape}")
                 h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
 
         # Important, the bias of the last linear might be non-zero

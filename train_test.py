@@ -35,7 +35,6 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         one_hot = data['one_hot'].to(dtype)
         charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(dtype)
 
-
         x = remove_mean_with_mask(x, node_mask)
 
         # not used
@@ -66,26 +65,31 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         # ~!halfprecision
         # with torch.cuda.amp.autocast():
         # transform batch through flow
+        print("01/5 - compute_loss_and_nll")
         nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
                                                                 x, h, node_mask, edge_mask, context)
         # standard nll from forward KL
         loss = nll + args.ode_regularization * reg_term
         
+        print("02/5 - loss.backward")
         # ~!halfprecision
         loss.backward()
         # scaler.scale(loss).backward()
         
         if args.clip_grad:
+            print("03/5 - utils.gradient_clipping")
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
         else:
             grad_norm = 0.
 
+        print("04/5 - optim.step()")
         # ~!halfprecision
         optim.step()
         # scaler.step(optim)
 
         # Update EMA if enabled.
         if args.ema_decay > 0:
+            print("05/5 - ema.update_model_average")
             ema.update_model_average(model_ema, model)
 
         if i % args.n_report_steps == 0:

@@ -128,7 +128,7 @@ class EGNN_dynamics_QM9(nn.Module):
         # [64, 25, 3]
 
         if torch.any(torch.isnan(vel)):
-            print('Warning: detected nan, resetting EGNN output to zero.')
+            print('Warning: detected nan, resetting EGNN output to zero. (EGNN_dynamics_QM9)')
             vel = torch.zeros_like(vel)
 
         if node_mask is None:
@@ -283,7 +283,7 @@ class EGNN_encoder_QM9(nn.Module):
 
         # check for nan
         if torch.any(torch.isnan(vel)):
-            print('Warning: detected nan, resetting EGNN output to zero.')
+            print('Warning: detected nan, resetting EGNN output to zero. (EGNN_encoder_QM9)')
             vel = torch.zeros_like(vel)
 
         # normalise mean from velocity (remove unwanted axis translations during generation - velocity)
@@ -309,11 +309,11 @@ class EGNN_encoder_QM9(nn.Module):
         h_std = torch.exp(0.5 * h_final[:, :, 1 + self.out_node_nf:])
 
         if torch.any(torch.isnan(vel_std)):
-            print('Warning: detected nan in vel_std, resetting to one.')
+            print('Warning: detected nan in vel_std, resetting to one. (EQNN_encoder_QM9)')
             vel_std = torch.ones_like(vel_std)
         
         if torch.any(torch.isnan(h_std)):
-            print('Warning: detected nan in h_std, resetting to one.')
+            print('Warning: detected nan in h_std, resetting to one. (EGNN_encoder_QM9)')
             h_std = torch.ones_like(h_std)
         
         # Note: only vel_mean and h_mean are correctly masked
@@ -503,7 +503,7 @@ class EGNN_decoder_QM9(nn.Module):
         # [64, 27, 3]
 
         if torch.any(torch.isnan(vel)):
-            print('Warning: detected nan, resetting EGNN output to zero.')
+            print('Warning: detected nan, resetting EGNN output to zero. (EGNN_decoder_QM9)')
             vel = torch.zeros_like(vel)
 
         if node_mask is None:
