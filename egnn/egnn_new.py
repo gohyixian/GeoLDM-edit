@@ -1,6 +1,7 @@
 from torch import nn
 import torch
 import math
+from torch.utils.checkpoint import checkpoint
 
 
 def low_vram_forward(layer, tensor, max_tensor_size=50000):
@@ -25,6 +26,21 @@ def low_vram_forward(layer, tensor, max_tensor_size=50000):
     
     tensor = torch.cat(splits, dim=0)
     return tensor
+
+
+def checkpoint_equiv_block(inputs):
+    """Wrapper function for Equivariant block checkpointing, used
+       in EGNN.forward().
+
+    Args:
+        inputs (_type_): block & inputs wrapped in a single tuple
+
+    Returns:
+        _type_: Equiv_block(...inputs)
+    """
+    block, h, x, edge_index, node_mask, edge_mask, distances = inputs
+    return block(h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
+
 
 
 class GCL(nn.Module):
@@ -238,7 +254,11 @@ class EGNN(nn.Module):
         h = low_vram_forward(self.embedding, h)
         
         for i in range(0, self.n_layers):
-            h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
+            # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
+            if self.n_layers > 1 and ((i+1) % math.sqrt(self.n_layers) == 0):
+                h, x = checkpoint(checkpoint_equiv_block, (self._modules["e_block_%d" % i], h, x, edge_index, node_mask, edge_mask, distances))
+            else:
+                h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
 
         # Important, the bias of the last linear might be non-zero
         # h = self.embedding_out(h)
