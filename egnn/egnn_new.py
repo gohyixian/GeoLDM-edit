@@ -18,6 +18,8 @@ def low_vram_forward(layer, tensor, max_tensor_size=50000):
     """
     tensor_device = tensor.device
     layer_device = next(layer.parameters()).device
+
+    print(f"%% NAN count {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in layer.parameters()])))}")
     
     # print(f">>> model:{next(layer.parameters()).dtype}, tensor:{tensor.dtype}")
     

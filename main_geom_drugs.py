@@ -51,8 +51,8 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if args.cuda else "cpu")
 
 # ~!fp16
-# dtype = torch.float32
-dtype = torch.float16
+dtype = torch.float32
+# dtype = torch.float16
 torch.set_default_dtype(dtype)
 
 args.device = device
@@ -65,9 +65,9 @@ split_data = build_geom_dataset.load_split_data(data_file,
                                                 filter_size=args.filter_molecule_size, 
                                                 permutation_file_path=args.permutation_file_path, 
                                                 dataset_name=args.dataset)
-# ~!to
-# transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, device, args.sequential)
-transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, torch.device("cpu"), args.sequential)
+# ~!to ~!mp
+transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, device, args.sequential)
+# transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, torch.device("cpu"), args.sequential)
 
 dataloaders = {}
 for key, data_list in zip(['train', 'val', 'test'], split_data):

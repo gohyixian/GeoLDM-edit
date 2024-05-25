@@ -14,26 +14,29 @@ import torch
 
 def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
                 nodes_dist, gradnorm_queue, dataset_info, prop_dist, scaler):
+    
+    # ~!mp
+    from torch.cuda.amp import GradScaler, autocast
+    scaler = GradScaler()
+    
     model_dp.train()
     model.train()
     nll_epoch = []
     n_iterations = len(loader)
     
-    # ~!halfprecision
-    # scaler = torch.cuda.amp.GradScaler()
     
     for i, data in enumerate(loader):
-        # ~!to
-        # x = data['positions'].to(device, dtype)
-        # node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
-        # edge_mask = data['edge_mask'].to(device, dtype)
-        # one_hot = data['one_hot'].to(device, dtype)
-        # charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
-        x = data['positions'].to(dtype)
-        node_mask = data['atom_mask'].to(dtype).unsqueeze(2)
-        edge_mask = data['edge_mask'].to(dtype)
-        one_hot = data['one_hot'].to(dtype)
-        charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(dtype)
+        # ~!to ~!mp
+        x = data['positions'].to(device, dtype)
+        node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
+        edge_mask = data['edge_mask'].to(device, dtype)
+        one_hot = data['one_hot'].to(device, dtype)
+        charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
+        # x = data['positions'].to(dtype)
+        # node_mask = data['atom_mask'].to(dtype).unsqueeze(2)
+        # edge_mask = data['edge_mask'].to(dtype)
+        # one_hot = data['one_hot'].to(dtype)
+        # charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(dtype)
 
         x = remove_mean_with_mask(x, node_mask)
 
@@ -53,28 +56,45 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         h = {'categorical': one_hot, 'integer': charges}
 
         if len(args.conditioning) > 0:
-            # ~!to
-            # context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(device, dtype)
-            context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(dtype)
+            # ~!to ~!mp
+            context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(device, dtype)
+            # context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(dtype)
             assert_correctly_masked(context, node_mask)
         else:
             context = None
 
         optim.zero_grad()
 
-        # ~!halfprecision
-        # with torch.cuda.amp.autocast():
-        # transform batch through flow
-        print("01/5 - compute_loss_and_nll")
-        nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
-                                                                x, h, node_mask, edge_mask, context)
-        # standard nll from forward KL
-        loss = nll + args.ode_regularization * reg_term
-        
+        # ~!mp
+        with torch.autocast(device_type='cuda', dtype=torch.get_default_dtype()):
+            # ~!halfprecision
+            # with torch.cuda.amp.autocast():
+            # transform batch through flow
+            print("01/5 - compute_loss_and_nll")
+            nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
+                                                                    x, h, node_mask, edge_mask, context)
+            # standard nll from forward KL
+            loss = nll + args.ode_regularization * reg_term
+            print(f"%%%%% MASTER LOSS {torch.isnan(torch.Tensor(loss)).any()}")
+            
         print("02/5 - loss.backward")
+        
+        # ~!mp
         # ~!halfprecision
-        loss.backward()
-        # scaler.scale(loss).backward()
+        # loss.backward()
+        scaler.scale(loss).backward()
+
+        def print_grad(w):
+            if w.grad is not None:
+                # print("                ", w.grad)
+                pass
+            return 1 if w.grad is not None else 0
+        
+        grad_check = [print_grad(w) for w in model.parameters()]
+        print(f"%%%%% MASTER Grad (model) {sum(grad_check)}/{len(grad_check)}")
+        grad_check_dp = [print_grad(w) for w in model.parameters()]
+        print(f"%%%%% MASTER Grad (model_dp) {sum(grad_check)}/{len(grad_check)}")
+
         
         if args.clip_grad:
             print("03/5 - utils.gradient_clipping")
@@ -83,8 +103,19 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             grad_norm = 0.
 
         print("04/5 - optim.step()")
+        # print(f"%%%%% MASTER Grad_ {int(bool(sum([1 if torch.isnan(w.grad).any() else 0 for w in model.parameters()])))}")
+        # print(f"%%%%% MASTER Grad_dp {int(bool(sum([1 if torch.isnan(w.grad).any() else 0 for w in model_dp.parameters()])))}")
+        
+        print(f"%%%%% MASTER WEIGHTS (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}")
+        print(f"%%%%% MASTER WEIGHTS (B4) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}")
+
+        # ~!mp
         # ~!halfprecision
-        optim.step()
+        # optim.step()
+        scaler.step(optim)
+        scaler.update()
+        print(f"%%%%% MASTER WEIGHTS (A3) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}")
+        print(f"%%%%% MASTER WEIGHTS (A3) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}")
         # scaler.step(optim)
 
         # Update EMA if enabled.

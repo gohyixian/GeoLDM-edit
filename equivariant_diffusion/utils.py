@@ -30,16 +30,16 @@ def sum_except_batch(x):
 
 # ~!fp16
 def remove_mean(x):
-    _dtype = x.dtype
-    if _dtype == torch.float16:
-        x_32 = x.to(torch.float32)
-        mean = torch.mean(x_32, dim=1, keepdim=True)
-        x_32 = x_32 - mean
-        return x_32.to(_dtype)
-    else:
-        mean = torch.mean(x, dim=1, keepdim=True)
-        x = x - mean
-        return x
+    # _dtype = x.dtype
+    # if _dtype == torch.float16:
+    #     x_32 = x.clone().to(torch.float32)
+    #     mean = torch.mean(x_32, dim=1, keepdim=True).to(_dtype)
+    #     x = x - mean
+    #     return x
+    # else:
+    mean = torch.mean(x, dim=1, keepdim=True)
+    x = x - mean
+    return x
 
 # ~!fp16
 def remove_mean_with_mask(x, node_mask):    # node_mask shape: [bs, n_nodes, 1]
@@ -47,7 +47,7 @@ def remove_mean_with_mask(x, node_mask):    # node_mask shape: [bs, n_nodes, 1]
     # check if sum of unmasked item passes a threshold
     _dtype = x.dtype
     if _dtype == torch.float16:
-        x_32 = x.to(torch.float32)
+        x_32 = x.clone().to(torch.float32)
         masked_max_abs_value = (x_32 * (1 - node_mask)).abs().sum().item()
     else:
         masked_max_abs_value = (x * (1 - node_mask)).abs().sum().item()
@@ -57,20 +57,21 @@ def remove_mean_with_mask(x, node_mask):    # node_mask shape: [bs, n_nodes, 1]
     
     # calculate mean on masked item only
     N = node_mask.sum(1, keepdims=True)
-    if _dtype == torch.float16:
-        mean = torch.sum(x_32, dim=1, keepdim=True) / N
-        x_32 = x_32 - mean * node_mask
-        return x_32.to(_dtype)
-    else:
-        mean = torch.sum(x, dim=1, keepdim=True) / N
-        x = x - mean * node_mask
-        return x
+    # if _dtype == torch.float16:
+    #     mean = torch.sum(x_32, dim=1, keepdim=True) / N
+    #     mean = mean.to(_dtype)
+    #     x = x - mean * node_mask
+    #     return x
+    # else:
+    mean = torch.sum(x, dim=1, keepdim=True) / N
+    x = x - mean * node_mask
+    return x
 
 # ~!fp16
 def assert_mean_zero(x):
     _dtype = x.dtype
     if _dtype == torch.float16:
-        x_32 = x.to(torch.float32)
+        x_32 = x.clone().to(torch.float32)
         mean = torch.mean(x_32, dim=1, keepdim=True)
     else:
         mean = torch.mean(x, dim=1, keepdim=True)
@@ -84,7 +85,7 @@ def assert_mean_zero_with_mask(x, node_mask, eps=1e-10):
 
     _dtype = x.dtype
     if _dtype == torch.float16:
-        x_32 = x.to(torch.float32)
+        x_32 = x.clone().to(torch.float32)
         largest_value = x_32.abs().max().item()
         error = torch.sum(x_32, dim=1, keepdim=True).abs().max().item()
     else:
@@ -100,7 +101,7 @@ def assert_mean_zero_with_mask(x, node_mask, eps=1e-10):
 def assert_correctly_masked(variable, node_mask):
     _dtype = variable.dtype
     if _dtype == torch.float16:
-        var_32 = variable.to(torch.float32)
+        var_32 = variable.clone().to(torch.float32)
         val = (var_32 * (1 - node_mask)).abs().max().item()
     else:
         val = (variable * (1 - node_mask)).abs().max().item()

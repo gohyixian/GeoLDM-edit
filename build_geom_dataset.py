@@ -243,22 +243,22 @@ class GeomDrugsTransform(object):
         one_hot = atom_types == self.atomic_number_list
         new_data['one_hot'] = one_hot
         if self.include_charges:
-            # ~!to
-            # new_data['charges'] = torch.zeros(n, 1, device=self.device)
-            new_data['charges'] = torch.zeros(n, 1)
+            # ~!to ~!mp
+            new_data['charges'] = torch.zeros(n, 1, device=self.device)
+            # new_data['charges'] = torch.zeros(n, 1)
         else:
-            # ~!to
-            # new_data['charges'] = torch.zeros(0, device=self.device)
-            new_data['charges'] = torch.zeros(0)
+            # ~!to ~!mp
+            new_data['charges'] = torch.zeros(0, device=self.device)
+            # new_data['charges'] = torch.zeros(0)
         
-        # ~!to
-        # new_data['atom_mask'] = torch.ones(n, device=self.device)
-        new_data['atom_mask'] = torch.ones(n)
+        # ~!to ~!mp
+        new_data['atom_mask'] = torch.ones(n, device=self.device)
+        # new_data['atom_mask'] = torch.ones(n)
 
         if self.sequential:
-            # ~!to
-            # edge_mask = torch.ones((n, n), device=self.device)
-            edge_mask = torch.ones((n, n))
+            # ~!to ~!mp
+            edge_mask = torch.ones((n, n), device=self.device)
+            # edge_mask = torch.ones((n, n))
             edge_mask[~torch.eye(edge_mask.shape[0], dtype=torch.bool)] = 0
             new_data['edge_mask'] = edge_mask.flatten()
         return new_data

@@ -1140,12 +1140,15 @@ class EnHierarchicalVAE(torch.nn.Module):
         h_cat_rec = h_cat_rec.reshape(bs * n_nodes, self.num_classes)
         h_cat = h_cat.reshape(bs * n_nodes, self.num_classes)
 
-        # ~!fp16
+        # ~!fp16 ~!mp
         # error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
         if torch.get_default_dtype() == torch.float16:
             print(">>> Casting F.cross_entropy() inputs to fp32, then loss back to fp16 ...")
+            print(f"%% NAN in vae.computer_reconstruction_error (B4)  h_cat:{torch.isnan(h_cat).any()}  h_cat_rec:{torch.isnan(h_cat_rec).any()}")
+            
             error_h_cat = F.cross_entropy(h_cat_rec.to(torch.float32), h_cat.argmax(dim=1), reduction='none')
-            error_h_cat = error_h_cat.to(torch.get_default_dtype())
+            # error_h_cat = error_h_cat.to(torch.get_default_dtype())
+            print(f"%% NAN in vae.computer_reconstruction_error (A3) {torch.isnan(error_h_cat).any()}")
         else:
             error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
 
@@ -1337,6 +1340,8 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             xh_rec = torch.cat([x_recon, h_recon], dim=2)
             print(" - 04/5 - self.vae.compute_reconstruction_error")
             loss_recon = self.vae.compute_reconstruction_error(xh_rec, xh)
+            print(f"%% vae.recon_error whole {torch.isnan(loss_recon).any()}")
+
         else:
             loss_recon = 0
 
@@ -1367,6 +1372,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             neg_log_constants = torch.zeros_like(neg_log_constants)
 
         neg_log_pxh = loss_ld + loss_recon + neg_log_constants
+        print(f"%% neg_log_pxh {torch.isnan(neg_log_pxh).any()}")
 
         return neg_log_pxh   # negatve log likelihood
     
