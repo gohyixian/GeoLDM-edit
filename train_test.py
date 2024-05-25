@@ -99,7 +99,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             grad_norm = 0.
 
         # nvidia-smi 
-        print(subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
+        # print(subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
+        print(f">> MEM Allocated: {torch.cuda.memory_allocated() / (1024 ** 2):.2f} MB    Reserved: {torch.cuda.memory_reserved() / (1024 ** 2):.2f} MB")
 
         # ~!mp
         print("04/5 - optim.step()") if args.verbose else None

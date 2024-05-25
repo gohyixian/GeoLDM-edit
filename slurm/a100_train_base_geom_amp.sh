@@ -5,15 +5,15 @@
 #SBATCH --nodes=1
 #SBATCH --mem=100G
 #SBATCH --gpus=1
-#SBATCH --job-name=train_base_geom
-#SBATCH --output=slurm_out/train_base_geom_a100.out
-#SBATCH --error=slurm_err/train_base_geom_a100.err
+#SBATCH --job-name=train_base_geom_amp
+#SBATCH --output=slurm_out/train_base_geom_a100_amp.out
+#SBATCH --error=slurm_err/train_base_geom_a100_amp.err
 #SBATCH --qos=long
 #SBATCH --hint=multithread
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 81721
+# 85796
 module load cuda/12.1       # gpu-a100
 module load miniconda/24.1.2
 conda activate geoldm-a100
