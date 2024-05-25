@@ -67,8 +67,8 @@ class Histogram_cont:
     def add(self, elements):
         for e in elements:
             # ~!fp16
-            # if not self.ignore_zeros or e > 1e-8:
-            if not self.ignore_zeros or e > 1e-4:
+            if not self.ignore_zeros or e > 1e-8:
+            # if not self.ignore_zeros or e > 1e-4:
             
                 i = int(float(e) / self.range[1] * len(self.bins))
                 i = min(i, len(self.bins) - 1)
@@ -142,10 +142,10 @@ def kl_divergence(p1, p2):
 
 def kl_divergence_sym(h1, h2):
     # ~!fp16
-    # p1 = normalize_histogram(h1) + 1e-10
-    # p2 = normalize_histogram(h2) + 1e-10
-    p1 = normalize_histogram(h1) + 1e-4
-    p2 = normalize_histogram(h2) + 1e-4
+    p1 = normalize_histogram(h1) + 1e-10
+    p2 = normalize_histogram(h2) + 1e-10
+    # p1 = normalize_histogram(h1) + 1e-4
+    # p2 = normalize_histogram(h2) + 1e-4
     kl = kl_divergence(p1, p2)
     kl_flipped = kl_divergence(p2, p1)
     return (kl + kl_flipped) / 2.
@@ -153,10 +153,10 @@ def kl_divergence_sym(h1, h2):
 
 def js_divergence(h1, h2):
     # ~!fp16
-    # p1 = normalize_histogram(h1) + 1e-10
-    # p2 = normalize_histogram(h2) + 1e-10
-    p1 = normalize_histogram(h1) + 1e-4
-    p2 = normalize_histogram(h2) + 1e-4
+    p1 = normalize_histogram(h1) + 1e-10
+    p2 = normalize_histogram(h2) + 1e-10
+    # p1 = normalize_histogram(h1) + 1e-4
+    # p2 = normalize_histogram(h2) + 1e-4
     M = (p1 + p2)/2
     js = (kl_divergence(p1, M) + kl_divergence(p2, M)) / 2
     return js

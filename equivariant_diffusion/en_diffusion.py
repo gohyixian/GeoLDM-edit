@@ -5,6 +5,7 @@ import torch
 from egnn import models
 from torch.nn import functional as F
 from equivariant_diffusion import utils as diffusion_utils
+from global_registry import PARAM_REGISTRY
 
 
 # Defining some useful util functions.
@@ -110,22 +111,23 @@ def gaussian_KL(q_mu, q_sigma, p_mu, p_sigma, node_mask):
         Returns:
             The KL distance, summed over all dimensions except the batch dim.
         """
-    # return sum_except_batch(
-    #         (
-    #             torch.log(p_sigma / (q_sigma + 1e-8) + 1e-8)
-    #             + 0.5 * (q_sigma**2 + (q_mu - p_mu)**2) / (p_sigma**2)
-    #             - 0.5
-    #         ) * node_mask
-    #     )
     
-    # ~!fp16
     return sum_except_batch(
             (
-                torch.log(p_sigma / (q_sigma + 1e-4) + 1e-4)
+                torch.log(p_sigma / (q_sigma + 1e-8) + 1e-8)
                 + 0.5 * (q_sigma**2 + (q_mu - p_mu)**2) / (p_sigma**2)
                 - 0.5
             ) * node_mask
         )
+    
+    # # ~!fp16
+    # return sum_except_batch(
+    #         (
+    #             torch.log(p_sigma / (q_sigma + 1e-4) + 1e-4)
+    #             + 0.5 * (q_sigma**2 + (q_mu - p_mu)**2) / (p_sigma**2)
+    #             - 0.5
+    #         ) * node_mask
+    #     )
 
 
 def gaussian_KL_for_dimension(q_mu, q_sigma, p_mu, p_sigma, d):
@@ -142,16 +144,16 @@ def gaussian_KL_for_dimension(q_mu, q_sigma, p_mu, p_sigma, d):
     mu_norm2 = sum_except_batch((q_mu - p_mu)**2)
     assert len(q_sigma.size()) == 1, print(q_sigma.size())
     assert len(p_sigma.size()) == 1, print(p_sigma.size())
-    # return (d * torch.log(p_sigma / (q_sigma + 1e-8) + 1e-8) 
-    #         + 0.5 * (d * q_sigma**2 + mu_norm2) / (p_sigma**2) 
-    #         - 0.5 * d
-    #         )
-    
-    # ~!fp16
-    return (d * torch.log(p_sigma / (q_sigma + 1e-4) + 1e-4) 
+    return (d * torch.log(p_sigma / (q_sigma + 1e-8) + 1e-8) 
             + 0.5 * (d * q_sigma**2 + mu_norm2) / (p_sigma**2) 
             - 0.5 * d
             )
+    
+    # # ~!fp16
+    # return (d * torch.log(p_sigma / (q_sigma + 1e-4) + 1e-4) 
+    #         + 0.5 * (d * q_sigma**2 + mu_norm2) / (p_sigma**2) 
+    #         - 0.5 * d
+    #         )
 
 class PositiveLinear(torch.nn.Module):
     """Linear layer with weights forced to be positive."""
@@ -663,7 +665,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         alpha_t = self.alpha(gamma_t, x)
         sigma_t = self.sigma(gamma_t, x)
 
-        print("    - 01/4 - self.sample_combined_position_feature_noise")
+        print("    - 01/4 - self.sample_combined_position_feature_noise") if PARAM_REGISTRY.get('verbose')==True else None
         # Sample zt ~ Normal(alpha_t x, sigma_t)
         # z_x = utils.sample_center_gravity_zero_gaussian_with_mask(..)
         # z_h = utils.sample_gaussian_with_mask(..)
@@ -677,11 +679,11 @@ class EnVariationalDiffusion(torch.nn.Module):
 
         diffusion_utils.assert_mean_zero_with_mask(z_t[:, :, :self.n_dims], node_mask)
 
-        print("    - 02/4 - self.phi")
+        print("    - 02/4 - self.phi") if PARAM_REGISTRY.get('verbose')==True else None
         # Neural net prediction.
         net_out = self.phi(z_t, t, node_mask, edge_mask, context)
 
-        print("    - 03/4 - self.compute_error")
+        print("    - 03/4 - self.compute_error") if PARAM_REGISTRY.get('verbose')==True else None
         # Compute the error.
         error = self.compute_error(net_out, gamma_t, eps)
 
@@ -701,7 +703,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         if self.training and self.loss_type == 'l2':
             neg_log_constants = torch.zeros_like(neg_log_constants)
 
-        print("    - 04/4 - self.kl_prior")
+        print("    - 04/4 - self.kl_prior") if PARAM_REGISTRY.get('verbose')==True else None
         # The KL between q(z1 | x) and p(z1) = Normal(0, 1). Should be close to zero.
         kl_prior = self.kl_prior(xh, node_mask)
 
@@ -1144,11 +1146,11 @@ class EnHierarchicalVAE(torch.nn.Module):
         # error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
         if torch.get_default_dtype() == torch.float16:
             print(">>> Casting F.cross_entropy() inputs to fp32, then loss back to fp16 ...")
-            print(f"%% NAN in vae.computer_reconstruction_error (B4)  h_cat:{torch.isnan(h_cat).any()}  h_cat_rec:{torch.isnan(h_cat_rec).any()}")
+            # print(f"%% NAN in vae.computer_reconstruction_error (B4)  h_cat:{torch.isnan(h_cat).any()}  h_cat_rec:{torch.isnan(h_cat_rec).any()}")
             
             error_h_cat = F.cross_entropy(h_cat_rec.to(torch.float32), h_cat.argmax(dim=1), reduction='none')
             # error_h_cat = error_h_cat.to(torch.get_default_dtype())
-            print(f"%% NAN in vae.computer_reconstruction_error (A3) {torch.isnan(error_h_cat).any()}")
+            # print(f"%% NAN in vae.computer_reconstruction_error (A3) {torch.isnan(error_h_cat).any()}")
         else:
             error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
 
@@ -1302,7 +1304,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         Computes the loss (type l2 or NLL) if training. And if eval then always computes NLL.
         """
 
-        print(" - 01/5 - self.vae.encode")
+        print(" - 01/5 - self.vae.encode") if PARAM_REGISTRY.get('verbose')==True else None
         """ VAE Encoding """
         # Encode data to latent space.
         z_x_mu, z_x_sigma, z_h_mu, z_h_sigma = self.vae.encode(x, h, node_mask, edge_mask, context)
@@ -1321,7 +1323,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         z_xh_sigma = sigma_0
         # z_xh_sigma = torch.cat([z_x_sigma.expand(-1, -1, 3), z_h_sigma], dim=2)
         
-        print(" - 02/5 - self.vae.sample_normal")
+        print(" - 02/5 - self.vae.sample_normal") if PARAM_REGISTRY.get('verbose')==True else None
         # eps = self.sample_combined_position_feature_noise(bs, mu.size(1), node_mask)
         # z_xh = mu + sigma * eps
         z_xh = self.vae.sample_normal(z_xh_mean, z_xh_sigma, node_mask)
@@ -1335,12 +1337,12 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             # ground truth
             xh = torch.cat([x, h['categorical'], h['integer']], dim=2)
             # Decoder output (reconstruction).
-            print(" - 03/5 - self.vae.decoder")
+            print(" - 03/5 - self.vae.decoder") if PARAM_REGISTRY.get('verbose')==True else None
             x_recon, h_recon = self.vae.decoder._forward(z_xh, node_mask, edge_mask, context)
             xh_rec = torch.cat([x_recon, h_recon], dim=2)
-            print(" - 04/5 - self.vae.compute_reconstruction_error")
+            print(" - 04/5 - self.vae.compute_reconstruction_error") if PARAM_REGISTRY.get('verbose')==True else None
             loss_recon = self.vae.compute_reconstruction_error(xh_rec, xh)
-            print(f"%% vae.recon_error whole {torch.isnan(loss_recon).any()}")
+            print(f"%% vae.recon_error whole {torch.isnan(loss_recon).any()}") if PARAM_REGISTRY.get('verbose')==True else None
 
         else:
             loss_recon = 0
@@ -1356,7 +1358,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
 
         # compute_loss() defined in EnVariationalDiffusion Above
         if self.training:
-            print(" - 05/5 - self.compute_loss")
+            print(" - 05/5 - self.compute_loss") if PARAM_REGISTRY.get('verbose')==True else None
             # Only 1 forward pass when t0_always is False.
             loss_ld, loss_dict = self.compute_loss(z_x, z_h, node_mask, edge_mask, context, t0_always=False)
         else:
@@ -1372,7 +1374,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             neg_log_constants = torch.zeros_like(neg_log_constants)
 
         neg_log_pxh = loss_ld + loss_recon + neg_log_constants
-        print(f"%% neg_log_pxh {torch.isnan(neg_log_pxh).any()}")
+        print(f"%% neg_log_pxh {torch.isnan(neg_log_pxh).any()}") if PARAM_REGISTRY.get('verbose')==True else None
 
         return neg_log_pxh   # negatve log likelihood
     

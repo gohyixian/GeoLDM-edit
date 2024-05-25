@@ -10,14 +10,11 @@ import qm9.utils as qm9utils
 from qm9 import losses
 import time
 import torch
+from global_registry import PARAM_REGISTRY
 
 
 def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
                 nodes_dist, gradnorm_queue, dataset_info, prop_dist, scaler):
-    
-    # ~!mp
-    from torch.cuda.amp import GradScaler, autocast
-    scaler = GradScaler()
     
     model_dp.train()
     model.train()
@@ -32,11 +29,6 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         edge_mask = data['edge_mask'].to(device, dtype)
         one_hot = data['one_hot'].to(device, dtype)
         charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
-        # x = data['positions'].to(dtype)
-        # node_mask = data['atom_mask'].to(dtype).unsqueeze(2)
-        # edge_mask = data['edge_mask'].to(dtype)
-        # one_hot = data['one_hot'].to(dtype)
-        # charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(dtype)
 
         x = remove_mean_with_mask(x, node_mask)
 
@@ -56,9 +48,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         h = {'categorical': one_hot, 'integer': charges}
 
         if len(args.conditioning) > 0:
-            # ~!to ~!mp
             context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(device, dtype)
-            # context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(dtype)
             assert_correctly_masked(context, node_mask)
         else:
             context = None
@@ -66,61 +56,64 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         optim.zero_grad()
 
         # ~!mp
-        with torch.autocast(device_type='cuda', dtype=torch.get_default_dtype()):
-            # ~!halfprecision
-            # with torch.cuda.amp.autocast():
-            # transform batch through flow
-            print("01/5 - compute_loss_and_nll")
+        print("01/5 - compute_loss_and_nll") if args.verbose else None
+        if args.mixed_precision_training:
+            with torch.autocast(device_type='cuda', dtype=torch.get_default_dtype()):
+                # transform batch through flow
+                nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
+                                                                        x, h, node_mask, edge_mask, context)
+                # standard nll from forward KL
+                loss = nll + args.ode_regularization * reg_term
+        else:
             nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
                                                                     x, h, node_mask, edge_mask, context)
-            # standard nll from forward KL
             loss = nll + args.ode_regularization * reg_term
-            print(f"%%%%% MASTER LOSS {torch.isnan(torch.Tensor(loss)).any()}")
-            
-        print("02/5 - loss.backward")
+        print(f"%%%%% MASTER LOSS {torch.isnan(torch.Tensor(loss)).any()}") if args.verbose else None
+        
         
         # ~!mp
-        # ~!halfprecision
-        # loss.backward()
-        scaler.scale(loss).backward()
-
-        def print_grad(w):
-            if w.grad is not None:
-                # print("                ", w.grad)
-                pass
-            return 1 if w.grad is not None else 0
+        print("02/5 - loss.backward") if args.verbose else None
+        if args.mixed_precision_training:
+            scaler.scale(loss).backward()
+        else:
+            loss.backward()
         
-        grad_check = [print_grad(w) for w in model.parameters()]
-        print(f"%%%%% MASTER Grad (model) {sum(grad_check)}/{len(grad_check)}")
-        grad_check_dp = [print_grad(w) for w in model.parameters()]
-        print(f"%%%%% MASTER Grad (model_dp) {sum(grad_check)}/{len(grad_check)}")
+        
+        if args.vebose:
+            def print_grad(w):
+                if w.grad is not None:
+                    # print("                ", w.grad)
+                    pass
+                return 1 if w.grad is not None else 0
+            grad_check = [print_grad(w) for w in model.parameters()]
+            print(f"%%%%% MASTER Grad (model) {sum(grad_check)}/{len(grad_check)}")
+            grad_check_dp = [print_grad(w) for w in model.parameters()]
+            print(f"%%%%% MASTER Grad (model_dp) {sum(grad_check_dp)}/{len(grad_check_dp)}")
 
         
         if args.clip_grad:
-            print("03/5 - utils.gradient_clipping")
+            print("03/5 - utils.gradient_clipping") if args.verbose else None
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
         else:
             grad_norm = 0.
 
-        print("04/5 - optim.step()")
-        # print(f"%%%%% MASTER Grad_ {int(bool(sum([1 if torch.isnan(w.grad).any() else 0 for w in model.parameters()])))}")
-        # print(f"%%%%% MASTER Grad_dp {int(bool(sum([1 if torch.isnan(w.grad).any() else 0 for w in model_dp.parameters()])))}")
-        
-        print(f"%%%%% MASTER WEIGHTS (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}")
-        print(f"%%%%% MASTER WEIGHTS (B4) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}")
 
         # ~!mp
-        # ~!halfprecision
-        # optim.step()
-        scaler.step(optim)
-        scaler.update()
-        print(f"%%%%% MASTER WEIGHTS (A3) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}")
-        print(f"%%%%% MASTER WEIGHTS (A3) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}")
-        # scaler.step(optim)
+        print("04/5 - optim.step()") if args.verbose else None
+        print(f"%%%%% MASTER WEIGHTS (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
+        print(f"%%%%% MASTER WEIGHTS (B4) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}") if args.verbose else None
+        if args.mixed_precision_training:
+            scaler.step(optim)
+            scaler.update()
+        else:
+            optim.step()
+
+        print(f"%%%%% MASTER WEIGHTS (A3) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
+        print(f"%%%%% MASTER WEIGHTS (A3) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}") if args.verbose else None
 
         # Update EMA if enabled.
         if args.ema_decay > 0:
-            print("05/5 - ema.update_model_average")
+            print("05/5 - ema.update_model_average") if args.verbose else None
             ema.update_model_average(model_ema, model)
 
         if i % args.n_report_steps == 0:
@@ -149,9 +142,6 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         if args.break_train_epoch:
             break
         
-        # ~!halfprecision
-        # scaler.update()
-        
     wandb.log({"Train Epoch NLL": np.mean(nll_epoch)}, commit=False)
     
     return n_iterations
@@ -166,7 +156,7 @@ def check_mask_correct(variables, node_mask):
 def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_dist, partition='Test'):
     eval_model.eval()
     
-    # ~!halfprecision
+    # ~!mp
     # with torch.no_grad(), torch.cuda.amp.autocast():
     with torch.no_grad():
         nll_epoch = 0
@@ -217,7 +207,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
 
 def save_and_sample_chain(model, args, device, dataset_info, prop_dist,
                           epoch=0, id_from=0, batch_id=''):
-    # ~!halfprecision
+    # ~!mp
     # with torch.cuda.amp.autocast():
     one_hot, charges, x = sample_chain(args=args, device=device, flow=model,
                                     n_tries=1, dataset_info=dataset_info, prop_dist=prop_dist)
@@ -234,7 +224,7 @@ def sample_different_sizes_and_save(model, nodes_dist, args, device, dataset_inf
     for counter in range(int(n_samples/batch_size)):
         nodesxsample = nodes_dist.sample(batch_size)
         
-        # ~!halfprecision
+        # ~!mp
         # with torch.cuda.amp.autocast():
         one_hot, charges, x, node_mask = sample(args, device, model, prop_dist=prop_dist,
                                                 nodesxsample=nodesxsample,
@@ -253,7 +243,7 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
     for i in range(int(n_samples/batch_size)):
         nodesxsample = nodes_dist.sample(batch_size)
         
-        # ~!halfprecision
+        # ~!mp
         # with torch.cuda.amp.autocast():
         one_hot, charges, x, node_mask = sample(args, device, model_sample, dataset_info, prop_dist,
                                                 nodesxsample=nodesxsample)
@@ -272,7 +262,7 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
 
 
 def save_and_sample_conditional(args, device, model, prop_dist, dataset_info, epoch=0, id_from=0):
-    # ~!halfprecision
+    # ~!mp
     # with torch.cuda.amp.autocast():
     one_hot, charges, x, node_mask = sample_sweep_conditional(args, device, model, dataset_info, prop_dist)
 

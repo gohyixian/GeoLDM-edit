@@ -2,9 +2,10 @@ from torch import nn
 import torch
 import math
 from torch.utils.checkpoint import checkpoint
+from global_registry import PARAM_REGISTRY
 
 
-def low_vram_forward(layer, tensor, max_tensor_size=50000):
+def low_vram_forward(layer, tensor):
     """Chunks tensor into smaller sizes along dim=0, and performs forward 
        propagation before combining them back together.
 
@@ -16,13 +17,15 @@ def low_vram_forward(layer, tensor, max_tensor_size=50000):
     Returns:
         _type_: _description_
     """
+    
     tensor_device = tensor.device
     layer_device = next(layer.parameters()).device
 
-    print(f"%% NAN count {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in layer.parameters()])))}")
+    print(f"%% NAN count {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in layer.parameters()])))}") if PARAM_REGISTRY.get('verbose')==True else None
     
     # print(f">>> model:{next(layer.parameters()).dtype}, tensor:{tensor.dtype}")
     
+    max_tensor_size = int(PARAM_REGISTRY.get('forward_tensor_chunk_size'))
     splits = list(torch.split(tensor, max_tensor_size, dim=0))
     
     for i, split in enumerate(splits):
@@ -260,13 +263,15 @@ class EGNN(nn.Module):
         
         for i in range(0, self.n_layers):
             # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
-            if self.n_layers > 1 and ((i+1) % int(math.sqrt(self.n_layers)) == 0):
-                print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape} ... CHECKPOINTING")
+            if self.n_layers > 1 and \
+                ((i+1) % int(math.sqrt(self.n_layers)) == 0) and \
+                PARAM_REGISTRY.get('use_checkpointing'):
+                print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
                 h, x = checkpoint(checkpoint_equiv_block, 
                                   (self._modules["e_block_%d" % i], h, x, edge_index, node_mask, edge_mask, distances), 
                                   use_reentrant=False)
             else:
-                print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape}")
+                print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape}") if PARAM_REGISTRY.get('verbose')==True else None
                 h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
 
         # Important, the bias of the last linear might be non-zero
@@ -321,8 +326,8 @@ class SinusoidsEmbeddingNew(nn.Module):
         self.dim = len(self.frequencies) * 2
 
     def forward(self, x):
-        # x = torch.sqrt(x + 1e-8)
-        x = torch.sqrt(x + 1e-4)  # ~!fp16
+        x = torch.sqrt(x + 1e-8)
+        # x = torch.sqrt(x + 1e-4)  # ~!fp16
         
         emb = x * self.frequencies[None, :].to(x.device)
         emb = torch.cat((emb.sin(), emb.cos()), dim=-1)
@@ -333,8 +338,8 @@ def coord2diff(x, edge_index, norm_constant=1):
     row, col = edge_index
     coord_diff = x[row] - x[col]     # feeding this to model, relative difference
     radial = torch.sum((coord_diff) ** 2, 1).unsqueeze(1)
-    # norm = torch.sqrt(radial + 1e-8)
-    norm = torch.sqrt(radial + 1e-4)  # ~!fp16
+    norm = torch.sqrt(radial + 1e-8)
+    # norm = torch.sqrt(radial + 1e-4)  # ~!fp16
     
     coord_diff = coord_diff/(norm + norm_constant)
     return radial, coord_diff

@@ -198,14 +198,14 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
 
 def get_optim(args, generative_model):
     # ~!fp16
-    # optim = torch.optim.AdamW(
-    #     generative_model.parameters(),
-    #     lr=args.lr, amsgrad=True,
-    #     weight_decay=1e-12)
     optim = torch.optim.AdamW(
         generative_model.parameters(),
         lr=args.lr, amsgrad=True,
-        weight_decay=1e-4)
+        weight_decay=1e-12)
+    # optim = torch.optim.AdamW(
+    #     generative_model.parameters(),
+    #     lr=args.lr, amsgrad=True,
+    #     weight_decay=1e-4)
 
     return optim
 
@@ -231,8 +231,8 @@ class DistributionNodes:
         self.prob = torch.from_numpy(prob).float()
 
         # ~!fp16
-        # entropy = torch.sum(self.prob * torch.log(self.prob + 1e-30))   # entropy calculation, unused
-        entropy = torch.sum(self.prob * torch.log(self.prob + 1e-4))   # entropy calculation, unused
+        entropy = torch.sum(self.prob * torch.log(self.prob + 1e-30))   # entropy calculation, unused
+        # entropy = torch.sum(self.prob * torch.log(self.prob + 1e-4))   # entropy calculation, unused
         
         print("Entropy of n_nodes: H[N]", entropy.item())   # i.e. -2.475700616836548
 
@@ -249,8 +249,8 @@ class DistributionNodes:
         idcs = torch.tensor(idcs).to(batch_n_nodes.device)
 
         # ~!fp16
-        # log_p = torch.log(self.prob + 1e-30)    # computes log probability. 1e-30 epsilon is to prevent log(0)
-        log_p = torch.log(self.prob + 1e-4)    # computes log probability. 1e-30 epsilon is to prevent log(0)
+        log_p = torch.log(self.prob + 1e-30)    # computes log probability. 1e-30 epsilon is to prevent log(0)
+        # log_p = torch.log(self.prob + 1e-4)    # computes log probability. 1e-30 epsilon is to prevent log(0)
 
         log_p = log_p.to(batch_n_nodes.device)
 
@@ -293,8 +293,8 @@ class DistributionProperty:
         prop_min, prop_max = torch.min(values), torch.max(values)   # filtered property min max
         
         # ~!fp16
-        # prop_range = prop_max - prop_min + 1e-12      # epsilon to prevent 0
-        prop_range = prop_max - prop_min + 1e-4      # epsilon to prevent 0
+        prop_range = prop_max - prop_min + 1e-12      # epsilon to prevent 0
+        # prop_range = prop_max - prop_min + 1e-4      # epsilon to prevent 0
         
         histogram = torch.zeros(n_bins)     # shape [1000]
         for val in values:

@@ -19,14 +19,14 @@ class PositionFeaturePrior(torch.nn.Module):
         assert len(node_mask.size()) == 3
         assert node_mask.size()[:2] == z_x.size()[:2]
 
-        # assert (z_x * (1 - node_mask)).sum() < 1e-8 and \
-        #        (z_h * (1 - node_mask)).sum() < 1e-8, \
-        #        'These variables should be properly masked.'
-        
-        # ~!fp16
-        assert (z_x * (1 - node_mask)).sum() < 1e-4 and \
-               (z_h * (1 - node_mask)).sum() < 1e-4, \
+        assert (z_x * (1 - node_mask)).sum() < 1e-8 and \
+               (z_h * (1 - node_mask)).sum() < 1e-8, \
                'These variables should be properly masked.'
+        
+        # # ~!fp16
+        # assert (z_x * (1 - node_mask)).sum() < 1e-4 and \
+        #        (z_h * (1 - node_mask)).sum() < 1e-4, \
+        #        'These variables should be properly masked.'
 
         log_pz_x = center_gravity_zero_gaussian_log_likelihood_with_mask(
             z_x, node_mask

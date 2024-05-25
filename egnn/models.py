@@ -3,6 +3,7 @@ import torch.nn as nn
 from egnn.egnn_new import EGNN, GNN, low_vram_forward
 from equivariant_diffusion.utils import remove_mean, remove_mean_with_mask
 import numpy as np
+from global_registry import PARAM_REGISTRY
 
 
 class EGNN_dynamics_QM9(nn.Module):
@@ -55,7 +56,7 @@ class EGNN_dynamics_QM9(nn.Module):
         return self._forward
 
     def _forward(self, t, xh, node_mask, edge_mask, context):
-        print(f"        >>> DYNAMICS t:{torch.isnan(t).any()}  xh:{torch.isnan(xh).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}")    
+        print(f"        >>> DYNAMICS t:{torch.isnan(t).any()}  xh:{torch.isnan(xh).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
 
         bs, n_nodes, dims = xh.shape
         # 64, 25, 4
@@ -101,9 +102,9 @@ class EGNN_dynamics_QM9(nn.Module):
         # [1600, 2+nf+?]
 
         if self.mode == 'egnn_dynamics':
-            print(f"        >>> DYNAMICS (B4) h:{torch.isnan(h).any()} x:{torch.isnan(x).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}")    
+            print(f"        >>> DYNAMICS (B4) h:{torch.isnan(h).any()} x:{torch.isnan(x).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
             h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
-            print(f"        >>> DYNAMICS (A3) h_:{torch.isnan(h_final).any()} x_:{torch.isnan(x_final).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}")    
+            print(f"        >>> DYNAMICS (A3) h_:{torch.isnan(h_final).any()} x_:{torch.isnan(x_final).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
             # [1600, 2]  [1600, 3]
             vel = (x_final - x) * node_mask  # This masking operation is redundant but just in case
         elif self.mode == 'gnn_dynamics':
@@ -242,7 +243,7 @@ class EGNN_encoder_QM9(nn.Module):
         return self._forward
 
     def _forward(self, xh, node_mask, edge_mask, context):  
-        print(f"        >>> ENCODER xh:{torch.isnan(xh).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}")    
+        print(f"        >>> ENCODER xh:{torch.isnan(xh).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
         bs, n_nodes, dims = xh.shape     # 64, 29, ?
         h_dims = dims - self.n_dims      # ? - 3
         edges = self.get_adj_matrix(n_nodes, bs, self.device)   # [row[bs*n_nodes*n_nodes], col[bs*n_nodes*n_nodes]]
@@ -462,7 +463,7 @@ class EGNN_decoder_QM9(nn.Module):
         return self._forward
 
     def _forward(self, xh, node_mask, edge_mask, context):
-        print(f"        >>> DECODER xh:{torch.isnan(xh).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}")    
+        print(f"        >>> DECODER xh:{torch.isnan(xh).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
 
         bs, n_nodes, dims = xh.shape
         # 64, 27, 4
@@ -494,9 +495,9 @@ class EGNN_decoder_QM9(nn.Module):
         
 
         if self.mode == 'egnn_dynamics':
-            print(f"        >>> DECODER (B4) h:{torch.isnan(h).any()} x:{torch.isnan(x).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}")    
+            print(f"        >>> DECODER (B4) h:{torch.isnan(h).any()} x:{torch.isnan(x).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
             h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
-            print(f"        >>> DECODER (A3) h_:{torch.isnan(h_final).any()} x_:{torch.isnan(x_final).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}")    
+            print(f"        >>> DECODER (A3) h_:{torch.isnan(h_final).any()} x_:{torch.isnan(x_final).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
 
             # [1728, 6]    [1728, 3]
             vel = x_final * node_mask  # This masking operation is redundant but just in case

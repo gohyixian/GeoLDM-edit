@@ -161,7 +161,7 @@ def main():
         model_ema = model
         model_ema_dp = model_dp
     
-    # ~!halfprecision
+    # ~!mp
     # scaler = torch.cuda.amp.GradScaler()
     scaler = None
 

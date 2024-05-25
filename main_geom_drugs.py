@@ -22,129 +22,153 @@ import pickle
 from qm9.utils import prepare_context, compute_mean_mad
 import train_test
 
-
-# config object for yaml
-class Config:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
+from global_registry import PARAM_REGISTRY, Config
 
 
-parser = argparse.ArgumentParser(description='e3_diffusion')
-parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
-opt = parser.parse_args()
-
-with open(opt.config_file, 'r') as file:
-    args_dict = yaml.safe_load(file)
-    
-args = Config(**args_dict)
-
-
-
-data_file = args.data_file
-
-if args.remove_h:
-    raise NotImplementedError()
-else:
-    dataset_info = geom_with_h
-
-args.cuda = not args.no_cuda and torch.cuda.is_available()
-device = torch.device("cuda" if args.cuda else "cpu")
-
-# ~!fp16
-dtype = torch.float32
-# dtype = torch.float16
-torch.set_default_dtype(dtype)
-
-args.device = device
-args.dtype = dtype
-
-print(">> Loading data from:", data_file)
-split_data = build_geom_dataset.load_split_data(data_file, 
-                                                val_proportion=0.1, 
-                                                test_proportion=0.1, 
-                                                filter_size=args.filter_molecule_size, 
-                                                permutation_file_path=args.permutation_file_path, 
-                                                dataset_name=args.dataset)
-# ~!to ~!mp
-transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, device, args.sequential)
-# transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, torch.device("cpu"), args.sequential)
-
-dataloaders = {}
-for key, data_list in zip(['train', 'val', 'test'], split_data):
-    dataset = build_geom_dataset.GeomDrugsDataset(data_list, transform=transform)
-    shuffle = (key == 'train') and not args.sequential
-
-    # Sequential dataloading disabled for now.
-    dataloaders[key] = build_geom_dataset.GeomDrugsDataLoader(
-        sequential=args.sequential, dataset=dataset, batch_size=args.batch_size,
-        shuffle=shuffle)
-del split_data
-
-atom_encoder = dataset_info['atom_encoder']
-atom_decoder = dataset_info['atom_decoder']
-
-# args, unparsed_args = parser.parse_known_args()
-args.wandb_usr = utils.get_wandb_username(args.wandb_usr)
-
-if args.resume is not None:
-    exp_name = args.exp_name + '_resume'
-    start_epoch = args.start_epoch
-    resume = args.resume
-    wandb_usr = args.wandb_usr
-
-    with open(join(args.resume, 'args.pickle'), 'rb') as f:
-        args = pickle.load(f)
-    args.resume = resume
-    args.break_train_epoch = False
-    args.exp_name = exp_name
-    args.start_epoch = start_epoch
-    args.wandb_usr = wandb_usr
-    print(args)
-
-utils.create_folders(args)
-print(args)
-
-# Wandb config
-if args.no_wandb:
-    mode = 'disabled'
-else:
-    mode = 'online' if args.online else 'offline'
-kwargs = {'entity': args.wandb_usr, 'name': args.exp_name, 'project': 'e3_diffusion_geom', 'config': args,
-          'settings': wandb.Settings(_disable_stats=True), 'reinit': True, 'mode': mode}
-wandb.init(**kwargs)
-wandb.save('*.txt')
-
-data_dummy = next(iter(dataloaders['train']))
-
-
-if len(args.conditioning) > 0:
-    print(f'Conditioning on {args.conditioning}')
-    property_norms = compute_mean_mad(dataloaders, args.conditioning)
-    context_dummy = prepare_context(args.conditioning, data_dummy, property_norms)
-    context_node_nf = context_dummy.size(2)
-else:
-    context_node_nf = 0
-    property_norms = None
-
-args.context_node_nf = context_node_nf
-
-
-# Create Latent Diffusion Model or Audoencoder
-if args.train_diffusion:
-    model, nodes_dist, prop_dist = get_latent_diffusion(args, device, dataset_info, dataloaders['train'])
-else:
-    model, nodes_dist, prop_dist = get_autoencoder(args, device, dataset_info, dataloaders['train'])
-
-model = model.to(device)
-optim = get_optim(args, model)
-# print(model)
-
-
-gradnorm_queue = utils.Queue(dtype=args.dtype)
-gradnorm_queue.add(3000)  # Add large value that will be flushed.
 
 
 def main():
+    parser = argparse.ArgumentParser(description='e3_diffusion')
+    parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
+    opt = parser.parse_args()
+
+    with open(opt.config_file, 'r') as file:
+        args_dict = yaml.safe_load(file)
+    args = Config(**args_dict)
+
+
+    # priority check goes here
+    if args.remove_h:
+        raise NotImplementedError()
+    else:
+        dataset_info = geom_with_h
+
+
+    # device settings
+    args.cuda = not args.no_cuda and torch.cuda.is_available()
+    device = torch.device("cuda" if args.cuda else "cpu")
+    args.device = device
+    args.device_ = "cuda" if args.cuda else "cpu"
+    print(f">> Model running on device {args.device}")
+    
+    
+    # mixed precision training
+    # ~!mp
+    if args.mixed_precision_training:
+        from torch.cuda.amp import GradScaler
+        scaler = GradScaler()
+        print(f">> Mixed precision training enabled")
+    else:
+        scaler = None
+        print(f">> Mixed precision training disabled")
+    
+
+    # dtype settings
+    dtype_str = args_dict['dtype']
+    module_name, dtype_name = dtype_str.split('.')
+    dtype = getattr(torch, dtype_name)
+    args.dtype = dtype
+    torch.set_default_dtype(dtype)
+    print(f">> Model running on dtype {args.dtype}")
+    
+    
+    # params global registry for easy access
+    PARAM_REGISTRY.update_from_config(args)
+
+
+    # pre-computed data file
+    data_file = args.data_file
+    print(">> Loading data from:", data_file)
+    split_data = build_geom_dataset.load_split_data(data_file, 
+                                                    val_proportion=0.1, 
+                                                    test_proportion=0.1, 
+                                                    filter_size=args.filter_molecule_size, 
+                                                    permutation_file_path=args.permutation_file_path, 
+                                                    dataset_name=args.dataset)
+    # ~!to ~!mp
+    transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, args.device, args.sequential)
+    # transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, torch.device("cpu"), args.sequential)
+
+    dataloaders = {}
+    for key, data_list in zip(['train', 'val', 'test'], split_data):
+        dataset = build_geom_dataset.GeomDrugsDataset(data_list, transform=transform)
+        shuffle = (key == 'train') and not args.sequential
+
+        # Sequential dataloading disabled for now.
+        dataloaders[key] = build_geom_dataset.GeomDrugsDataLoader(
+            sequential=args.sequential, dataset=dataset, batch_size=args.batch_size,
+            shuffle=shuffle)
+    del split_data
+
+
+    # # not used
+    # atom_encoder = dataset_info['atom_encoder']
+    # atom_decoder = dataset_info['atom_decoder']
+
+
+    # args, unparsed_args = parser.parse_known_args()
+    args.wandb_usr = utils.get_wandb_username(args.wandb_usr)
+
+
+    # resume
+    if args.resume is not None:
+        exp_name = args.exp_name + '_resume'
+        start_epoch = args.start_epoch
+        resume = args.resume
+        wandb_usr = args.wandb_usr
+
+        with open(join(args.resume, 'args.pickle'), 'rb') as f:
+            args = pickle.load(f)
+        args.resume = resume
+        args.break_train_epoch = False
+        args.exp_name = exp_name
+        args.start_epoch = start_epoch
+        args.wandb_usr = wandb_usr
+
+    utils.create_folders(args)
+
+
+    # Wandb config
+    if args.no_wandb:
+        mode = 'disabled'
+    else:
+        mode = 'online' if args.online else 'offline'
+    kwargs = {'entity': args.wandb_usr, 'name': args.exp_name, 'project': 'e3_diffusion_geom', 'config': args,
+            'settings': wandb.Settings(_disable_stats=True), 'reinit': True, 'mode': mode}
+    wandb.init(**kwargs)
+    wandb.save('*.txt')
+
+
+    data_dummy = next(iter(dataloaders['train']))
+    if len(args.conditioning) > 0:
+        print(f'Conditioning on {args.conditioning}')
+        property_norms = compute_mean_mad(dataloaders, args.conditioning)
+        context_dummy = prepare_context(args.conditioning, data_dummy, property_norms)
+        context_node_nf = context_dummy.size(2)
+    else:
+        context_node_nf = 0
+        property_norms = None
+
+    args.context_node_nf = context_node_nf
+
+
+    # Create Latent Diffusion Model or Audoencoder
+    if args.train_diffusion:
+        model, nodes_dist, prop_dist = get_latent_diffusion(args, args.device, dataset_info, dataloaders['train'])
+    else:
+        model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info, dataloaders['train'])
+
+    model = model.to(args.device)
+    optim = get_optim(args, model)
+    # print(model)
+
+
+    gradnorm_queue = utils.Queue(dtype=args.dtype)
+    gradnorm_queue.add(3000)  # Add large value that will be flushed.
+
+        
+    
+    
     if args.resume is not None:
         flow_state_dict = torch.load(join(args.resume, 'flow.npy'))
         dequantizer_state_dict = torch.load(join(args.resume, 'dequantizer.npy'))
@@ -174,10 +198,7 @@ def main():
         model_ema = model
         model_ema_dp = model_dp
     
-    # ~!halfprecision
-    # scaler = torch.cuda.amp.GradScaler()
-    scaler = None
-
+    
     best_nll_val = 1e8
     best_nll_test = 1e8
     nth_iter = 0
