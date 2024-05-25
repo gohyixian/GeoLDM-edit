@@ -98,10 +98,6 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         else:
             grad_norm = 0.
 
-        # nvidia-smi 
-        # print(subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
-        print(f">> MEM Allocated: {torch.cuda.memory_allocated() / (1024 ** 2):.2f} MB    Reserved: {torch.cuda.memory_reserved() / (1024 ** 2):.2f} MB")
-
         # ~!mp
         print("04/5 - optim.step()") if args.verbose else None
         print(f"%%%%% MASTER WEIGHTS (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
@@ -125,6 +121,10 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
                   f"Loss {loss.item():.2f}, NLL: {nll.item():.2f}, "
                   f"RegTerm: {reg_term.item():.1f}, "
                   f"GradNorm: {grad_norm:.1f}")
+            # nvidia-smi 
+            # print(subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
+            print(f">> MEM Allocated: {torch.cuda.memory_allocated() / (1024 ** 2):.2f} MB    Reserved: {torch.cuda.memory_reserved() / (1024 ** 2):.2f} MB")
+
         nll_epoch.append(nll.item())
         
         if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:

@@ -178,7 +178,7 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_every_batch: 100.0   # ~!tmp 10000.0
+visualize_every_batch: 100000.0   # 10000.0
 n_report_steps: 50
 
 
