@@ -64,8 +64,7 @@ def main():
     
 
     # dtype settings
-    dtype_str = args_dict['dtype']
-    module_name, dtype_name = dtype_str.split('.')
+    module_name, dtype_name = args.dtype.split('.')
     dtype = getattr(torch, dtype_name)
     args.dtype = dtype
     torch.set_default_dtype(dtype)

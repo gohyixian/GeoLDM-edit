@@ -11,6 +11,7 @@ from qm9 import losses
 import time
 import torch
 from global_registry import PARAM_REGISTRY
+import subprocess
 
 
 def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
@@ -79,7 +80,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             loss.backward()
         
         
-        if args.vebose:
+        if args.verbose:
             def print_grad(w):
                 if w.grad is not None:
                     # print("                ", w.grad)
@@ -97,6 +98,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         else:
             grad_norm = 0.
 
+        # nvidia-smi 
+        print(subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
 
         # ~!mp
         print("04/5 - optim.step()") if args.verbose else None
