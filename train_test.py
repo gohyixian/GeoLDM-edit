@@ -75,6 +75,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         # ~!mp
         print("02/5 - loss.backward") if args.verbose else None
         if args.mixed_precision_training:
+            # first scale loss by scale_factor, then compute backward pass for gradients
             scaler.scale(loss).backward()
         else:
             loss.backward()
@@ -94,6 +95,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         
         if args.clip_grad:
             print("03/5 - utils.gradient_clipping") if args.verbose else None
+            # manually unscaling gradients for correct gradient clipping
+            # https://pytorch.org/docs/2.2/notes/amp_examples.html#gradient-clipping
+            scaler.unscale_(optim)
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
         else:
             grad_norm = 0.
@@ -103,8 +107,10 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         print(f"%%%%% MASTER WEIGHTS (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
         print(f"%%%%% MASTER WEIGHTS (B4) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}") if args.verbose else None
         if args.mixed_precision_training:
-            scaler.step(optim)
+            step_result = scaler.step(optim)
             scaler.update()
+            if step_result is None:
+                print(f"Optimizer skipped step at Epoch {epoch}, iter: {i}/{n_iterations} most likely due to inf/NaN in gradients")
         else:
             optim.step()
 
