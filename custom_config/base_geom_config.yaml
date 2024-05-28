@@ -9,7 +9,7 @@ train_diffusion: true
 ae_path: null
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
-trainable_ae_encoder: false
+trainable_ae_encoder: true
 trainable_ae_decoder: true
 
 # can contain multiple: homo | onehot | lumo | num_atoms | etc
