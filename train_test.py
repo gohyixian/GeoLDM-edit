@@ -12,6 +12,7 @@ import time
 import torch
 from global_registry import PARAM_REGISTRY
 import subprocess
+import gc
 
 
 def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
@@ -148,6 +149,11 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
                 vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
                                     wandb=wandb, mode='conditional')
         wandb.log({"Batch NLL": nll.item()}, commit=True)
+        
+        # cleanup
+        torch.cuda.empty_cache()
+        gc.collect()
+        
         if args.break_train_epoch:
             break
         
@@ -210,6 +216,10 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
             if i % args.n_report_steps == 0:
                 print(f"\r {partition} NLL \t epoch: {epoch}, iter: {i}/{n_iterations}, "
                       f"NLL: {nll_epoch/n_samples:.2f}")
+            
+            # cleanup
+            torch.cuda.empty_cache()
+            gc.collect()
 
     return nll_epoch/n_samples
 
