@@ -81,37 +81,25 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             loss.backward()
         
         
-        if args.verbose:
-            def print_grad(w):
-                if w.grad is not None:
-                    # print("                ", w.grad)
-                    pass
-                return 1 if w.grad is not None else 0
-            grad_check = [print_grad(w) for w in model.parameters()]
-            print(f"%%%%% MASTER Grad (model) {sum(grad_check)}/{len(grad_check)}")
-            grad_check_dp = [print_grad(w) for w in model.parameters()]
-            print(f"%%%%% MASTER Grad (model_dp) {sum(grad_check_dp)}/{len(grad_check_dp)}")
-
-        
         if args.clip_grad:
             print("03/5 - utils.gradient_clipping") if args.verbose else None
             # manually unscaling gradients for correct gradient clipping
             # https://pytorch.org/docs/2.2/notes/amp_examples.html#gradient-clipping
-            def check_grad(w):
-                if w.requires_grad == True:
-                    if w.grad is not None:
-                        return 1
-                    else:
-                        return 0
-                else:
-                    return 1
-            grad_check_not_unscaled = [check_grad(w) for name,w in model.named_parameters()]
             scaler.unscale_(optim)
-            grad_check_unscaled = [check_grad(w) for name,w in model.named_parameters()]
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
-            grad_check_clipped = [check_grad(w) for name,w in model.named_parameters()]
-            print(f"GRADIENTS is not None:  NotUnscaled={sum(grad_check_not_unscaled)}/{len(grad_check_not_unscaled)}  Unscaled={sum(grad_check_unscaled)}/{len(grad_check_unscaled)}  Clipped={sum(grad_check_clipped)}/{len(grad_check_clipped)}")
-            [print("    ", name, w.grad is not None) for name,w in model.named_parameters()]
+            
+            if args.verbose:
+                def check_grad(w):
+                    if w.requires_grad == True:
+                        if w.grad is not None:
+                            return 1
+                        else:
+                            return 0
+                    else:
+                        return 1
+                grad_check_clipped = [check_grad(w) for name,w in model.named_parameters()]
+                print(f"GRADIENTS is not None:  Clipped={sum(grad_check_clipped)}/{len(grad_check_clipped)}")
+                [print("    ", name, w.grad is not None) for name,w in model.named_parameters()]
         else:
             grad_norm = 0.
 
@@ -120,11 +108,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         print(f"%%%%% MASTER WEIGHTS (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
         print(f"%%%%% MASTER WEIGHTS (B4) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}") if args.verbose else None
         if args.mixed_precision_training:
-            step_result = scaler.step(optim)
+            scaler.step(optim)
             scaler.update()
-            if step_result is not None:
-                print(f"Optimizer did not skipped step at Epoch {epoch}, iter: {i}/{n_iterations} most likely due to inf/NaN in gradients")
-                print(step_result)
         else:
             optim.step()
 

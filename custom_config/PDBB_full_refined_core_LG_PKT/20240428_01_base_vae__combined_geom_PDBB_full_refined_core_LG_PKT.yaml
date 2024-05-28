@@ -1,38 +1,48 @@
 
-exp_name: base_geoldm_qm9_ldm
+exp_name: 20240428_01_base_vae__combined_geom_PDBB_full_refined_core_LG_PKT
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
-train_diffusion: true
+train_diffusion: false
 
 # Specify first stage model path
-ae_path: null  # TODO: udpate: path to trained weights & args folder
+ae_path: null
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
-trainable_ae_encoder: false
+trainable_ae_encoder: true
 trainable_ae_decoder: true
 
-# can contain multiple: homo | lumo | alpha | gap | mu | Cv
+# can contain multiple: homo | onehot | lumo | num_atoms | etc
 conditioning: []
 
 # include atom charge, according to periodic table
-include_charges: true
+include_charges: false   # true for qm9
 
-# only works for ldm, not for VAE
-condition_time: true
+condition_time: true   # only works for ldm, not for VAE
 
 
 
 
 # ========================================================================================================== Dataset
-# qm9 | qm9_second_half (train only on the last 50K samples of the training dataset), default qm9
-dataset: qm9
+# geom
+dataset: d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT
 
-# qm9 directory
-datadir: qm9/temp
+# geom directory  ~!geom
+data_file: ./data/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT__geom_1.npy
+# data_file: /lustre/user/yixian.goh/geoldm-edit/data/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT__geom_1.npy
+# set to null if you're running this dataset for the first time. 
+# Script will generate a random permutation to shuffle the dataset.
+# Please set the path to the DATASET_permutation.npy file after it is generated.
+permutation_file_path: ./data/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_permutation.npy
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
+
+# Only use molecules below this size. Int, default null  ~!geom
+filter_molecule_size: null
+
+# Organize data by size to reduce average memory usage. ~!geom
+sequential: false
 
 # Number of worker for the dataloader
 num_workers: 0
@@ -48,11 +58,11 @@ remove_h: false
 
 # ========================================================================================================== Training Params
 start_epoch: 0
-test_epochs: 20
-generate_epochs: 1
+test_epochs: 1
 
-n_epochs: 3000
-batch_size: 64
+
+n_epochs: 12000  # 3000  !altered
+batch_size: 2    # 8  32    !altered min=2 1 will have errors
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01
@@ -60,8 +70,8 @@ kl_weight: 0.01
 
 # ode_regularization weightage, default 1e-3
 ode_regularization: 0.001
-brute_force: false
-actnorm: true
+# brute_force: false
+# actnorm: true
 break_train_epoch: false
 dp: true
 clip_grad: true
@@ -73,7 +83,7 @@ ema_decay: 0.9999
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 1000
+n_stability_samples: 500
 
 
 # disables CUDA training
@@ -98,7 +108,7 @@ diffusion_steps: 1000
 diffusion_noise_schedule: polynomial_2       # polynomial power 2
 
 # default 1e-5
-diffusion_noise_precision: 1.0e-05
+diffusion_noise_precision: 1.0e-04  # ~!fp16
 
 # vlb | l2
 diffusion_loss_type: l2
@@ -114,13 +124,13 @@ normalize_factors: [1, 4, 10]
 
 # ========================================================================================================== Network Architecture
 # number of layers of EquivariantBlock to use in LDM and VAE's Decoder
-n_layers: 9
+n_layers: 4  # 9 for qm9
 
 # number of GCL Blocks to use in each EquivariantBlock
 inv_sublayers: 1
 
 # model's internal operating number of features
-nf: 256
+nf: 256  # 256 !altered
 
 # use tanh in the coord_mlp
 tanh: true
@@ -148,8 +158,8 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_every_batch: 100000000.0
-n_report_steps: 1
+visualize_every_batch: 10000.0
+n_report_steps: 50
 
 
 
@@ -164,7 +174,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: false
+no_wandb: true   # !altered
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true

@@ -1,16 +1,17 @@
 
-exp_name: 20240428_01_base_vae__combined_geom_PDBB_full_refined_core_LG_PKT
+exp_name: 20240428_01_base_all__combined_geom_PDBB_full_refined_core_LG_PKT
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
-train_diffusion: false
+train_diffusion: true
 
 # Specify first stage model path
 ae_path: null
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
-trainable_ae_encoder: true
+trainable_ae_encoder: false
 trainable_ae_decoder: true
+
 
 # can contain multiple: homo | onehot | lumo | num_atoms | etc
 conditioning: []
@@ -59,7 +60,7 @@ remove_h: false
 # ========================================================================================================== Training Params
 start_epoch: 0
 test_epochs: 1
-generate_epochs: 1
+
 
 n_epochs: 12000  # 3000  !altered
 batch_size: 2    # 8  32    !altered min=2 1 will have errors
@@ -108,7 +109,7 @@ diffusion_steps: 1000
 diffusion_noise_schedule: polynomial_2       # polynomial power 2
 
 # default 1e-5
-diffusion_noise_precision: 1.0e-04  # ~!fp16
+diffusion_noise_precision: 1.0e-04   # ~!fp16
 
 # vlb | l2
 diffusion_loss_type: l2

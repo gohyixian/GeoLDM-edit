@@ -20,7 +20,7 @@ dp: True
 condition_time: True
 clip_grad: True
 save_model: True
-generate_epochs: 1
+
 num_workers: 0
 test_epochs: 1
 data_augmentation: False

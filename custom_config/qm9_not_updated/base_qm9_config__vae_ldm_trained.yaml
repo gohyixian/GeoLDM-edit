@@ -1,5 +1,5 @@
 
-exp_name: geoldm_geom_20240522_ssn
+exp_name: geoldm_qm9_2024_04_13
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -12,11 +12,11 @@ ae_path: null
 trainable_ae_encoder: false
 trainable_ae_decoder: true
 
-# can contain multiple: homo | onehot | lumo | num_atoms | etc
+# can contain multiple: homo | lumo | alpha | gap | mu | Cv
 conditioning: []
 
 # include atom charge, according to periodic table
-include_charges: false   # true for qm9
+include_charges: true
 
 # only works for ldm, not for VAE
 condition_time: true
@@ -25,26 +25,14 @@ condition_time: true
 
 
 # ========================================================================================================== Dataset
-# geom
-dataset: geom
+# qm9 | qm9_second_half (train only on the last 50K samples of the training dataset), default qm9
+dataset: qm9
 
-# geom directory  ~!geom
-data_file: ./data/geom/geom_drugs_30.npy
-# data_file: /scr/user/yixian.goh/geoldm-edit-data/geom/geom_drugs_30.npy
-# set to null if you're running this dataset for the first time. 
-# Script will generate a random permutation to shuffle the dataset.
-# Please set the path to the DATASET_permutation.npy file after it is generated.
-permutation_file_path: ./data/geom/geom_permutation.npy
-# permutation_file_path: /home/user/yixian.goh/geoldm-edit/data/geom/geom_permutation.npy
+# qm9 directory
+datadir: qm9/temp
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
-
-# Only use molecules below this size. Int, default null  ~!geom
-filter_molecule_size: null
-
-# Organize data by size to reduce average memory usage. ~!geom
-sequential: false
 
 # Number of worker for the dataloader
 num_workers: 0
@@ -60,11 +48,11 @@ remove_h: false
 
 # ========================================================================================================== Training Params
 start_epoch: 0
-test_epochs: 1
-generate_epochs: 1
+test_epochs: 20
 
-n_epochs: 3000  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 32    # 32
+
+n_epochs: 3000
+batch_size: 64
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01
@@ -72,8 +60,8 @@ kl_weight: 0.01
 
 # ode_regularization weightage, default 1e-3
 ode_regularization: 0.001
-# brute_force: false
-# actnorm: true
+brute_force: false
+actnorm: true
 break_train_epoch: false
 dp: true
 clip_grad: true
@@ -85,7 +73,7 @@ ema_decay: 0.9999
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 500
+n_stability_samples: 1000
 
 
 # disables CUDA training
@@ -93,25 +81,6 @@ no_cuda: false
 
 # hutch | exact
 trace: hutch
-
-# verbose logging
-verbose: false
-
-dtype: torch.float32
-
-# enable mixed precision training (fp32, fp16)
-mixed_precision_training: true
-
-# use checkpointing during training to reduce GPU memory usage
-# checkpointing is done on the sqrt(block_num)'th Equivariant block of each EGNN for most optimal perf
-use_checkpointing: true
-
-# splits tensors into managable chunks and performs forward propagation without breaking GPU memory limit
-forward_tensor_chunk_size: 50000
-
-
-
-
 
 
 
@@ -129,7 +98,7 @@ diffusion_steps: 1000
 diffusion_noise_schedule: polynomial_2       # polynomial power 2
 
 # default 1e-5
-diffusion_noise_precision: 1.0e-04 # ~!fp16
+diffusion_noise_precision: 1.0e-05
 
 # vlb | l2
 diffusion_loss_type: l2
@@ -145,7 +114,7 @@ normalize_factors: [1, 4, 10]
 
 # ========================================================================================================== Network Architecture
 # number of layers of EquivariantBlock to use in LDM and VAE's Decoder
-n_layers: 4  # 9 for qm9
+n_layers: 9
 
 # number of GCL Blocks to use in each EquivariantBlock
 inv_sublayers: 1
@@ -179,8 +148,8 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_every_batch: 10000.0
-n_report_steps: 50
+visualize_every_batch: 100000000.0
+n_report_steps: 1
 
 
 
@@ -195,7 +164,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: true
+no_wandb: false
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true

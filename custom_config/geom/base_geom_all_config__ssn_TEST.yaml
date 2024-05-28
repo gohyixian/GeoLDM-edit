@@ -1,12 +1,12 @@
 
-exp_name: base_geoldm_geom_ldm
+exp_name: base_geom_all_config__ssn_TEST
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
 train_diffusion: true
 
 # Specify first stage model path
-ae_path: null  # TODO: udpate: path to trained weights & args folder
+ae_path: null
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
 trainable_ae_encoder: false
@@ -29,13 +29,13 @@ condition_time: true
 dataset: geom
 
 # geom directory  ~!geom
-# data_file: ./data/geom/geom_drugs_30.npy
-data_file: /scr/user/yixian.goh/geoldm-edit-data/geom/geom_drugs_30.npy
+data_file: ./data/geom/geom_drugs_30.npy
+# data_file: /scr/user/yixian.goh/geoldm-edit-data/geom/geom_drugs_30.npy
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
 # Please set the path to the DATASET_permutation.npy file after it is generated.
-# permutation_file_path: ./data/geom/geom_permutation.npy
-permutation_file_path: /home/user/yixian.goh/geoldm-edit/data/geom/geom_permutation.npy
+permutation_file_path: ./data/geom/geom_permutation.npy
+# permutation_file_path: /home/user/yixian.goh/geoldm-edit/data/geom/geom_permutation.npy
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
@@ -61,10 +61,10 @@ remove_h: false
 # ========================================================================================================== Training Params
 start_epoch: 0
 test_epochs: 1
-generate_epochs: 1
 
-n_epochs: 12000  # 3000
-batch_size: 8    # 32
+
+n_epochs: 3000  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 32    # 32
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01
@@ -93,6 +93,25 @@ no_cuda: false
 
 # hutch | exact
 trace: hutch
+
+# verbose logging
+verbose: false
+
+dtype: torch.float32
+
+# enable mixed precision training (fp32, fp16)
+mixed_precision_training: true
+
+# use checkpointing during training to reduce GPU memory usage
+# checkpointing is done on the sqrt(block_num)'th Equivariant block of each EGNN for most optimal perf
+use_checkpointing: true
+
+# splits tensors into managable chunks and performs forward propagation without breaking GPU memory limit
+forward_tensor_chunk_size: 50000
+
+
+
+
 
 
 
@@ -176,7 +195,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: false
+no_wandb: true
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true
