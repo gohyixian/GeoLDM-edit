@@ -1,5 +1,5 @@
 
-exp_name: geoldm_geom_amp_20240526
+exp_name: geoldm_geom_amp_20240528
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
