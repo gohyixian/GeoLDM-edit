@@ -5,12 +5,12 @@ exp_name: 20240428_01_base_vae__combined_geom_PDBB_full_refined_core_LG_PKT
 # Train second stage LatentDiffusionModel model
 train_diffusion: false
 
-# When train_diffusion=False, Train VAE Encoder & Decoder
-# When train_diffusion=True, Train VAE Decoder (fine tune decoder)
+# Specify first stage model path
 ae_path: null
 
-# Train first stage AutoEncoder model
-trainable_ae: true
+# Train first stage AutoEncoder model (no effect if train_diffusion=False)
+trainable_ae_encoder: true
+trainable_ae_decoder: true
 
 # can contain multiple: homo | onehot | lumo | num_atoms | etc
 conditioning: []

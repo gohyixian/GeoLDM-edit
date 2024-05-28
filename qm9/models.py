@@ -178,7 +178,8 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
     if args.probabilistic_model == 'diffusion':
         vdm = EnLatentDiffusion(
             vae=first_stage_model,    # VAE model
-            trainable_ae=args.trainable_ae,    # true
+            trainable_ae_encoder=args.trainable_ae_encoder,    # false
+            trainable_ae_decoder=args.trainable_ae_decoder,    # true
             dynamics=net_dynamics,    # LDM model
             in_node_nf=in_node_nf,    # 1
             n_dims=3,

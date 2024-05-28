@@ -1222,11 +1222,15 @@ class EnLatentDiffusion(EnVariationalDiffusion):
     """
     def __init__(self, **kwargs):
         vae = kwargs.pop('vae')
-        trainable_ae = kwargs.pop('trainable_ae', False)
+        trainable_ae_encoder = kwargs.pop('trainable_ae_encoder', False)
+        trainable_ae_decoder = kwargs.pop('trainable_ae_decoder', False)
+        
         super().__init__(**kwargs)
 
         # Create self.vae as the first stage model.
-        self.trainable_ae = trainable_ae
+        self.trainable_ae_encoder = trainable_ae_encoder
+        self.trainable_ae_decoder = trainable_ae_decoder
+        
         self.instantiate_first_stage(vae)
     
     def unnormalize_z(self, z, node_mask):
@@ -1328,12 +1332,13 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         # z_xh = mu + sigma * eps
         z_xh = self.vae.sample_normal(z_xh_mean, z_xh_sigma, node_mask)
         # z_xh = z_xh_mean
-        z_xh = z_xh.detach()  # Always keep the VAE's Encoder fixed when training LDM and/or VAE's Decoder
+        if not self.trainable_ae_encoder:
+            z_xh = z_xh.detach()  # Always keep the VAE's Encoder fixed when training LDM and/or VAE's Decoder
         diffusion_utils.assert_correctly_masked(z_xh, node_mask)
 
         """ VAE Decoding - required if training VAE too """
         # Compute reconstruction loss.
-        if self.trainable_ae:
+        if self.trainable_ae_decoder:
             # ground truth
             xh = torch.cat([x, h['categorical'], h['integer']], dim=2)
             # Decoder output (reconstruction).
@@ -1424,12 +1429,15 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         return chain_decoded_flat
 
     def instantiate_first_stage(self, vae: EnHierarchicalVAE):
-        if not self.trainable_ae:
+        if not self.trainable_ae_encoder and not self.trainable_ae_decoder:
             self.vae = vae.eval()
             self.vae.train = disabled_train
             for param in self.vae.parameters():
                 param.requires_grad = False
         else:
+            # set whole model to trainable, but if self.trainable_ae_encoder=False,
+            # will detach the VAE Encoder's outputs from the loss computational graph
+            # hence weights not updated.
             self.vae = vae.train()
             for param in self.vae.parameters():
                 param.requires_grad = True
