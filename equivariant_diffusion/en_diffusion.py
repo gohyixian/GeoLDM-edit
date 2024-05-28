@@ -1328,7 +1328,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         # z_xh = mu + sigma * eps
         z_xh = self.vae.sample_normal(z_xh_mean, z_xh_sigma, node_mask)
         # z_xh = z_xh_mean
-        z_xh = z_xh.detach()  # Always keep the encoder fixed.
+        z_xh = z_xh.detach()  # Always keep the VAE's Encoder fixed when training LDM and/or VAE's Decoder
         diffusion_utils.assert_correctly_masked(z_xh, node_mask)
 
         """ VAE Decoding - required if training VAE too """

@@ -97,8 +97,21 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             print("03/5 - utils.gradient_clipping") if args.verbose else None
             # manually unscaling gradients for correct gradient clipping
             # https://pytorch.org/docs/2.2/notes/amp_examples.html#gradient-clipping
+            def check_grad(w):
+                if w.requires_grad == True:
+                    if w.grad is not None:
+                        return 1
+                    else:
+                        return 0
+                else:
+                    return 1
+            grad_check_not_unscaled = [check_grad(w) for name,w in model.named_parameters()]
             scaler.unscale_(optim)
+            grad_check_unscaled = [check_grad(w) for name,w in model.named_parameters()]
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
+            grad_check_clipped = [check_grad(w) for name,w in model.named_parameters()]
+            print(f"GRADIENTS is not None:  NotUnscaled={sum(grad_check_not_unscaled)}/{len(grad_check_not_unscaled)}  Unscaled={sum(grad_check_unscaled)}/{len(grad_check_unscaled)}  Clipped={sum(grad_check_clipped)}/{len(grad_check_clipped)}")
+            [print("    ", name, w.grad is not None) for name,w in model.named_parameters()]
         else:
             grad_norm = 0.
 
@@ -109,8 +122,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         if args.mixed_precision_training:
             step_result = scaler.step(optim)
             scaler.update()
-            if step_result is None:
-                print(f"Optimizer skipped step at Epoch {epoch}, iter: {i}/{n_iterations} most likely due to inf/NaN in gradients")
+            if step_result is not None:
+                print(f"Optimizer did not skipped step at Epoch {epoch}, iter: {i}/{n_iterations} most likely due to inf/NaN in gradients")
+                print(step_result)
         else:
             optim.step()
 

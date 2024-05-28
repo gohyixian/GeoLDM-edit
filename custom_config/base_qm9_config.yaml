@@ -8,7 +8,8 @@ train_diffusion: true
 # Specify first stage model path
 ae_path: null
 
-# Train first stage AutoEncoder model
+# When train_diffusion=False, Train VAE Encoder & Decoder
+# When train_diffusion=True, Train VAE Decoder (fine tune decoder)
 trainable_ae: true
 
 # can contain multiple: homo | lumo | alpha | gap | mu | Cv
