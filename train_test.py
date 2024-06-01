@@ -122,6 +122,12 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             print("05/5 - ema.update_model_average") if args.verbose else None
             ema.update_model_average(model_ema, model)
 
+
+        # process tracking
+        num_processes = PARAM_REGISTRY.get('get_num_processes')(PARAM_REGISTRY.get('pid'))
+        print(f">> Number of processes: {num_processes}")
+
+
         if i % args.n_report_steps == 0:
             print(f"\rEpoch: {epoch}, iter: {i}/{n_iterations}, "
                   f"Loss {loss.item():.2f}, NLL: {nll.item():.2f}, "
