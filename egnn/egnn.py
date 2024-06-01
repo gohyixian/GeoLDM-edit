@@ -110,8 +110,8 @@ class E_GCL(nn.Module):
         coord_diff = coord[row] - coord[col]
         radial = torch.sum((coord_diff)**2, 1).unsqueeze(1)
 
-        norm = torch.sqrt(radial + 1e-8)
-        # norm = torch.sqrt(radial + 1e-4)  # ~!fp16
+        # norm = torch.sqrt(radial + 1e-8)
+        norm = torch.sqrt(radial + 1e-4)  # ~!fp16
         
         coord_diff = coord_diff/(norm + self.norm_constant)
 

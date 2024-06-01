@@ -534,9 +534,9 @@ class EnVariationalDiffusion(torch.nn.Module):
         eps = self.sample_combined_position_feature_noise(bs, mu.size(1), node_mask)
         return mu + sigma * eps
 
-    # def log_pxh_given_z0_without_constants(self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-10):
+    def log_pxh_given_z0_without_constants(self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-10):
     # ~!fp16
-    def log_pxh_given_z0_without_constants(self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-4):
+    # def log_pxh_given_z0_without_constants(self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-4):
     
         """Calculates loss_term_0 at timestep t=0."""
         
@@ -1040,10 +1040,10 @@ class EnHierarchicalVAE(torch.nn.Module):
         # --LOSS 01
         loss_kl_h = gaussian_KL(z_h_mu, ones, zeros, ones, node_mask)
         # KL for equivariant features. x
-        # assert z_x_sigma.mean(dim=(1,2), keepdim=True).expand_as(z_x_sigma).allclose(z_x_sigma, atol=1e-7)
+        assert z_x_sigma.mean(dim=(1,2), keepdim=True).expand_as(z_x_sigma).allclose(z_x_sigma, atol=1e-7)
         
         # ~!fp16
-        assert z_x_sigma.mean(dim=(1,2), keepdim=True).expand_as(z_x_sigma).allclose(z_x_sigma, atol=1e-4)
+        # assert z_x_sigma.mean(dim=(1,2), keepdim=True).expand_as(z_x_sigma).allclose(z_x_sigma, atol=1e-4)
         
         zeros, ones = torch.zeros_like(z_x_mu), torch.ones_like(z_x_sigma.mean(dim=(1,2)))
         subspace_d = self.subspace_dimensionality(node_mask)  # (29-1)*3, int
@@ -1287,12 +1287,13 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         
         return x, h
     
-    # def log_pxh_given_z0_without_constants(
-    #         self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-10):
+    
+    def log_pxh_given_z0_without_constants(
+            self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-10):
     
     # ~!fp16
-    def log_pxh_given_z0_without_constants(
-            self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-4):
+    # def log_pxh_given_z0_without_constants(
+    #         self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-4):
 
         # Computes the error for the distribution N(latent | 1 / alpha_0 z_0 + sigma_0/alpha_0 eps_0, sigma_0 / alpha_0),
         # the weighting in the epsilon parametrization is exactly '1'.
@@ -1323,6 +1324,10 @@ class EnLatentDiffusion(EnVariationalDiffusion):
 
         # Infer latent z.
         z_xh_mean = torch.cat([z_x_mu, z_h_mu], dim=2)
+        
+        # tmp
+        z_xh_mean = z_xh_mean * node_mask
+        
         diffusion_utils.assert_correctly_masked(z_xh_mean, node_mask)
         z_xh_sigma = sigma_0
         # z_xh_sigma = torch.cat([z_x_sigma.expand(-1, -1, 3), z_h_sigma], dim=2)

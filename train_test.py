@@ -23,8 +23,10 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     nll_epoch = []
     n_iterations = len(loader)
     
-    
     for i, data in enumerate(loader):
+        # tmp
+        if i > 32:
+            break
         # ~!to ~!mp
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
@@ -86,7 +88,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             print("03/5 - utils.gradient_clipping") if args.verbose else None
             # manually unscaling gradients for correct gradient clipping
             # https://pytorch.org/docs/2.2/notes/amp_examples.html#gradient-clipping
-            scaler.unscale_(optim)
+            if args.mixed_precision_training:
+                scaler.unscale_(optim)
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
             
             if args.verbose:

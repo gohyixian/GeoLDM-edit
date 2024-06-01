@@ -18,10 +18,10 @@ def low_vram_forward(layer, tensor):
         _type_: _description_
     """
     
-    tensor_device = tensor.device
-    layer_device = next(layer.parameters()).device
+    # tensor_device = tensor.device
+    # layer_device = next(layer.parameters()).device
 
-    print(f"%% NAN count {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in layer.parameters()])))}") if PARAM_REGISTRY.get('verbose')==True else None
+    # print(f"%% NAN count {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in layer.parameters()])))}") if PARAM_REGISTRY.get('verbose')==True else None
     
     # print(f">>> model:{next(layer.parameters()).dtype}, tensor:{tensor.dtype}")
     
@@ -30,7 +30,9 @@ def low_vram_forward(layer, tensor):
     
     for i, split in enumerate(splits):
         # ~!to
-        splits[i] = layer(split.to(layer_device)).to(tensor_device)
+        # splits[i] = layer(split.to(layer_device)).to(tensor_device)
+        splits[i] = layer(split)
+        
     
     tensor = torch.cat(splits, dim=0)
     return tensor

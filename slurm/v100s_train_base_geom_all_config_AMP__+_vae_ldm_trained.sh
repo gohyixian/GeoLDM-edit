@@ -1,7 +1,7 @@
 #! /bin/bash -l
 
 #SBATCH --partition=gpu-v100s
-#SBATCH --ntasks=8
+#SBATCH --ntasks=48
 #SBATCH --nodes=1
 #SBATCH --mem=100G
 #SBATCH --gpus=2
@@ -13,7 +13,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 88818
+# 88836
 # module load cuda/12.1       # gpu-a100
 # module load miniconda/24.1.2
 # conda activate geoldm-a100

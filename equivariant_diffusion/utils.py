@@ -105,7 +105,7 @@ def assert_correctly_masked(variable, node_mask):
         val = (var_32 * (1 - node_mask)).abs().max().item()
     else:
         val = (variable * (1 - node_mask)).abs().max().item()
-    assert val < 1e-4, 'Variables not masked properly.'
+    assert val < 1e-4, f'Variables not masked properly. val:{val}'
 
 
 def center_gravity_zero_gaussian_log_likelihood(x):
