@@ -75,6 +75,8 @@ ode_regularization: 0.001
 # brute_force: false
 # actnorm: true
 break_train_epoch: false
+
+# Data Parallel for multi GPU support
 dp: true
 clip_grad: true
 
