@@ -217,51 +217,51 @@ def main():
         print(f">>> Epoch took {time.time() - start_epoch:.1f} seconds.")
         nth_iter += n_iters
 
-        # if epoch % args.test_epochs == 0:
-        #     if isinstance(model, en_diffusion.EnVariationalDiffusion):
-        #         wandb.log(model.log_info(), commit=True)
+        if epoch % args.test_epochs == 0:
+            if isinstance(model, en_diffusion.EnVariationalDiffusion):
+                wandb.log(model.log_info(), commit=True)
             
-        #     if not args.break_train_epoch and args.train_diffusion:
-        #         start  = time.time()
-        #         train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
-        #                                     dataset_info, prop_dist, n_samples=args.n_stability_samples)
-        #         print(f">>> analyze_and_save took {time.time() - start:.1f} seconds.")
+            if not args.break_train_epoch and args.train_diffusion:
+                start  = time.time()
+                train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
+                                            dataset_info, prop_dist, n_samples=args.n_stability_samples)
+                print(f">>> analyze_and_save took {time.time() - start:.1f} seconds.")
                 
-        #     start  = time.time()
-        #     nll_val = train_test.test(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
-        #                               property_norms, nodes_dist, partition='Val')
-        #     print(f">>> validation set test took {time.time() - start:.1f} seconds.")
+            start  = time.time()
+            nll_val = train_test.test(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
+                                      property_norms, nodes_dist, partition='Val')
+            print(f">>> validation set test took {time.time() - start:.1f} seconds.")
             
-        #     start  = time.time()
-        #     nll_test = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
-        #                                property_norms, nodes_dist, partition='Test')
-        #     print(f">>> testing set test took {time.time() - start:.1f} seconds.")
+            start  = time.time()
+            nll_test = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
+                                       property_norms, nodes_dist, partition='Test')
+            print(f">>> testing set test took {time.time() - start:.1f} seconds.")
             
 
-        #     if nll_val < best_nll_val:
-        #         best_nll_val = nll_val
-        #         best_nll_test = nll_test
-        #         if args.save_model:
-        #             args.current_epoch = epoch + 1
-        #             utils.save_model(optim, 'outputs/%s/optim.npy' % args.exp_name)
-        #             utils.save_model(model, 'outputs/%s/generative_model.npy' % args.exp_name)
-        #             if args.ema_decay > 0:
-        #                 utils.save_model(model_ema, 'outputs/%s/generative_model_ema.npy' % args.exp_name)
-        #             with open('outputs/%s/args.pickle' % args.exp_name, 'wb') as f:
-        #                 pickle.dump(args, f)
+            if nll_val < best_nll_val:
+                best_nll_val = nll_val
+                best_nll_test = nll_test
+                if args.save_model:
+                    args.current_epoch = epoch + 1
+                    utils.save_model(optim, 'outputs/%s/optim.npy' % args.exp_name)
+                    utils.save_model(model, 'outputs/%s/generative_model.npy' % args.exp_name)
+                    if args.ema_decay > 0:
+                        utils.save_model(model_ema, 'outputs/%s/generative_model_ema.npy' % args.exp_name)
+                    with open('outputs/%s/args.pickle' % args.exp_name, 'wb') as f:
+                        pickle.dump(args, f)
 
-        #     if args.save_model:
-        #         utils.save_model(optim, 'outputs/%s/optim_%d_iter_%d.npy' % (args.exp_name, epoch, nth_iter))
-        #         utils.save_model(model, 'outputs/%s/generative_model_%d_iter_%d.npy' % (args.exp_name, epoch, nth_iter))
-        #         if args.ema_decay > 0:
-        #             utils.save_model(model_ema, 'outputs/%s/generative_model_ema_%d_iter_%d.npy' % (args.exp_name, epoch, nth_iter))
-        #         with open('outputs/%s/args_%d_iter_%d.pickle' % (args.exp_name, epoch, nth_iter), 'wb') as f:
-        #             pickle.dump(args, f)
-        #     print('Val loss: %.4f \t Test loss:  %.4f' % (nll_val, nll_test))
-        #     print('Best val loss: %.4f \t Best test loss:  %.4f' % (best_nll_val, best_nll_test))
-        #     wandb.log({"Val loss ": nll_val}, commit=True)
-        #     wandb.log({"Test loss ": nll_test}, commit=True)
-        #     wandb.log({"Best cross-validated test loss ": best_nll_test}, commit=True)
+            if args.save_model:
+                utils.save_model(optim, 'outputs/%s/optim_%d_iter_%d.npy' % (args.exp_name, epoch, nth_iter))
+                utils.save_model(model, 'outputs/%s/generative_model_%d_iter_%d.npy' % (args.exp_name, epoch, nth_iter))
+                if args.ema_decay > 0:
+                    utils.save_model(model_ema, 'outputs/%s/generative_model_ema_%d_iter_%d.npy' % (args.exp_name, epoch, nth_iter))
+                with open('outputs/%s/args_%d_iter_%d.pickle' % (args.exp_name, epoch, nth_iter), 'wb') as f:
+                    pickle.dump(args, f)
+            print('Val loss: %.4f \t Test loss:  %.4f' % (nll_val, nll_test))
+            print('Best val loss: %.4f \t Best test loss:  %.4f' % (best_nll_val, best_nll_test))
+            wandb.log({"Val loss ": nll_val}, commit=True)
+            wandb.log({"Test loss ": nll_test}, commit=True)
+            wandb.log({"Best cross-validated test loss ": best_nll_test}, commit=True)
 
 
 if __name__ == "__main__":

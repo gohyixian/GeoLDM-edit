@@ -46,6 +46,7 @@ def save_xyz_file(path, one_hot, charges, positions, dataset_info, id_from=0, na
 
 
 def load_molecule_xyz(file, dataset_info):
+    one_hot, charges, positions = None, None, None
     with open(file, encoding='utf8') as f:
         n_atoms = int(f.readline())
         one_hot = torch.zeros(n_atoms, len(dataset_info['atom_decoder']))
@@ -59,7 +60,7 @@ def load_molecule_xyz(file, dataset_info):
             one_hot[i, dataset_info['atom_encoder'][atom_type]] = 1
             position = torch.Tensor([float(e) for e in atom[1:]])
             positions[i, :] = position
-        return positions, one_hot, charges
+    return positions, one_hot, charges
 
 
 def load_xyz_files(path, shuffle=True):

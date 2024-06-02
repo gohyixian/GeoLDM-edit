@@ -133,6 +133,12 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             print(subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
 
         nll_epoch.append(nll.item())
+        nll_item = nll.item()
+        
+        # cleanup first
+        del x, h, node_mask, edge_mask, one_hot, charges, loss, nll, reg_term, mean_abs_z, grad_norm
+        torch.cuda.empty_cache()
+        gc.collect()
         
         if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
             start = time.time()
@@ -149,11 +155,12 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             if len(args.conditioning) > 0:
                 vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
                                     wandb=wandb, mode='conditional')
-        wandb.log({"Batch NLL": nll.item()}, commit=True)
+        
+        # wandb.log({"Batch NLL": nll.item()}, commit=True)
+        wandb.log({"Batch NLL": nll_item}, commit=True)
         
         
         # cleanup
-        del x, h, node_mask, edge_mask, one_hot, charges, loss, nll, reg_term, mean_abs_z, grad_norm
         torch.cuda.empty_cache()
         gc.collect()
         
@@ -188,6 +195,9 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
         n_iterations = len(loader)
 
         for i, data in enumerate(loader):
+            # tmp
+            if i > 500:
+                break
             x = data['positions'].to(device, dtype)
             batch_size = x.size(0)
             node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
