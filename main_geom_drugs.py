@@ -49,7 +49,6 @@ def main():
     device = torch.device("cuda" if args.cuda else "cpu")
     args.device = device
     args.device_ = "cuda" if args.cuda else "cpu"
-    print(f">> Model running on device {args.device}")
     
     
     # mixed precision training
@@ -57,10 +56,8 @@ def main():
     if args.mixed_precision_training:
         from torch.cuda.amp import GradScaler
         scaler = GradScaler()
-        print(f">> Mixed precision training enabled")
     else:
         scaler = None
-        print(f">> Mixed precision training disabled")
     
 
     # dtype settings
@@ -68,7 +65,6 @@ def main():
     dtype = getattr(torch, dtype_name)
     args.dtype = dtype
     torch.set_default_dtype(dtype)
-    print(f">> Model running on dtype {args.dtype}")
     
     
     # params global registry for easy access
@@ -159,14 +155,12 @@ def main():
 
     model = model.to(args.device)
     optim = get_optim(args, model)
-    # print(model)
 
 
     gradnorm_queue = utils.Queue(dtype=args.dtype)
     gradnorm_queue.add(3000)  # Add large value that will be flushed.
 
-        
-    
+
     
     if args.resume is not None:
         flow_state_dict = torch.load(join(args.resume, 'flow.npy'))
@@ -196,6 +190,20 @@ def main():
         ema = None
         model_ema = model
         model_ema_dp = model_dp
+    
+    
+    # model details logging
+    mem_params = sum([param.nelement()*param.element_size() for param in model.parameters()])
+    mem_bufs = sum([buf.nelement()*buf.element_size() for buf in model.buffers()])
+    mem = mem_params + mem_bufs # in bytes
+    mem_mb, mem_gb = mem/(1024**2), mem/(1024**3)
+    print(f"Model running on device  : {args.device}")
+    print(f"Mixed precision training : {args.mixed_precision_training}")
+    print(f"Model running on dtype   : {args.dtype}")
+    print(f"Model Size               : {mem_gb} GB  /  {mem_mb} MB  /  {mem} Bytes")
+    print(f"================================")
+    print(model)
+    
     
     
     best_nll_val = 1e8
