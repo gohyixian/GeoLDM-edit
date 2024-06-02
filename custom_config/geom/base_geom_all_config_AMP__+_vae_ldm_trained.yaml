@@ -1,6 +1,6 @@
 
 # exp_name: base_geom_all_config__+_vae_ldm_trained_20240528__AMP_TRUE_test
-exp_name: 20240602_EPOCH_WITH_TEST_cleanup_bf_VisChain_VisChain_loadMoleculeXYZ_with_adjusted_test
+exp_name: 20240602_EPOCH_WITH_TEST_cleanup_bf_VisChain_VisChain_loadMoleculeXYZ_with_adjusted_test__
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -186,7 +186,7 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_every_batch: 200.0  # ~!tmp 10000.0
+visualize_every_batch: 50.0  # ~!tmp 10000.0
 n_report_steps: 50
 
 
