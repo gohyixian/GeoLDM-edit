@@ -140,28 +140,28 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         torch.cuda.empty_cache()
         gc.collect()
         
-        # if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
-        #     start = time.time()
-        #     if len(args.conditioning) > 0:
-        #         save_and_sample_conditional(args, device, model_ema, prop_dist, dataset_info, epoch=epoch)
-        #     save_and_sample_chain(model_ema, args, device, dataset_info, prop_dist, epoch=epoch,
-        #                           batch_id=str(i))
-        #     sample_different_sizes_and_save(model_ema, nodes_dist, args, device, dataset_info,
-        #                                     prop_dist, epoch=epoch)
-        #     print(f'Sampling took {time.time() - start:.2f} seconds')
-
-        #     vis.visualize(f"outputs/{args.exp_name}/epoch_{epoch}_{i}", dataset_info=dataset_info, wandb=wandb)
-        #     vis.visualize_chain(f"outputs/{args.exp_name}/epoch_{epoch}_{i}/chain/", dataset_info, wandb=wandb)
-        #     if len(args.conditioning) > 0:
-        #         vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
-        #                             wandb=wandb, mode='conditional')
         if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
-            TEST_PATH = '/home/user/yixian.goh/geoldm-edit/outputs/20240602_EPOCH_WITH_TEST_cleanup_bf_VisChain_VisChain_loadMoleculeXYZ_with_adjusted_test/epoch_0_200'
-            vis.visualize(TEST_PATH, dataset_info=dataset_info, wandb=wandb)
-            vis.visualize_chain(f"{TEST_PATH}/chain/", dataset_info, wandb=wandb)
+            start = time.time()
+            if len(args.conditioning) > 0:
+                save_and_sample_conditional(args, device, model_ema, prop_dist, dataset_info, epoch=epoch)
+            save_and_sample_chain(model_ema, args, device, dataset_info, prop_dist, epoch=epoch,
+                                  batch_id=str(i))
+            sample_different_sizes_and_save(model_ema, nodes_dist, args, device, dataset_info,
+                                            prop_dist, epoch=epoch)
+            print(f'Sampling took {time.time() - start:.2f} seconds')
+
+            vis.visualize(f"outputs/{args.exp_name}/epoch_{epoch}_{i}", dataset_info=dataset_info, wandb=wandb)
+            vis.visualize_chain(f"outputs/{args.exp_name}/epoch_{epoch}_{i}/chain/", dataset_info, wandb=wandb)
             if len(args.conditioning) > 0:
                 vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
                                     wandb=wandb, mode='conditional')
+        # if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
+        #     TEST_PATH = '/home/user/yixian.goh/geoldm-edit/outputs/20240602_EPOCH_WITH_TEST_cleanup_bf_VisChain_VisChain_loadMoleculeXYZ_with_adjusted_test/epoch_0_200'
+        #     vis.visualize(TEST_PATH, dataset_info=dataset_info, wandb=wandb)
+        #     vis.visualize_chain(f"{TEST_PATH}/chain/", dataset_info, wandb=wandb)
+        #     if len(args.conditioning) > 0:
+        #         vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
+        #                             wandb=wandb, mode='conditional')
         
         # wandb.log({"Batch NLL": nll.item()}, commit=True)
         wandb.log({"Batch NLL": nll_item}, commit=True)

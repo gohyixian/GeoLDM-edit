@@ -1,6 +1,6 @@
 
 # exp_name: base_geom_all_config__+_vae_ldm_trained_20240528__AMP_TRUE_test
-exp_name: 20240602_EPOCH_WITH_TEST_cleanup_bf_VisChain_VisChain_loadMoleculeXYZ_with_adjusted_test__
+exp_name: 20240602_EPOCH_WITH_TEST_cleanup_bf_VisChain_VisChain_loadMoleculeXYZ_with_adjusted_test__TEST_FOR_NUM_PROCESS_DIFF
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -89,7 +89,7 @@ ema_decay: 0.9999
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 20  # tmp 500
+n_stability_samples: 500  # tmp 500
 
 
 # disables CUDA training
@@ -186,7 +186,7 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_every_batch: 50.0  # ~!tmp 10000.0
+visualize_every_batch: 500.0  # ~!tmp 10000.0
 n_report_steps: 50
 
 
