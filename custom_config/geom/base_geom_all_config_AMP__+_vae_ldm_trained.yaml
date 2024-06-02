@@ -1,5 +1,7 @@
 
-exp_name: base_geom_all_config__+_vae_ldm_trained_20240528
+# exp_name: base_geom_all_config__+_vae_ldm_trained_20240528__AMP_TRUE_test
+exp_name: 20240602_CKPT_MODE_all_test
+
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -109,7 +111,7 @@ use_checkpointing: true
 
 # sqrt: checkpointing is done on the sqrt(block_num)'th Equivariant block of each EGNN for most optimal perf
 # all:  checkpointing is done on all Equivariant blocks. Not optimal but helps if input size is too large
-checkpointing_mode: sqrt
+checkpointing_mode: all
 
 # splits tensors into managable chunks and performs forward propagation without breaking GPU memory limit
 forward_tensor_chunk_size: 50000
