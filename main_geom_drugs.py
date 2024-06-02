@@ -23,8 +23,6 @@ from qm9.utils import prepare_context, compute_mean_mad
 import train_test
 
 from global_registry import PARAM_REGISTRY, Config
-import psutil
-import os
 
 
 
@@ -44,15 +42,6 @@ def main():
         raise NotImplementedError()
     else:
         dataset_info = geom_with_h
-
-    # process tracing
-    args.pid = os.getpid()
-    def get_num_processes(pid):
-        current_process = psutil.Process(pid) # get current process
-        child_processes = current_process.children(recursive=True)  # get child processes
-        return len(child_processes)
-    args.get_num_processes = get_num_processes
-    # will be registered to PARAMS_REGISTRY for global access
     
 
     # device settings

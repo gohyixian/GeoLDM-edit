@@ -33,7 +33,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         edge_mask = data['edge_mask'].to(device, dtype)
         one_hot = data['one_hot'].to(device, dtype)
         charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
-
+        
         x = remove_mean_with_mask(x, node_mask)
 
         # not used
@@ -110,7 +110,6 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         # ~!mp
         print("04/5 - optim.step()") if args.verbose else None
         print(f"%%%%% MASTER WEIGHTS (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
-        print(f"%%%%% MASTER WEIGHTS (B4) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}") if args.verbose else None
         if args.mixed_precision_training:
             scaler.step(optim)
             scaler.update()
@@ -118,7 +117,6 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             optim.step()
 
         print(f"%%%%% MASTER WEIGHTS (A3) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
-        print(f"%%%%% MASTER WEIGHTS (A3) dp {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_dp.parameters()])))}") if args.verbose else None
 
         # Update EMA if enabled.
         if args.ema_decay > 0:
@@ -151,16 +149,11 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             if len(args.conditioning) > 0:
                 vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
                                     wandb=wandb, mode='conditional')
-        # wandb.log({"Batch NLL": nll.item()}, commit=True)
-        
-        # process tracking
-        num_processes = PARAM_REGISTRY.get('get_num_processes')(PARAM_REGISTRY.get('pid'))
-        print(f">> Number of processes: {num_processes}")
-
-        wandb.log({"Batch NLL": nll.item(), "Num Processes": num_processes}, commit=True)
+        wandb.log({"Batch NLL": nll.item()}, commit=True)
         
         
         # cleanup
+        del x, h, node_mask, edge_mask, one_hot, charges, loss, nll, reg_term, mean_abs_z, grad_norm
         torch.cuda.empty_cache()
         gc.collect()
         
@@ -168,6 +161,11 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             break
         
     wandb.log({"Train Epoch NLL": np.mean(nll_epoch)}, commit=False)
+    
+    # cleanup
+    del nll_epoch
+    torch.cuda.empty_cache()
+    gc.collect()
     
     return n_iterations
 
