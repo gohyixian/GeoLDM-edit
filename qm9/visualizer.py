@@ -5,6 +5,7 @@ import glob
 import random
 import matplotlib
 import imageio
+import gc
 
 
 matplotlib.use('Agg')
@@ -35,7 +36,13 @@ def save_xyz_file(path, one_hot, charges, positions, dataset_info, id_from=0, na
             atom = atoms[atom_i]
             atom = dataset_info['atom_decoder'][atom]
             f.write("%s %.9f %.9f %.9f\n" % (atom, positions[batch_i, atom_i, 0], positions[batch_i, atom_i, 1], positions[batch_i, atom_i, 2]))
+            del atom # cleanup
+            torch.cuda.empty_cache()
+            gc.collect()
         f.close()
+        del atoms # cleanup
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def load_molecule_xyz(file, dataset_info):
@@ -314,12 +321,18 @@ def visualize(path, dataset_info, max_num=25, wandb=None, spheres_3d=False):
         print("Average distance between atoms", dists.mean().item())
         plot_data3d(positions, atom_type, dataset_info=dataset_info, save_path=file[:-4] + '.png',
                     spheres_3d=spheres_3d)
+        del positions, one_hot, charges, atom_type, dists # cleanup
+        torch.cuda.empty_cache()
+        gc.collect()
 
         if wandb is not None:
             path = file[:-4] + '.png'
             # Log image(s)
             im = plt.imread(path)
             wandb.log({'molecule': [wandb.Image(im, caption=path)]})
+            del im # cleanup
+            torch.cuda.empty_cache()
+            gc.collect()
 
 
 def visualize_chain(path, dataset_info, wandb=None, spheres_3d=False,
@@ -337,6 +350,9 @@ def visualize_chain(path, dataset_info, wandb=None, spheres_3d=False,
         fn = file[:-4] + '.png'
         plot_data3d(positions, atom_type, dataset_info=dataset_info,
                     save_path=fn, spheres_3d=spheres_3d, alpha=1.0)
+        del positions, one_hot, charges, atom_type # cleanup
+        torch.cuda.empty_cache()
+        gc.collect()
         save_paths.append(fn)
 
     imgs = [imageio.imread(fn) for fn in save_paths]
@@ -346,6 +362,9 @@ def visualize_chain(path, dataset_info, wandb=None, spheres_3d=False,
     # Add the last frame 10 times so that the final result remains temporally.
     # imgs.extend([imgs[-1]] * 10)
     imageio.mimsave(gif_path, imgs, subrectangles=True)
+    del imgs # cleanup
+    torch.cuda.empty_cache()
+    gc.collect()
 
     if wandb is not None:
         wandb.log({mode: [wandb.Video(gif_path, caption=gif_path)]})

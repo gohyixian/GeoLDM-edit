@@ -25,7 +25,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     
     for i, data in enumerate(loader):
         # tmp
-        if i > 32:
+        if i > 500:
             break
         # ~!to ~!mp
         x = data['positions'].to(device, dtype)
@@ -226,6 +226,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                       f"NLL: {nll_epoch/n_samples:.2f}")
             
             # cleanup
+            del x, h, node_mask, edge_mask, one_hot, charges, nll
             torch.cuda.empty_cache()
             gc.collect()
 
@@ -242,7 +243,10 @@ def save_and_sample_chain(model, args, device, dataset_info, prop_dist,
     vis.save_xyz_file(f'outputs/{args.exp_name}/epoch_{epoch}_{batch_id}/chain/',
                       one_hot, charges, x, dataset_info, id_from, name='chain')
 
-    return one_hot, charges, x
+    # return one_hot, charges, x
+    del one_hot, charges, x   # cleanup
+    torch.cuda.empty_cache()
+    gc.collect()
 
 
 def sample_different_sizes_and_save(model, nodes_dist, args, device, dataset_info, prop_dist,
@@ -259,6 +263,10 @@ def sample_different_sizes_and_save(model, nodes_dist, args, device, dataset_inf
         print(f"Generated molecule: Positions {x[:-1, :, :]}")
         vis.save_xyz_file(f'outputs/{args.exp_name}/epoch_{epoch}_{batch_id}/', one_hot, charges, x, dataset_info,
                           batch_size * counter, name='molecule')
+        
+        del one_hot, charges, x, node_mask  # cleanup
+        torch.cuda.empty_cache()
+        gc.collect()
 
 
 def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info, prop_dist,
@@ -297,4 +305,7 @@ def save_and_sample_conditional(args, device, model, prop_dist, dataset_info, ep
         'outputs/%s/epoch_%d/conditional/' % (args.exp_name, epoch), one_hot, charges, x, dataset_info,
         id_from, name='conditional', node_mask=node_mask)
 
-    return one_hot, charges, x
+    # return one_hot, charges, x
+    del one_hot, charges, x, node_mask # cleanup
+    torch.cuda.empty_cache()
+    gc.collect()
