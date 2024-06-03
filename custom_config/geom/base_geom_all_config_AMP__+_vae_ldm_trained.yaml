@@ -1,6 +1,6 @@
 
 # exp_name: base_geom_all_config__+_vae_ldm_trained_20240528__AMP_TRUE_test
-exp_name: 20240602_EPOCH_WITH_TEST_cleanup_bf_VisChain_VisChain_loadMoleculeXYZ_with_adjusted_test__TEST_FOR_NUM_PROCESS_DIFF
+exp_name: 20240602_EPOCH_WITH_TEST_cleanup_bf_VisChain_noVisChain__TEST_FOR_NAN_AFTER_EPOCH_500
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
