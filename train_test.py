@@ -24,9 +24,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     n_iterations = len(loader)
     
     for i, data in enumerate(loader):
-        # tmp
-        if i > 500:
-            break
+        # # tmp
+        # if i > 500:
+        #     break
         # ~!to ~!mp
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
@@ -72,7 +72,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
                                                                     x, h, node_mask, edge_mask, context)
             loss = nll + args.ode_regularization * reg_term
-        print(f"%%%%% MASTER LOSS {torch.isnan(torch.Tensor(loss)).any()}") if args.verbose else None
+        print(f"%%%%% MASTER LOSS is NaN {torch.isnan(torch.Tensor(loss)).any()}") if args.verbose else None
         
         
         # ~!mp
@@ -109,27 +109,28 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 
         # ~!mp
         print("04/5 - optim.step()") if args.verbose else None
-        print(f"%%%%% MASTER WEIGHTS (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
+        print(f"%%%%% MASTER WEIGHTS is NaN (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
         if args.mixed_precision_training:
             scaler.step(optim)
             scaler.update()
         else:
             optim.step()
 
-        print(f"%%%%% MASTER WEIGHTS (A3) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
+        print(f"%%%%% MASTER WEIGHTS is NaN (A3) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
 
         # Update EMA if enabled.
         if args.ema_decay > 0:
             print("05/5 - ema.update_model_average") if args.verbose else None
             ema.update_model_average(model_ema, model)
-            print(f"%%%%% EMA Model Weights {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_ema.parameters()])))}")
-            
+        
 
         if i % args.n_report_steps == 0:
             print(f"\rEpoch: {epoch}, iter: {i}/{n_iterations}, "
                   f"Loss {loss.item():.2f}, NLL: {nll.item():.2f}, "
                   f"RegTerm: {reg_term.item():.1f}, "
                   f"GradNorm: {grad_norm:.1f}")
+            print(f"%%%%% EMA Model Weights is NaN {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_ema.parameters()])))}")
+            
             # nvidia-smi 
             print(f">> MEM Allocated: {torch.cuda.memory_allocated() / (1024 ** 2):.2f} MB    Reserved: {torch.cuda.memory_reserved() / (1024 ** 2):.2f} MB")
             print(subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
@@ -205,9 +206,9 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
         n_iterations = len(loader)
 
         for i, data in enumerate(loader):
-            # tmp
-            if i > 500:
-                break
+            # # tmp
+            # if i > 500:
+            #     break
             x = data['positions'].to(device, dtype)
             batch_size = x.size(0)
             node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)

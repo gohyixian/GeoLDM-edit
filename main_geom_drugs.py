@@ -224,7 +224,8 @@ def main():
             if not args.break_train_epoch and args.train_diffusion:
                 start  = time.time()
                 print(">>> Entering analyze_and_save")
-                print(f"%%%%% EMA Model Weights {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_ema.parameters()])))}")
+                print(f"%%%%% EMA Model Weights is NaN {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_ema.parameters()])))}")
+                
                 train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
                                             dataset_info, prop_dist, n_samples=args.n_stability_samples)
                 print(f">>> analyze_and_save took {time.time() - start:.1f} seconds.")
