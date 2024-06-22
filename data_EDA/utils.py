@@ -1,6 +1,6 @@
 import numpy as np
 
-def euclidean_distance(point1, point2):
+def euclidean_distance(point1, point2, axis=0):
     """
     Calculate the Euclidean distance between two points.
     
@@ -11,7 +11,7 @@ def euclidean_distance(point1, point2):
     Returns:
         float: Euclidean distance between the two points.
     """
-    return np.sqrt(np.sum((point1 - point2) ** 2))
+    return np.sqrt(np.sum((point1 - point2) ** 2, axis=axis))
 
 
 
