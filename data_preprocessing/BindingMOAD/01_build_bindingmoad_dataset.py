@@ -1,6 +1,5 @@
 import os
 import argparse
-from time import time
 from pathlib import Path
 from collections import defaultdict
 
@@ -154,6 +153,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # python -W ignore 01_build_bindingmoad_dataset.py --raw_moad_basedir /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/BindingMOAD --dist_cutoff 10.0 --max_occurences 50 --no_H --ca_only --save_dir /Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data/d_20240623_BindingMOAD_LG_PKT --save_dataset_name d_20240623_BindingMOAD_LG_PKT
+    # python -W ignore 01_build_bindingmoad_dataset.py --raw_moad_basedir /mnt/c/Users/PC/Desktop/yixian/data/BindingMOAD --dist_cutoff 10.0 --max_occurences 50 --no_H --ca_only --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20240623_BindingMOAD_LG_PKT --save_dataset_name d_20240623_BindingMOAD_LG_PKT
     
     
 
@@ -177,7 +177,6 @@ if __name__ == '__main__':
     # 4Y0D: [(RW2:A:502,), (RW2:B:501,), (RW2:C:503,), (RW2:D:501,)]
     pair_dict = ligand_list_to_dict(all_data)
 
-    tic = time()
     num_failed = 0
     with tqdm(total=n_tot) as pbar:
         # 1A0J

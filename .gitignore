@@ -39,6 +39,5 @@ Anaconda2024.02-1-Linux-x86_64.sh
 data_EDA/*.pkl
 data_EDA/data_object_cache/*.pkl
 
-data/geom/*
-data/combined_geom_PDBB_refined_core_LG_PKT/*.npy
-data/d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT/*.npy
+data/**/*.npy
+data/**/*.npz
