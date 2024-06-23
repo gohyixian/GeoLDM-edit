@@ -153,7 +153,7 @@ if __name__ == '__main__':
     parser.add_argument('--no_H', action='store_true')
     args = parser.parse_args()
     
-    # python -W ignore 01_build_bindingmoad_dataset.py --raw_moad_basedir /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/BindingMOAD --dist_cutoff 10.0 --max_occurences 50 --save_dir /Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data/d_20240623_BindingMOAD_LG_PKT --save_dataset_name d_20240623_BindingMOAD_LG_PKT
+    # python -W ignore 01_build_bindingmoad_dataset.py --raw_moad_basedir /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/BindingMOAD --dist_cutoff 10.0 --max_occurences 50 --no_H --ca_only --save_dir /Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data/d_20240623_BindingMOAD_LG_PKT --save_dataset_name d_20240623_BindingMOAD_LG_PKT
     
     
 
