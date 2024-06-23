@@ -1,9 +1,9 @@
 import os
 import pickle
 
-from GEOM import GEOM
-from QM9 import QM9
-from PDBBIND import PDBBIND
+from do_GEOM import GEOM
+from do_QM9 import QM9
+from do_PDBBIND import PDBBIND
 
 geom_data_object_pkl = 'data_object_cache/GEOM_data_object.pkl'
 qm9_data_object_pkl  = 'data_object_cache/QM9_data_object.pkl'

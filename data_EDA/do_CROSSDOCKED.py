@@ -254,4 +254,4 @@ if __name__ == '__main__':
     for attr, value in attributes_values.items():
         print(f"{attr}: {value}")
 
-# python CROSSDOCKED.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/CrossDocked
+# python do_CROSSDOCKED.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/CrossDocked

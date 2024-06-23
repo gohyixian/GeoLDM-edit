@@ -65,15 +65,14 @@ if __name__ == "__main__":
     unpacker = msgpack.Unpacker(open(path_to_GEOM_msgpack, "rb"))
     
     geom_data_obj = GEOM()
+    max_comformers_per_molecule = 30  # 1
     
     # for now, work with the one conformer with lowest total energy only (in Hartree)
-    # geom_data_obj.extract_conformers(unpacker, max_conformers_per_molecule=1)
-    geom_data_obj.extract_conformers(unpacker, max_conformers_per_molecule=30)   # 30 to align with default geom dataset configuration
+    geom_data_obj.extract_conformers(unpacker, max_conformers_per_molecule=max_comformers_per_molecule)   # 30 to align with default geom dataset configuration
     
     
     # Store the object to a file using pickle
-    # geom_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/GEOM_data_object.pkl'
-    geom_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/GEOM_C30_data_object.pkl'
+    geom_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/GEOM_C{max_comformers_per_molecule}_data_object.pkl'
     
     with open(geom_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(geom_data_obj, file)

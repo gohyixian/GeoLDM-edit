@@ -352,5 +352,5 @@ if __name__ == '__main__':
         print(f"{attr}: {value}")
 
 
-# python -W ignore BINDINGMOAD.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/BindingMOAD
+# python -W ignore do_BINDINGMOAD.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/BindingMOAD
 
