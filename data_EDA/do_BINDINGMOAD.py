@@ -14,9 +14,9 @@ from constants import dataset_params, get_periodictable_list
 from utils import euclidean_distance
 
 dataset_info = dataset_params['bindingmoad']
-amino_acid_dict = dataset_info['aa_encoder']
+# amino_acid_dict = dataset_info['aa_encoder']
 atom_dict = dataset_info['atom_encoder']
-atom_decoder = dataset_info['atom_decoder']
+# atom_decoder = dataset_info['atom_decoder']
 
 
 def read_label_file(csv_path):
@@ -228,12 +228,8 @@ if __name__ == '__main__':
 
     lig_coords = []
     lig_one_hot = []
-    lig_mask = []
     pocket_coords = []
     pocket_one_hot = []
-    pocket_mask = []
-    pdb_and_mol_ids = []
-    receptors = []
 
     n_tot = len(all_data)
     # 4Y0D: [(RW2:A:502,), (RW2:B:501,), (RW2:C:503,), (RW2:D:501,)]

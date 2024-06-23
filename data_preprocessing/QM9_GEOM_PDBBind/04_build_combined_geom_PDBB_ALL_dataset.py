@@ -1,11 +1,8 @@
 import msgpack
 import os
 import numpy as np
-import torch
-from torch.utils.data import BatchSampler, DataLoader, Dataset, SequentialSampler
 import argparse
-from qm9.data import collate as qm9_collate
-from utils import get_periodictable_list
+from constants import get_periodictable_list
 
 
 def extract_conformers(args):
@@ -95,7 +92,7 @@ def extract_conformers(args):
                 n = coords.shape[0]
                 # all_number_atoms.append(n)
                 mol_id_arr = mol_id * np.ones((n, 1), dtype=float)
-                id_coords = np.hstack((mol_id_arr, coords))
+                id_coords = np.hstack((mol_id_arr, coords))     # n x 5   [id, atomic_num, x, y, z]
 
                 dataset_conformers.append(id_coords)
                 mol_id += 1

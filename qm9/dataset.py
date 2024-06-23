@@ -35,7 +35,8 @@ def retrieve_dataloaders(cfg):
                                          num_workers=num_workers,
                                          collate_fn=preprocess.collate_fn)
                              for split, dataset in datasets.items()}
-    elif 'geom' in cfg.dataset:
+    # elif 'geom' in cfg.dataset:
+    else:  # GEOM | PDBBind | BindingMOAD | Cross-Docked
         import build_geom_dataset
         from configs.datasets_config import get_dataset_info
         if hasattr(cfg, 'data_file') and cfg.data_file is not None:
@@ -69,8 +70,8 @@ def retrieve_dataloaders(cfg):
                 shuffle=shuffle)
         del split_data
         charge_scale = None
-    else:
-        raise ValueError(f'Unknown dataset {cfg.dataset}')
+    # else:
+    #     raise ValueError(f'Unknown dataset {cfg.dataset}')
 
     return dataloaders, charge_scale
 

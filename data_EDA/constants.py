@@ -1,15 +1,23 @@
 import periodictable
 # https://periodictable.readthedocs.io/en/latest/guide/using.html
 # https://www.geeksforgeeks.org/get-the-details-of-an-element-by-atomic-number-using-python/
+from Bio.Data import IUPACData
+from Bio.PDB.Polypeptide import three_to_index, index_to_one, is_aa
 
-def get_periodictable_list():
+
+def get_periodictable_list(include_aa=False):
     atom_num = []
     symbol = []
     
+    if include_aa:
+        for three, one in IUPACData.protein_letters_3to1.items():
+            atom_num.append(int(three_to_index(three.upper())) - 20)
+            symbol.append(three.upper())
+
     for element in periodictable.elements:
         atom_num.append(int(element.number))
         symbol.append(str(element.symbol))
-    
+
     an2s = dict(zip(atom_num, symbol))
     s2an = dict(zip(symbol, atom_num))
     
