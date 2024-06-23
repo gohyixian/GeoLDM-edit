@@ -12,17 +12,11 @@ class EMA():
             old_weight, up_weight = ma_params.data, current_params.data
             ma_params.data = self.update_average(old_weight, up_weight)
 
+    # ~!fp16
     def update_average(self, old, new):
         if old is None:
             return new
-        
-        # ~!fp16
-        new_device = new.device
-        new = new.to(old.device)
-        tmp = old * self.beta + (1 - self.beta) * new
-        new = new.to(new_device)
-        return tmp
-        # return old * self.beta + (1 - self.beta) * new
+        return old * self.beta + (1 - self.beta) * new
 
 
 def sum_except_batch(x):
@@ -30,82 +24,37 @@ def sum_except_batch(x):
 
 # ~!fp16
 def remove_mean(x):
-    # _dtype = x.dtype
-    # if _dtype == torch.float16:
-    #     x_32 = x.clone().to(torch.float32)
-    #     mean = torch.mean(x_32, dim=1, keepdim=True).to(_dtype)
-    #     x = x - mean
-    #     return x
-    # else:
     mean = torch.mean(x, dim=1, keepdim=True)
     x = x - mean
     return x
 
 # ~!fp16
-def remove_mean_with_mask(x, node_mask):    # node_mask shape: [bs, n_nodes, 1]
-    # ~!fp16
-    # check if sum of unmasked item passes a threshold
-    _dtype = x.dtype
-    if _dtype == torch.float16:
-        x_32 = x.clone().to(torch.float32)
-        masked_max_abs_value = (x_32 * (1 - node_mask)).abs().sum().item()
-    else:
-        masked_max_abs_value = (x * (1 - node_mask)).abs().sum().item()
-    # assert masked_max_abs_value < 1e-5, f'Error {masked_max_abs_value} too high'
-    # ~!fp16
+def remove_mean_with_mask(x, node_mask):
+    masked_max_abs_value = (x * (1 - node_mask)).abs().sum().item()
     assert masked_max_abs_value < 1e-5, f'Error {masked_max_abs_value} too high'
-    
-    # calculate mean on masked item only
     N = node_mask.sum(1, keepdims=True)
-    # if _dtype == torch.float16:
-    #     mean = torch.sum(x_32, dim=1, keepdim=True) / N
-    #     mean = mean.to(_dtype)
-    #     x = x - mean * node_mask
-    #     return x
-    # else:
+
     mean = torch.sum(x, dim=1, keepdim=True) / N
     x = x - mean * node_mask
     return x
 
 # ~!fp16
 def assert_mean_zero(x):
-    _dtype = x.dtype
-    if _dtype == torch.float16:
-        x_32 = x.clone().to(torch.float32)
-        mean = torch.mean(x_32, dim=1, keepdim=True)
-    else:
-        mean = torch.mean(x, dim=1, keepdim=True)
+    mean = torch.mean(x, dim=1, keepdim=True)
     assert mean.abs().max().item() < 1e-4
 
-
 # ~!fp16
-# def assert_mean_zero_with_mask(x, node_mask, eps=1e-10):
 def assert_mean_zero_with_mask(x, node_mask, eps=1e-10):
     assert_correctly_masked(x, node_mask)
-
-    _dtype = x.dtype
-    if _dtype == torch.float16:
-        x_32 = x.clone().to(torch.float32)
-        largest_value = x_32.abs().max().item()
-        error = torch.sum(x_32, dim=1, keepdim=True).abs().max().item()
-    else:
-        largest_value = x.abs().max().item()
-        error = torch.sum(x, dim=1, keepdim=True).abs().max().item()
-
+    largest_value = x.abs().max().item()
+    error = torch.sum(x, dim=1, keepdim=True).abs().max().item()
     rel_error = error / (largest_value + eps)
-    # assert rel_error < 1e-2, f'Mean is not zero, relative_error {rel_error}'
-    assert rel_error < 1., f'Mean is not zero, relative_error {rel_error}'
-
+    assert rel_error < 1e-2, f'Mean is not zero, relative_error {rel_error}'
 
 # ~!fp16
 def assert_correctly_masked(variable, node_mask):
-    _dtype = variable.dtype
-    if _dtype == torch.float16:
-        var_32 = variable.clone().to(torch.float32)
-        val = (var_32 * (1 - node_mask)).abs().max().item()
-    else:
-        val = (variable * (1 - node_mask)).abs().max().item()
-    assert val < 1e-4, f'Variables not masked properly. val:{val}'
+    assert (variable * (1 - node_mask)).abs().max().item() < 1e-4, \
+        'Variables not masked properly.'
 
 
 def center_gravity_zero_gaussian_log_likelihood(x):

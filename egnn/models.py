@@ -73,7 +73,6 @@ class EGNN_dynamics_QM9(nn.Module):
         if h_dims == 0:
             # ~!to ~!mp
             h = torch.ones(bs*n_nodes, 1).to(self.device)
-            # h = torch.ones(bs*n_nodes, 1)
         else:
             h = xh[:, self.n_dims:].clone()
             # [1600, 1]
@@ -163,8 +162,6 @@ class EGNN_dynamics_QM9(nn.Module):
                 # ~!to ~!mp
                 edges = [torch.LongTensor(rows).to(device),
                          torch.LongTensor(cols).to(device)]
-                # edges = [torch.LongTensor(rows),
-                        #  torch.LongTensor(cols)]
                 edges_dic_b[batch_size] = edges
                 return edges
         else:
@@ -258,7 +255,6 @@ class EGNN_encoder_QM9(nn.Module):
         if h_dims == 0:
             # ~!to ~!mp
             h = torch.ones(bs*n_nodes, 1).to(self.device)      # pass ones if no node embeddings h
-            # h = torch.ones(bs*n_nodes, 1)      # pass ones if no node embeddings h
         else:
             h = xh[:, self.n_dims:].clone() # crop out
 
@@ -299,7 +295,8 @@ class EGNN_encoder_QM9(nn.Module):
             vel = remove_mean_with_mask(vel, node_mask.view(bs, n_nodes, 1))    # same remove mean, but mean of masked item only
 
         # final out mlp
-        h_final = low_vram_forward(self.final_mlp, h_final)      # h_final still flat
+        # h_final = low_vram_forward(self.final_mlp, h_final)      # h_final still flat
+        h_final = self.final_mlp(h_final)
         h_final = h_final * node_mask if node_mask is not None else h_final
         h_final = h_final.view(bs, n_nodes, -1)    # reshape back
 
@@ -395,9 +392,7 @@ class EGNN_encoder_QM9(nn.Module):
                             # the rows and columns of the adjacency matrix.
                 # ~!to ~!mp
                 edges = [torch.LongTensor(rows).to(device),
-                         torch.LongTensor(cols).to(device)]
-                # edges = [torch.LongTensor(rows),
-                        #  torch.LongTensor(cols)]     # [row[bs*n_nodes*n_nodes], col[bs*n_nodes*n_nodes]]
+                         torch.LongTensor(cols).to(device)]     # [row[bs*n_nodes*n_nodes], col[bs*n_nodes*n_nodes]]
                 edges_dic_b[batch_size] = edges
                 return edges
         else:
@@ -481,7 +476,6 @@ class EGNN_decoder_QM9(nn.Module):
         if h_dims == 0:
             # ~!to ~!mp
             h = torch.ones(bs*n_nodes, 1).to(self.device)
-            # h = torch.ones(bs*n_nodes, 1)
         else:
             h = xh[:, self.n_dims:].clone()
             # [1728, 1]  64*27
@@ -546,8 +540,6 @@ class EGNN_decoder_QM9(nn.Module):
                 # ~!to ~!mp
                 edges = [torch.LongTensor(rows).to(device),
                          torch.LongTensor(cols).to(device)]
-                # edges = [torch.LongTensor(rows),
-                        #  torch.LongTensor(cols)]
                 edges_dic_b[batch_size] = edges
                 return edges
         else:

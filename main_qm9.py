@@ -140,7 +140,7 @@ def main():
         optim.load_state_dict(optim_state_dict)
 
     # Initialize dataparallel if enabled and possible.
-    if args.dp and torch.cuda.device_count() > 1:  # true, ?
+    if args.dp and torch.cuda.device_count() > 1:
         print(f'Training using {torch.cuda.device_count()} GPUs')
         model_dp = torch.nn.DataParallel(model.cpu())
         model_dp = model_dp.cuda()
@@ -150,7 +150,7 @@ def main():
     # Initialize model copy for exponential moving average of params.
     if args.ema_decay > 0:
         model_ema = copy.deepcopy(model)
-        ema = flow_utils.EMA(args.ema_decay)  # 0.9999
+        ema = flow_utils.EMA(args.ema_decay)
 
         if args.dp and torch.cuda.device_count() > 1:
             model_ema_dp = torch.nn.DataParallel(model_ema)
@@ -162,9 +162,6 @@ def main():
         model_ema_dp = model_dp
     
     # ~!mp
-    # scaler = torch.cuda.amp.GradScaler()
-    scaler = None
-
     best_nll_val = 1e8
     best_nll_test = 1e8
     nth_iter = 0
@@ -173,8 +170,7 @@ def main():
         n_iters = train_epoch(args=args, loader=dataloaders['train'], epoch=epoch, model=model, model_dp=model_dp,
                     model_ema=model_ema, ema=ema, device=device, dtype=dtype, property_norms=property_norms,
                     nodes_dist=nodes_dist, dataset_info=dataset_info,
-                    gradnorm_queue=gradnorm_queue, optim=optim, prop_dist=prop_dist, 
-                    scaler=scaler)
+                    gradnorm_queue=gradnorm_queue, optim=optim, prop_dist=prop_dist)
         print(f">>> Epoch took {time.time() - start_epoch:.1f} seconds.")
         nth_iter += n_iters
 

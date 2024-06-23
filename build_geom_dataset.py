@@ -245,20 +245,16 @@ class GeomDrugsTransform(object):
         if self.include_charges:
             # ~!to ~!mp
             new_data['charges'] = torch.zeros(n, 1, device=self.device)
-            # new_data['charges'] = torch.zeros(n, 1)
         else:
             # ~!to ~!mp
             new_data['charges'] = torch.zeros(0, device=self.device)
-            # new_data['charges'] = torch.zeros(0)
         
         # ~!to ~!mp
         new_data['atom_mask'] = torch.ones(n, device=self.device)
-        # new_data['atom_mask'] = torch.ones(n)
 
         if self.sequential:
             # ~!to ~!mp
             edge_mask = torch.ones((n, n), device=self.device)
-            # edge_mask = torch.ones((n, n))
             edge_mask[~torch.eye(edge_mask.shape[0], dtype=torch.bool)] = 0
             new_data['edge_mask'] = edge_mask.flatten()
         return new_data
@@ -266,8 +262,6 @@ class GeomDrugsTransform(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    # quick note: conformations = possible 3D arrangements of a molecule due to factors like
-    #             single bonds are rotateble bonds.
     parser.add_argument("--conformations", type=int, default=30,
                         help="Max number of conformations kept for each molecule.")
     parser.add_argument("--remove_h", action='store_true', help="Remove hydrogens from the dataset.")

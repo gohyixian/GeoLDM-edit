@@ -84,12 +84,12 @@ class GCL(nn.Module):
             out = torch.cat([source, target], dim=1)  # torch.Size([bs*27*27, 256+256])
         else:
             out = torch.cat([source, target, edge_attr], dim=1)
-        # mij = self.edge_mlp(out)
-        mij = low_vram_forward(self.edge_mlp, out)
+        mij = self.edge_mlp(out)
+        # mij = low_vram_forward(self.edge_mlp, out)
 
         if self.attention:
-            # att_val = self.att_mlp(mij)
-            att_val = low_vram_forward(self.att_mlp, mij)
+            att_val = self.att_mlp(mij)
+            # att_val = low_vram_forward(self.att_mlp, mij)
             
             out = mij * att_val
         else:
@@ -110,8 +110,8 @@ class GCL(nn.Module):
             agg = torch.cat([x, agg, node_attr], dim=1)
         else:
             agg = torch.cat([x, agg], dim=1)
-        # out = x + self.node_mlp(agg)
-        out = x + low_vram_forward(self.node_mlp, agg)
+        out = x + self.node_mlp(agg)
+        # out = x + low_vram_forward(self.node_mlp, agg)
         
         return out, agg
 
@@ -152,12 +152,12 @@ class EquivariantUpdate(nn.Module):
         row, col = edge_index
         input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
         if self.tanh:  # true
-            # trans = coord_diff * torch.tanh(self.coord_mlp(input_tensor)) * self.coords_range
-            trans = coord_diff * torch.tanh(low_vram_forward(self.coord_mlp, input_tensor)) * self.coords_range
+            trans = coord_diff * torch.tanh(self.coord_mlp(input_tensor)) * self.coords_range
+            # trans = coord_diff * torch.tanh(low_vram_forward(self.coord_mlp, input_tensor)) * self.coords_range
             
         else:
-            # trans = coord_diff * self.coord_mlp(input_tensor)
-            trans = coord_diff * low_vram_forward(self.coord_mlp, input_tensor)
+            trans = coord_diff * self.coord_mlp(input_tensor)
+            # trans = coord_diff * low_vram_forward(self.coord_mlp, input_tensor)
         if edge_mask is not None:
             trans = trans * edge_mask
         agg = unsorted_segment_sum(trans, row, num_segments=coord.size(0),
@@ -260,8 +260,8 @@ class EGNN(nn.Module):
         distances, _ = coord2diff(x, edge_index)
         if self.sin_embedding is not None:      # none
             distances = self.sin_embedding(distances)
-        # h = self.embedding(h)
-        h = low_vram_forward(self.embedding, h)
+        h = self.embedding(h)
+        # h = low_vram_forward(self.embedding, h)
         
         for i in range(0, self.n_layers):
             # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
@@ -290,8 +290,8 @@ class EGNN(nn.Module):
                 h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
 
         # Important, the bias of the last linear might be non-zero
-        # h = self.embedding_out(h)
-        h = low_vram_forward(self.embedding_out, h)
+        h = self.embedding_out(h)
+        # h = low_vram_forward(self.embedding_out, h)
         
         if node_mask is not None:
             h = h * node_mask
@@ -341,9 +341,8 @@ class SinusoidsEmbeddingNew(nn.Module):
         self.dim = len(self.frequencies) * 2
 
     def forward(self, x):
+        # ~!fp16
         x = torch.sqrt(x + 1e-8)
-        # x = torch.sqrt(x + 1e-4)  # ~!fp16
-        
         emb = x * self.frequencies[None, :].to(x.device)
         emb = torch.cat((emb.sin(), emb.cos()), dim=-1)
         return emb.detach()
@@ -353,8 +352,8 @@ def coord2diff(x, edge_index, norm_constant=1):
     row, col = edge_index
     coord_diff = x[row] - x[col]     # feeding this to model, relative difference
     radial = torch.sum((coord_diff) ** 2, 1).unsqueeze(1)
+    # ~!fp16
     norm = torch.sqrt(radial + 1e-8)
-    # norm = torch.sqrt(radial + 1e-4)  # ~!fp16
     
     coord_diff = coord_diff/(norm + norm_constant)
     return radial, coord_diff

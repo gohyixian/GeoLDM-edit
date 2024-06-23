@@ -49,16 +49,7 @@ def main():
     device = torch.device("cuda" if args.cuda else "cpu")
     args.device = device
     args.device_ = "cuda" if args.cuda else "cpu"
-    
-    
-    # mixed precision training
-    # ~!mp
-    if args.mixed_precision_training:
-        from torch.cuda.amp import GradScaler
-        scaler = GradScaler()
-    else:
-        scaler = None
-    
+
 
     # dtype settings
     module_name, dtype_name = args.dtype.split('.')
@@ -82,7 +73,6 @@ def main():
                                                     dataset_name=args.dataset)
     # ~!to ~!mp
     transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, args.device, args.sequential)
-    # transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, torch.device("cpu"), args.sequential)
 
     dataloaders = {}
     for key, data_list in zip(['train', 'val', 'test'], split_data):
@@ -96,10 +86,8 @@ def main():
     del split_data
 
 
-    # # not used
-    # atom_encoder = dataset_info['atom_encoder']
-    # atom_decoder = dataset_info['atom_decoder']
-
+    atom_encoder = dataset_info['atom_encoder']
+    atom_decoder = dataset_info['atom_decoder']
 
     # args, unparsed_args = parser.parse_known_args()
     args.wandb_usr = utils.get_wandb_username(args.wandb_usr)
@@ -198,7 +186,7 @@ def main():
     mem = mem_params + mem_bufs # in bytes
     mem_mb, mem_gb = mem/(1024**2), mem/(1024**3)
     print(f"Model running on device  : {args.device}")
-    print(f"Mixed precision training : {args.mixed_precision_training}")
+    # print(f"Mixed precision training : {args.mixed_precision_training}")
     print(f"Model running on dtype   : {args.dtype}")
     print(f"Model Size               : {mem_gb} GB  /  {mem_mb} MB  /  {mem} Bytes")
     print(f"================================")
@@ -213,7 +201,7 @@ def main():
         start_epoch = time.time()
         n_iters = train_test.train_epoch(args, dataloaders['train'], epoch, model, model_dp, model_ema, ema, device, dtype,
                                property_norms, optim, nodes_dist, gradnorm_queue, dataset_info,
-                               prop_dist, scaler=scaler)
+                               prop_dist)
         print(f">>> Epoch took {time.time() - start_epoch:.1f} seconds.")
         nth_iter += n_iters
 
@@ -224,8 +212,6 @@ def main():
             if not args.break_train_epoch and args.train_diffusion:
                 start  = time.time()
                 print(">>> Entering analyze_and_save")
-                print(f"%%%%% EMA Model Weights is NaN {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_ema.parameters()])))}")
-                
                 train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
                                             dataset_info, prop_dist, n_samples=args.n_stability_samples)
                 print(f">>> analyze_and_save took {time.time() - start:.1f} seconds.")

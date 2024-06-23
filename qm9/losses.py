@@ -8,7 +8,6 @@ def sum_except_batch(x):
 def assert_correctly_masked(variable, node_mask):
     # ~!fp16
     assert (variable * (1 - node_mask)).abs().sum().item() < 1e-8
-    # assert (variable * (1 - node_mask)).abs().sum().item() < 1e-4
     
 
 

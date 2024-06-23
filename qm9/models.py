@@ -203,10 +203,6 @@ def get_optim(args, generative_model):
         generative_model.parameters(),
         lr=args.lr, amsgrad=True,
         weight_decay=1e-12)
-    # optim = torch.optim.AdamW(
-    #     generative_model.parameters(),
-    #     lr=args.lr, amsgrad=True,
-    #     weight_decay=1e-4)
 
     return optim
 
@@ -233,7 +229,6 @@ class DistributionNodes:
 
         # ~!fp16
         entropy = torch.sum(self.prob * torch.log(self.prob + 1e-30))   # entropy calculation, unused
-        # entropy = torch.sum(self.prob * torch.log(self.prob + 1e-4))   # entropy calculation, unused
         
         print("Entropy of n_nodes: H[N]", entropy.item())   # i.e. -2.475700616836548
 
@@ -251,12 +246,8 @@ class DistributionNodes:
 
         # ~!fp16
         log_p = torch.log(self.prob + 1e-30)    # computes log probability. 1e-30 epsilon is to prevent log(0)
-        # log_p = torch.log(self.prob + 1e-4)    # computes log probability. 1e-30 epsilon is to prevent log(0)
-
         log_p = log_p.to(batch_n_nodes.device)
-
         log_probs = log_p[idcs]    # get required log probs only
-
         return log_probs
 
 
@@ -295,7 +286,6 @@ class DistributionProperty:
         
         # ~!fp16
         prop_range = prop_max - prop_min + 1e-12      # epsilon to prevent 0
-        # prop_range = prop_max - prop_min + 1e-4      # epsilon to prevent 0
         
         histogram = torch.zeros(n_bins)     # shape [1000]
         for val in values:

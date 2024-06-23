@@ -45,12 +45,12 @@ def get_adj_matrix(n_nodes, batch_size, device):
     edges = [torch.LongTensor(rows).to(device), torch.LongTensor(cols).to(device)]
     return edges
 
-# def preprocess_input(one_hot, charges, charge_power, charge_scale, device):
-#     charge_tensor = (charges.unsqueeze(-1) / charge_scale).pow(
-#         torch.arange(charge_power + 1., device=device, dtype=torch.float32))
-#     charge_tensor = charge_tensor.view(charges.shape + (1, charge_power + 1))
-#     atom_scalars = (one_hot.unsqueeze(-1) * charge_tensor).view(charges.shape[:2] + (-1,))
-#     return atom_scalars
+def preprocess_input(one_hot, charges, charge_power, charge_scale, device):
+    charge_tensor = (charges.unsqueeze(-1) / charge_scale).pow(
+        torch.arange(charge_power + 1., device=device, dtype=torch.float32))
+    charge_tensor = charge_tensor.view(charges.shape + (1, charge_power + 1))
+    atom_scalars = (one_hot.unsqueeze(-1) * charge_tensor).view(charges.shape[:2] + (-1,))
+    return atom_scalars
 
 
 def prepare_context(conditioning, minibatch, property_norms):

@@ -16,7 +16,7 @@ import gc
 
 
 def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
-                nodes_dist, gradnorm_queue, dataset_info, prop_dist, scaler):
+                nodes_dist, gradnorm_queue, dataset_info, prop_dist):
     
     model_dp.train()
     model.train()
@@ -24,10 +24,6 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     n_iterations = len(loader)
     
     for i, data in enumerate(loader):
-        # # tmp
-        # if i > 500:
-        #     break
-        # ~!to ~!mp
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
         edge_mask = data['edge_mask'].to(device, dtype)
@@ -36,8 +32,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         
         x = remove_mean_with_mask(x, node_mask)
 
-        # not used
-        if args.augment_noise > 0:  # 0
+        if args.augment_noise > 0:
+            raise NotImplementedError()
             # Add noise eps ~ N(0, augment_noise) around points.
             eps = sample_center_gravity_zero_gaussian_with_mask(x.size(), x.device, node_mask)
             x = x + eps * args.augment_noise
@@ -60,67 +56,26 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         optim.zero_grad()
 
         # ~!mp
-        print("01/5 - compute_loss_and_nll") if args.verbose else None
-        if args.mixed_precision_training:
-            with torch.autocast(device_type='cuda', dtype=torch.get_default_dtype()):
-                # transform batch through flow
-                nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
-                                                                        x, h, node_mask, edge_mask, context)
-                # standard nll from forward KL
-                loss = nll + args.ode_regularization * reg_term
-        else:
-            nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
-                                                                    x, h, node_mask, edge_mask, context)
-            loss = nll + args.ode_regularization * reg_term
-        print(f"%%%%% MASTER LOSS is NaN {torch.isnan(torch.Tensor(loss)).any()}") if args.verbose else None
-        
-        
+        # transform batch through flow
+        nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
+                                                                x, h, node_mask, edge_mask, context)
+        # standard nll from forward KL
+        loss = nll + args.ode_regularization * reg_term
+
         # ~!mp
-        print("02/5 - loss.backward") if args.verbose else None
-        if args.mixed_precision_training:
-            # first scale loss by scale_factor, then compute backward pass for gradients
-            scaler.scale(loss).backward()
-        else:
-            loss.backward()
+        loss.backward()
         
         
         if args.clip_grad:
-            print("03/5 - utils.gradient_clipping") if args.verbose else None
-            # manually unscaling gradients for correct gradient clipping
-            # https://pytorch.org/docs/2.2/notes/amp_examples.html#gradient-clipping
-            if args.mixed_precision_training:
-                scaler.unscale_(optim)
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
-            
-            if args.verbose:
-                def check_grad(w):
-                    if w.requires_grad == True:
-                        if w.grad is not None:
-                            return 1
-                        else:
-                            return 0
-                    else:
-                        return 1
-                grad_check_clipped = [check_grad(w) for name,w in model.named_parameters()]
-                print(f"GRADIENTS is not None:  Clipped={sum(grad_check_clipped)}/{len(grad_check_clipped)}")
-                [print("    ", name, w.grad is not None) for name,w in model.named_parameters()]
         else:
             grad_norm = 0.
 
         # ~!mp
-        print("04/5 - optim.step()") if args.verbose else None
-        print(f"%%%%% MASTER WEIGHTS is NaN (B4) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
-        if args.mixed_precision_training:
-            scaler.step(optim)
-            scaler.update()
-        else:
-            optim.step()
-
-        print(f"%%%%% MASTER WEIGHTS is NaN (A3) {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model.parameters()])))}") if args.verbose else None
+        optim.step()
 
         # Update EMA if enabled.
         if args.ema_decay > 0:
-            print("05/5 - ema.update_model_average") if args.verbose else None
             ema.update_model_average(model_ema, model)
         
 
@@ -129,7 +84,6 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
                   f"Loss {loss.item():.2f}, NLL: {nll.item():.2f}, "
                   f"RegTerm: {reg_term.item():.1f}, "
                   f"GradNorm: {grad_norm:.1f}")
-            print(f"%%%%% EMA Model Weights is NaN {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in model_ema.parameters()])))}")
             
             # nvidia-smi 
             print(f">> MEM Allocated: {torch.cuda.memory_allocated() / (1024 ** 2):.2f} MB    Reserved: {torch.cuda.memory_reserved() / (1024 ** 2):.2f} MB")
@@ -143,31 +97,22 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         torch.cuda.empty_cache()
         gc.collect()
         
-        # if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
-        #     start = time.time()
-        #     if len(args.conditioning) > 0:
-        #         save_and_sample_conditional(args, device, model_ema, prop_dist, dataset_info, epoch=epoch)
-        #     save_and_sample_chain(model_ema, args, device, dataset_info, prop_dist, epoch=epoch,
-        #                           batch_id=str(i))
-        #     sample_different_sizes_and_save(model_ema, nodes_dist, args, device, dataset_info,
-        #                                     prop_dist, epoch=epoch)
-        #     print(f'Sampling took {time.time() - start:.2f} seconds')
+        if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
+            start = time.time()
+            if len(args.conditioning) > 0:
+                save_and_sample_conditional(args, device, model_ema, prop_dist, dataset_info, epoch=epoch)
+            save_and_sample_chain(model_ema, args, device, dataset_info, prop_dist, epoch=epoch,
+                                  batch_id=str(i))
+            sample_different_sizes_and_save(model_ema, nodes_dist, args, device, dataset_info,
+                                            prop_dist, epoch=epoch)
+            print(f'Sampling took {time.time() - start:.2f} seconds')
 
-        #     vis.visualize(f"outputs/{args.exp_name}/epoch_{epoch}_{i}", dataset_info=dataset_info, wandb=wandb)
-        #     vis.visualize_chain(f"outputs/{args.exp_name}/epoch_{epoch}_{i}/chain/", dataset_info, wandb=wandb)
-        #     if len(args.conditioning) > 0:
-        #         vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
-        #                             wandb=wandb, mode='conditional')
-                
-        # if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
-        #     TEST_PATH = '/home/user/yixian.goh/geoldm-edit/outputs/20240602_EPOCH_WITH_TEST_cleanup_bf_VisChain_VisChain_loadMoleculeXYZ_with_adjusted_test/epoch_0_200'
-        #     vis.visualize(TEST_PATH, dataset_info=dataset_info, wandb=wandb)
-        #     vis.visualize_chain(f"{TEST_PATH}/chain/", dataset_info, wandb=wandb)
-        #     if len(args.conditioning) > 0:
-        #         vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
-        #                             wandb=wandb, mode='conditional')
-        
-        # wandb.log({"Batch NLL": nll.item()}, commit=True)
+            vis.visualize(f"outputs/{args.exp_name}/epoch_{epoch}_{i}", dataset_info=dataset_info, wandb=wandb)
+            vis.visualize_chain(f"outputs/{args.exp_name}/epoch_{epoch}_{i}/chain/", dataset_info, wandb=wandb)
+            if len(args.conditioning) > 0:
+                vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
+                                    wandb=wandb, mode='conditional')
+
         wandb.log({"Batch NLL": nll_item}, commit=True)
         
         
@@ -198,7 +143,6 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
     eval_model.eval()
     
     # ~!mp
-    # with torch.no_grad(), torch.cuda.amp.autocast():
     with torch.no_grad():
         nll_epoch = 0
         n_samples = 0
@@ -206,9 +150,6 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
         n_iterations = len(loader)
 
         for i, data in enumerate(loader):
-            # # tmp
-            # if i > 500:
-            #     break
             x = data['positions'].to(device, dtype)
             batch_size = x.size(0)
             node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
@@ -217,6 +158,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
             charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
 
             if args.augment_noise > 0:
+                raise NotImplementedError()
                 # Add noise eps ~ N(0, augment_noise) around points.
                 eps = sample_center_gravity_zero_gaussian_with_mask(x.size(),
                                                                     x.device,
@@ -257,17 +199,13 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
 def save_and_sample_chain(model, args, device, dataset_info, prop_dist,
                           epoch=0, id_from=0, batch_id=''):
     # ~!mp
-    # with torch.cuda.amp.autocast():
     one_hot, charges, x = sample_chain(args=args, device=device, flow=model,
                                     n_tries=1, dataset_info=dataset_info, prop_dist=prop_dist)
 
     vis.save_xyz_file(f'outputs/{args.exp_name}/epoch_{epoch}_{batch_id}/chain/',
                       one_hot, charges, x, dataset_info, id_from, name='chain')
 
-    # return one_hot, charges, x
-    del one_hot, charges, x   # cleanup
-    torch.cuda.empty_cache()
-    gc.collect()
+    return one_hot, charges, x
 
 
 def sample_different_sizes_and_save(model, nodes_dist, args, device, dataset_info, prop_dist,
@@ -277,7 +215,6 @@ def sample_different_sizes_and_save(model, nodes_dist, args, device, dataset_inf
         nodesxsample = nodes_dist.sample(batch_size)
         
         # ~!mp
-        # with torch.cuda.amp.autocast():
         one_hot, charges, x, node_mask = sample(args, device, model, prop_dist=prop_dist,
                                                 nodesxsample=nodesxsample,
                                                 dataset_info=dataset_info)
@@ -300,7 +237,6 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
         nodesxsample = nodes_dist.sample(batch_size)
         
         # ~!mp
-        # with torch.cuda.amp.autocast():
         one_hot, charges, x, node_mask = sample(args, device, model_sample, dataset_info, prop_dist,
                                                 nodesxsample=nodesxsample)
 
@@ -319,14 +255,10 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
 
 def save_and_sample_conditional(args, device, model, prop_dist, dataset_info, epoch=0, id_from=0):
     # ~!mp
-    # with torch.cuda.amp.autocast():
     one_hot, charges, x, node_mask = sample_sweep_conditional(args, device, model, dataset_info, prop_dist)
 
     vis.save_xyz_file(
         'outputs/%s/epoch_%d/conditional/' % (args.exp_name, epoch), one_hot, charges, x, dataset_info,
         id_from, name='conditional', node_mask=node_mask)
 
-    # return one_hot, charges, x
-    del one_hot, charges, x, node_mask # cleanup
-    torch.cuda.empty_cache()
-    gc.collect()
+    return one_hot, charges, x
