@@ -128,9 +128,12 @@ if __name__ == '__main__':
             # print("\nPOCKET DATA")
             # print(pocket_data.shape, '\n', pocket_data)
             
-            ligand_dataset.append(ligand_data)
-            pocket_dataset.append(pocket_data)
-            mol_id += 1
+            if ligand_data.shape[1] == 5 and pocket_data.shape[1] == 5:
+                ligand_dataset.append(ligand_data)
+                pocket_dataset.append(pocket_data)
+                mol_id += 1
+            else:
+                print(f">> Skipped due to ligand {ligand_data.shape}, or pocket {pocket_data.shape}")
             
         except (KeyError, AssertionError, FileNotFoundError, IndexError,
                 ValueError) as e:
@@ -139,9 +142,9 @@ if __name__ == '__main__':
             pbar.set_description(f'#failed: {num_failed}')
             continue
         
-        print("===============")
-        print(ligand_fn)
-        print(pocket_fn)
+        # print("===============")
+        # print(ligand_fn)
+        # print(pocket_fn)
 
 
     ligand_dataset = np.vstack(ligand_dataset)

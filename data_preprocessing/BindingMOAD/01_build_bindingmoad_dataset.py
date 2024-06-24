@@ -181,8 +181,8 @@ if __name__ == '__main__':
     with tqdm(total=n_tot) as pbar:
         # 1A0J
         for p in pair_dict:
-            print("=============")
-            print(f"P: {p}")
+            # print("=============")
+            # print(f"P: {p}")
 
             pdb_successful = set()
 
@@ -205,7 +205,7 @@ if __name__ == '__main__':
                 n_bio_successful = 0
                 # (RW2:A:502,)
                 for m in pair_dict[p]:
-                    print(f"M: {m}")
+                    # print(f"M: {m}")
 
                     # Skip already processed ligand (duplicates: ligands with >1 optimal docking positions)
                     # RW2:A:502
@@ -217,7 +217,7 @@ if __name__ == '__main__':
                     ligand_resi = int(ligand_resi)
 
                     try:
-                        print(ligand_name, ligand_chain, ligand_resi)
+                        # print(ligand_name, ligand_chain, ligand_resi)
                         ligand_data, pocket_data = process_ligand_and_pocket(
                             pdb_struct, ligand_name, ligand_chain, ligand_resi,
                             dist_cutoff=args.dist_cutoff, ca_only=args.ca_only, 
@@ -228,8 +228,14 @@ if __name__ == '__main__':
                         # print("\nPOCKET DATA")
                         # print(pocket_data.shape, '\n', pocket_data)
                         
-                        ligand_dataset.append(ligand_data)
-                        pocket_dataset.append(pocket_data)
+                        if ligand_data.shape[1] == 5 and pocket_data.shape[1] == 5:
+                            ligand_dataset.append(ligand_data)
+                            pocket_dataset.append(pocket_data)
+                            mol_id += 1
+                        else:
+                            print(f">> Skipped due to ligand {ligand_data.shape}, or pocket {pocket_data.shape}")
+                            
+                        
                     except (KeyError, AssertionError, FileNotFoundError,
                             IndexError, ValueError) as e:
                         # print(type(e).__name__, e)
@@ -237,7 +243,6 @@ if __name__ == '__main__':
 
                     pdb_successful.add(m[0])
                     n_bio_successful += 1
-                    mol_id += 1
                     
 
             pbar.update(len(pair_dict[p]))
