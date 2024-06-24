@@ -228,12 +228,17 @@ if __name__ == '__main__':
                         # print("\nPOCKET DATA")
                         # print(pocket_data.shape, '\n', pocket_data)
                         
-                        if ligand_data.shape[1] == 5 and pocket_data.shape[1] == 5:
-                            ligand_dataset.append(ligand_data)
-                            pocket_dataset.append(pocket_data)
-                            mol_id += 1
+                        if len(list(ligand_data.shape)) == 2 and len(list(pocket_data.shape)) == 2:
+                            if ligand_data.shape[1] == 5 and pocket_data.shape[1] == 5:
+                                ligand_dataset.append(ligand_data)
+                                pocket_dataset.append(pocket_data)
+                                mol_id += 1
+                            else:
+                                print(f">> Skipped due to ligand {ligand_data.shape}, or pocket {pocket_data.shape}")
+                                num_failed += 1
                         else:
                             print(f">> Skipped due to ligand {ligand_data.shape}, or pocket {pocket_data.shape}")
+                            num_failed += 1
                             
                         
                     except (KeyError, AssertionError, FileNotFoundError,
