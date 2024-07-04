@@ -1,6 +1,6 @@
 '''
 This script computes the necessary stats for the dataset required in configs/datasets_config.py
-For BindingMOAD, we will compute the stats for the combined [Ligand+Pocket] for VAE training,
+For CrossDocked, we will compute the stats for the combined [Ligand+Pocket] for VAE training,
 and [Ligand] only for LDM & ControlNet training.
 
 All stats listed for [Ligand] will be the stats of [Ligands] only, except for the below ([Ligand+Pocket]):
@@ -27,7 +27,8 @@ from constants import get_periodictable_list
 #  [idx, atomic_num, x, y, z]]
 
 
-conformation_file = '../../data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H.npz'
+
+conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H.npz'
 
 all_data = np.load(conformation_file)
 

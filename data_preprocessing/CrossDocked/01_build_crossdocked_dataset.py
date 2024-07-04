@@ -182,3 +182,13 @@ if __name__ == '__main__':
     print(f"[PKT] Ave. Atom Num  : {pocket_dataset.shape[0] / (mol_id+1)}")
     print("Total number of Ligand-Pocket pairs:", mol_id+1)
     print("Dataset processed.")
+
+
+# failed: 67: 100%|| 100100/100100 [40:13<00:00, 41.47it/s]
+#
+# [LG] Total Atom Num  : 2361427
+# [LG] Ave. Atom Num   : 23.606951844928073
+# [PKT] Total Atom Num : 5056527
+# [PKT] Ave. Atom Num  : 50.549599624116524
+# Total number of Ligand-Pocket pairs: 100031
+# Dataset processed.

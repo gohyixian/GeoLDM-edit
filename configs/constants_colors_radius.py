@@ -3,6 +3,8 @@
 
 # radius scaled accordingly to the range of [0.1, 0.8] and rounded to 1 d.p.
 
+# TODO: add colors and radius for Amino Acids (CA only cases)
+
 colors_radius_dic = {
     'H': '#FFFFFF_0.1',
     'He': '#D9FFFF_0.2',

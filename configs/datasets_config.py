@@ -176,6 +176,103 @@ d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT = {
 
 
 
+
+# BindingMOAD
+# for VAE
+d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_POCKET_atom_decoder = \
+    ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 
+     'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR', 
+     'B', 'C', 'N', 'O', 'F', 'P', 'S', 'V', 'I', 'W'],
+
+d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_POCKET = {
+    'name': 'd_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H__LIGAND+POCKET',
+    'atom_encoder': {'ALA': 0, 'CYS': 1, 'ASP': 2, 'GLU': 3, 'PHE': 4, 'GLY': 5, 'HIS': 6, 'ILE': 7, 'LYS': 8, 'LEU': 9, 'MET': 10, 
+                     'ASN': 11, 'PRO': 12, 'GLN': 13, 'ARG': 14, 'SER': 15, 'THR': 16, 'VAL': 17, 'TRP': 18, 'TYR': 19, 
+                     'B': 20, 'C': 21, 'N': 22, 'O': 23, 'F': 24, 'P': 25, 'S': 26, 'V': 27, 'I': 28, 'W': 29},
+    'atomic_nb': [-20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 5, 6, 7, 8, 9, 15, 16, 23, 53, 74],
+    'atom_decoder': d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_POCKET_atom_decoder,
+    'max_n_nodes': 179,
+    'n_nodes': {1: 7, 2: 7, 3: 17, 4: 48, 5: 384, 6: 606, 7: 707, 8: 1036, 9: 1503, 10: 2270, 11: 1899, 12: 2257, 13: 1761, 14: 1552, 15: 1472, 16: 1770, 17: 1224, 18: 1262, 19: 1375, 20: 2032, 21: 2129, 22: 1890, 23: 1685, 24: 1781, 25: 1713, 26: 1440, 27: 1717, 28: 1530, 29: 1557, 30: 1150, 31: 1619, 32: 1491, 33: 1285, 34: 920, 35: 927, 36: 1120, 37: 883, 38: 740, 39: 840, 40: 812, 41: 647, 42: 722, 43: 711, 44: 955, 45: 629, 46: 694, 47: 745, 48: 857, 49: 831, 50: 717, 51: 733, 52: 799, 53: 942, 54: 978, 55: 966, 56: 973, 57: 1057, 58: 1076, 59: 1092, 60: 1145, 61: 1373, 62: 1404, 63: 1503, 64: 1381, 65: 1307, 66: 1284, 67: 1253, 68: 1194, 69: 1211, 70: 1191, 71: 1153, 72: 1207, 73: 1062, 74: 1120, 75: 990, 76: 895, 77: 940, 78: 848, 79: 843, 80: 814, 81: 827, 82: 767, 83: 652, 84: 573, 85: 565, 86: 577, 87: 527, 88: 501, 89: 442, 90: 408, 91: 397, 92: 394, 93: 349, 94: 292, 95: 273, 96: 265, 97: 218, 98: 227, 99: 202, 100: 209, 101: 218, 102: 194, 103: 156, 104: 154, 105: 139, 106: 110, 107: 98, 108: 94, 109: 98, 110: 100, 111: 71, 112: 45, 113: 36, 114: 34, 115: 36, 116: 34, 117: 28, 118: 25, 119: 21, 120: 36, 121: 41, 122: 33, 123: 34, 124: 23, 125: 19, 126: 8, 127: 5, 128: 12, 129: 15, 130: 17, 131: 18, 132: 25, 133: 20, 134: 23, 135: 14, 136: 10, 137: 11, 138: 13, 139: 6, 140: 7, 141: 3, 142: 3, 143: 7, 144: 2, 145: 13, 146: 2, 147: 6, 148: 5, 149: 6, 150: 8, 151: 4, 152: 3, 153: 4, 154: 5, 155: 4, 156: 6, 157: 3, 158: 4, 159: 5, 160: 2, 161: 2, 162: 3, 163: 1, 164: 2, 165: 2, 166: 1, 167: 1, 170: 2, 179: 1},
+    'atom_types': {0: 238749, 1: 60324, 2: 171081, 3: 156502, 4: 182510, 5: 289879, 6: 112868, 7: 209755, 8: 129252, 9: 311823, 10: 106180, 11: 143771, 12: 132012, 13: 102341, 14: 158295, 15: 211001, 16: 190624, 17: 241225, 18: 76118, 19: 165968, 20: 681, 21: 755428, 22: 133742, 23: 265841, 24: 10392, 25: 21393, 26: 12747, 27: 36, 28: 496, 29: 2},
+    'colors_dic': [get_colors(f) for f in d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_POCKET_atom_decoder],
+    'radius_dic': [get_radius(f) for f in d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_POCKET_atom_decoder],
+    'with_h': False
+}
+
+# for LDM, ControlNet
+d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_atom_decoder = \
+    ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 
+     'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR', 
+     'B', 'C', 'N', 'O', 'F', 'P', 'S', 'V', 'I', 'W'],
+
+d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND = {
+    'name': 'd_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H__LIGAND',
+    'atom_encoder': {'ALA': 0, 'CYS': 1, 'ASP': 2, 'GLU': 3, 'PHE': 4, 'GLY': 5, 'HIS': 6, 'ILE': 7, 'LYS': 8, 'LEU': 9, 'MET': 10, 
+                     'ASN': 11, 'PRO': 12, 'GLN': 13, 'ARG': 14, 'SER': 15, 'THR': 16, 'VAL': 17, 'TRP': 18, 'TYR': 19, 
+                     'B': 20, 'C': 21, 'N': 22, 'O': 23, 'F': 24, 'P': 25, 'S': 26, 'V': 27, 'I': 28, 'W': 29},
+    'atomic_nb': [-20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 5, 6, 7, 8, 9, 15, 16, 23, 53, 74],
+    'atom_decoder': d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_atom_decoder,
+    'max_n_nodes': 140,
+    'n_nodes': {1: 4, 2: 5, 3: 16, 4: 47, 5: 378, 6: 602, 7: 701, 8: 1028, 9: 1489, 10: 2255, 11: 1881, 12: 2234, 13: 1733, 14: 1522, 15: 1424, 16: 1709, 17: 1178, 18: 1193, 19: 1305, 20: 1957, 21: 2049, 22: 1802, 23: 1593, 24: 1667, 25: 1585, 26: 1303, 27: 1582, 28: 1381, 29: 1411, 30: 986, 31: 1431, 32: 1272, 33: 1065, 34: 694, 35: 732, 36: 882, 37: 611, 38: 466, 39: 513, 40: 407, 41: 276, 42: 292, 43: 238, 44: 480, 45: 218, 46: 231, 47: 268, 48: 323, 49: 228, 50: 126, 51: 203, 52: 144, 53: 248, 54: 208, 55: 150, 56: 105, 57: 150, 58: 82, 59: 72, 60: 49, 61: 62, 62: 34, 63: 134, 64: 75, 65: 25, 66: 29, 67: 26, 68: 12, 69: 3, 70: 10, 71: 8, 72: 3, 73: 1, 74: 18, 75: 8, 76: 8, 77: 6, 78: 2, 79: 5, 80: 15, 82: 1, 84: 5, 86: 23, 87: 1, 88: 2, 91: 4, 92: 2, 95: 1, 96: 35, 97: 4, 98: 1, 100: 1, 103: 2, 104: 1, 106: 3, 107: 1, 109: 1, 120: 1, 140: 1},
+    'atom_types': {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 681, 21: 755428, 22: 133742, 23: 265841, 24: 10392, 25: 21393, 26: 12747, 27: 36, 28: 496, 29: 2},
+    'colors_dic': [get_colors(f) for f in d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_atom_decoder],
+    'radius_dic': [get_radius(f) for f in d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_atom_decoder],
+    'with_h': False
+}
+
+
+
+
+
+
+# CrossDocked
+# for VAE
+d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_POCKET_atom_decoder = \
+    ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 
+     'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR', 
+     'C', 'N', 'O', 'F', 'P', 'S', 'Cl'],
+
+d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_POCKET = {
+    'name': 'd_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND+POCKET',
+    'atom_encoder': {'ALA': 0, 'CYS': 1, 'ASP': 2, 'GLU': 3, 'PHE': 4, 'GLY': 5, 'HIS': 6, 'ILE': 7, 'LYS': 8, 'LEU': 9, 'MET': 10, 
+                     'ASN': 11, 'PRO': 12, 'GLN': 13, 'ARG': 14, 'SER': 15, 'THR': 16, 'VAL': 17, 'TRP': 18, 'TYR': 19, 
+                     'C': 20, 'N': 21, 'O': 22, 'F': 23, 'P': 24, 'S': 25, 'Cl': 26},
+    'atomic_nb': [-20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 6, 7, 8, 9, 15, 16, 17],
+    'atom_decoder': d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_POCKET_atom_decoder,
+    'max_n_nodes': 184,
+    'n_nodes': {1: 1, 2: 5, 3: 6, 4: 45, 5: 111, 6: 710, 7: 656, 8: 1046, 9: 1864, 10: 2887, 11: 3111, 12: 2933, 13: 2189, 14: 2471, 15: 2351, 16: 3165, 17: 2422, 18: 2670, 19: 3207, 20: 4981, 21: 4602, 22: 3518, 23: 4620, 24: 4059, 25: 4892, 26: 5189, 27: 6081, 28: 5399, 29: 3839, 30: 4339, 31: 4119, 32: 4229, 33: 3579, 34: 3333, 35: 3115, 36: 2738, 37: 2483, 38: 2719, 39: 2746, 40: 2953, 41: 3073, 42: 3089, 43: 3100, 44: 3677, 45: 3391, 46: 3567, 47: 3679, 48: 3955, 49: 4005, 50: 3933, 51: 3870, 52: 3766, 53: 3468, 54: 3390, 55: 3014, 56: 2734, 57: 2559, 58: 2451, 59: 2493, 60: 2305, 61: 2041, 62: 1813, 63: 1675, 64: 1623, 65: 1442, 66: 1459, 67: 1292, 68: 1042, 69: 946, 70: 830, 71: 705, 72: 632, 73: 558, 74: 453, 75: 417, 76: 366, 77: 345, 78: 332, 79: 237, 80: 206, 81: 170, 82: 144, 83: 133, 84: 96, 85: 62, 86: 29, 87: 33, 88: 29, 89: 7, 90: 4, 92: 1, 93: 3, 94: 4, 95: 1, 96: 2, 97: 1, 98: 2, 100: 3, 101: 3, 102: 1, 103: 2, 104: 4, 105: 1, 106: 3, 108: 1, 109: 1, 115: 1, 123: 1, 179: 1, 184: 1},
+    'atom_types': {0: 350598, 1: 110583, 2: 284233, 3: 219718, 4: 254587, 5: 477815, 6: 158505, 7: 330934, 8: 196195, 9: 473098, 10: 172448, 11: 195735, 12: 185535, 13: 133647, 14: 189282, 15: 327291, 16: 286215, 17: 376426, 18: 92648, 19: 241034, 20: 1585352, 21: 276495, 22: 400601, 23: 30875, 24: 26331, 25: 26552, 26: 15221},
+    'colors_dic': [get_colors(f) for f in d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_POCKET_atom_decoder],
+    'radius_dic': [get_radius(f) for f in d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_POCKET_atom_decoder],
+    'with_h': False
+}
+
+# for LDM, ControlNet
+d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_atom_decoder = \
+    ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 
+     'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR', 
+     'C', 'N', 'O', 'F', 'P', 'S', 'Cl'],
+
+d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND = {
+    'name': 'd_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND',
+    'atom_encoder': {'ALA': 0, 'CYS': 1, 'ASP': 2, 'GLU': 3, 'PHE': 4, 'GLY': 5, 'HIS': 6, 'ILE': 7, 'LYS': 8, 'LEU': 9, 'MET': 10, 
+                     'ASN': 11, 'PRO': 12, 'GLN': 13, 'ARG': 14, 'SER': 15, 'THR': 16, 'VAL': 17, 'TRP': 18, 'TYR': 19, 
+                     'C': 20, 'N': 21, 'O': 22, 'F': 23, 'P': 24, 'S': 25, 'Cl': 26},
+    'atomic_nb': [-20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 6, 7, 8, 9, 15, 16, 17],
+    'atom_decoder': d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_atom_decoder,
+    'max_n_nodes': 106,
+    'n_nodes': {3: 4, 4: 45, 5: 111, 6: 709, 7: 655, 8: 1043, 9: 1861, 10: 2884, 11: 3104, 12: 2910, 13: 2167, 14: 2439, 15: 2301, 16: 3117, 17: 2384, 18: 2611, 19: 3118, 20: 4890, 21: 4488, 22: 3356, 23: 4446, 24: 3814, 25: 4593, 26: 4770, 27: 5496, 28: 4772, 29: 3143, 30: 3582, 31: 3383, 32: 3314, 33: 2672, 34: 2146, 35: 1852, 36: 1357, 37: 927, 38: 919, 39: 739, 40: 674, 41: 607, 42: 487, 43: 360, 44: 673, 45: 184, 46: 212, 47: 105, 48: 186, 49: 73, 50: 38, 51: 20, 52: 42, 53: 3, 54: 93, 55: 35, 56: 12, 57: 9, 58: 18, 59: 5, 61: 9, 62: 1, 63: 5, 65: 2, 66: 20, 67: 28, 68: 1, 71: 1, 77: 1, 86: 1, 98: 1, 106: 2},
+    'atom_types': {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 1585352, 21: 276495, 22: 400601, 23: 30875, 24: 26331, 25: 26552, 26: 15221},
+    'colors_dic': [get_colors(f) for f in d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_atom_decoder],
+    'radius_dic': [get_radius(f) for f in d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_atom_decoder],
+    'with_h': False
+}
+
+
+
+
+
+
 def get_dataset_info(dataset_name, remove_h=False):
     if dataset_name == 'qm9':
         if not remove_h:
@@ -194,5 +291,13 @@ def get_dataset_info(dataset_name, remove_h=False):
             raise Exception('Missing config for %s without hydrogens' % dataset_name)
     elif dataset_name == 'd_20240428_combined_geom_PDBB_full_refined_core_LG_PKT':
         return d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT
+    elif dataset_name == 'd_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H__LIGAND+POCKET' and remove_h == True:
+        return d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_POCKET
+    elif dataset_name == 'd_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H__LIGAND' and remove_h == True:
+        return d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND
+    elif dataset_name == 'd_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND+POCKET' and remove_h == True:
+        return d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_POCKET
+    elif dataset_name == 'd_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND' and remove_h == True:
+        return d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND
     else:
-        raise Exception("Wrong dataset %s" % dataset_name)
+        raise Exception(f"Wrong dataset {dataset_name} with remove_h={remove_h}")

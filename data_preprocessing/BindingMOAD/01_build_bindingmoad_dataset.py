@@ -286,6 +286,14 @@ if __name__ == '__main__':
     print("Dataset processed.")
 
 
+#failed: 15273: 100% || 66031/66031 [2:07:53<00:00, 8.60it/s]
+#
+# [LG] Total Atom Num : 1200758
+# [LG] Ave. Atom Num  : 23.65606099410942
+# [PT] Total Atom Num : 3390278
+# [PKT] Ave. Atom Num : 66.79166256230423
+# Total number of Ligand-Pocket pairs: 50759
+# Dataset processed.
 
 
 
