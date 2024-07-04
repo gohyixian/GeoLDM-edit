@@ -182,7 +182,7 @@ d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT = {
 d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_POCKET_atom_decoder = \
     ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 
      'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR', 
-     'B', 'C', 'N', 'O', 'F', 'P', 'S', 'V', 'I', 'W'],
+     'B', 'C', 'N', 'O', 'F', 'P', 'S', 'V', 'I', 'W']
 
 d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_POCKET = {
     'name': 'd_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H__LIGAND+POCKET',
@@ -203,7 +203,7 @@ d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_POCKET = {
 d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND_atom_decoder = \
     ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 
      'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR', 
-     'B', 'C', 'N', 'O', 'F', 'P', 'S', 'V', 'I', 'W'],
+     'B', 'C', 'N', 'O', 'F', 'P', 'S', 'V', 'I', 'W']
 
 d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND = {
     'name': 'd_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H__LIGAND',
@@ -230,7 +230,7 @@ d_20240623_BindingMOAD__10A__MaxOcc50__CA_Only__no_H__LIGAND = {
 d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_POCKET_atom_decoder = \
     ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 
      'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR', 
-     'C', 'N', 'O', 'F', 'P', 'S', 'Cl'],
+     'C', 'N', 'O', 'F', 'P', 'S', 'Cl']
 
 d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_POCKET = {
     'name': 'd_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND+POCKET',
@@ -251,7 +251,7 @@ d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_POCKET = {
 d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND_atom_decoder = \
     ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 
      'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR', 
-     'C', 'N', 'O', 'F', 'P', 'S', 'Cl'],
+     'C', 'N', 'O', 'F', 'P', 'S', 'Cl']
 
 d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND = {
     'name': 'd_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND',

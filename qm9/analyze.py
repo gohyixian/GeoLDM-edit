@@ -230,14 +230,17 @@ def check_stability(positions, atom_type, dataset_info, debug=False):
             pair = sorted([atom_type[i], atom_type[j]])
             if dataset_info['name'] == 'qm9' or dataset_info['name'] == 'qm9_second_half' or dataset_info['name'] == 'qm9_first_half':
                 order = bond_analyze.get_bond_order(atom1, atom2, dist)
-            elif dataset_info['name'] == 'geom':
+            elif dataset_info['name'] == 'geom' or "ligand" in dataset_info['name'].lower():
                 order = bond_analyze.geom_predictor(
                     (atom_decoder[pair[0]], atom_decoder[pair[1]]), dist)
             nr_bonds[i] += order
             nr_bonds[j] += order
     nr_stable_bonds = 0
     for atom_type_i, nr_bonds_i in zip(atom_type, nr_bonds):
-        possible_bonds = bond_analyze.allowed_bonds[atom_decoder[atom_type_i]]
+        try:
+            possible_bonds = bond_analyze.allowed_bonds[atom_decoder[atom_type_i]]
+        except KeyError:  # CA_only (AA not found in Allowed Bonds between atoms)
+            return False, nr_stable_bonds, len(x)
         if type(possible_bonds) == int:
             is_stable = possible_bonds == nr_bonds_i
         else:

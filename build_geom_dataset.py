@@ -150,7 +150,8 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             print(">> Loading permutation file from:", permutation_file_path)
             perm = np.load(permutation_file_path)
         else:
-            default_permutation_file_path = os.path.join(base_path, f'{dataset_name}_permutation.npy')
+            file_name = conformation_file.split(os.path.sep)[-1][:-4]
+            default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
             # CAREFUL! Only for first time run:
             assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
             perm = np.random.permutation(len(ligand_data_list)).astype('int32')
@@ -198,7 +199,8 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             print(">> Loading permutation file from:", permutation_file_path)
             perm = np.load(permutation_file_path)
         else:
-            default_permutation_file_path = os.path.join(base_path, f'{dataset_name}_permutation.npy')
+            file_name = conformation_file.split(os.path.sep)[-1][:-4]
+            default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
             # CAREFUL! Only for first time run:
             perm = np.random.permutation(len(ligand_data_list)).astype('int32')
             print('Warning, currently taking a random permutation for '
@@ -252,7 +254,8 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             print(">> Loading permutation file from:", permutation_file_path)
             perm = np.load(permutation_file_path)
         else:
-            default_permutation_file_path = os.path.join(base_path, f'{dataset_name}_permutation.npy')
+            file_name = conformation_file.split(os.path.sep)[-1][:-4]
+            default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
             # CAREFUL! Only for first time run:
             assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
             perm = np.random.permutation(len(ligand_data_list)).astype('int32')

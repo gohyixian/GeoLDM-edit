@@ -55,10 +55,10 @@ def sample_chain(args, device, flow, n_tries, dataset_info, prop_dist=None):
     n_samples = 1
     if args.dataset == 'qm9' or args.dataset == 'qm9_second_half' or args.dataset == 'qm9_first_half':
         n_nodes = 19
-    elif args.dataset == 'geom':
+    elif args.dataset == 'geom' or 'ligand' in args.dataset.lower():
         n_nodes = 44
     else:
-        raise ValueError()
+        raise NotImplementedError()
 
     # TODO FIX: This conditioning just zeros.
     if args.context_node_nf > 0:

@@ -4,7 +4,7 @@ try:
 except ModuleNotFoundError:
     pass
 import build_geom_dataset
-from configs.datasets_config import geom_with_h
+from configs.datasets_config import geom_with_h, get_dataset_info
 import copy
 import utils
 import yaml
@@ -37,11 +37,12 @@ def main():
     args = Config(**args_dict)
     
 
-    # priority check goes here
-    if args.remove_h:
-        raise NotImplementedError()
-    else:
-        dataset_info = geom_with_h
+    # # priority check goes here
+    # if args.remove_h:
+    #     raise NotImplementedError()
+    # else:
+    #     dataset_info = geom_with_h
+    dataset_info = get_dataset_info(dataset_name=args.dataset, remove_h=args.remove_h)
     
 
     # device settings
@@ -151,7 +152,7 @@ def main():
     optim = get_optim(args, model)
 
 
-    gradnorm_queue = utils.Queue(dtype=args.dtype)
+    gradnorm_queue = utils.Queue()
     gradnorm_queue.add(3000)  # Add large value that will be flushed.
 
 
@@ -195,6 +196,8 @@ def main():
     # print(f"Mixed precision training : {args.mixed_precision_training}")
     print(f"Model running on dtype   : {args.dtype}")
     print(f"Model Size               : {mem_gb} GB  /  {mem_mb} MB  /  {mem} Bytes")
+    print(f"Training Dataset Name    : {args.dataset}")
+    print(f"Model Training Mode      : {args.training_mode}")
     print(f"================================")
     print(model)
     
