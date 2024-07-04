@@ -162,6 +162,7 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             np.save(default_permutation_file_path, perm)
         
         assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
+        assert len(list(ligand_data_list)) == len(list(perm)), 'Invalid permutation file! Did you change [filter_size] and/or [filter_pocket_size]?'
         
         ligand_data_list = [ligand_data_list[i] for i in perm]
         pocket_data_list = [pocket_data_list[i] for i in perm]
@@ -208,6 +209,8 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
                 'reproducibility.')
             assert not os.path.exists(default_permutation_file_path)
             np.save(default_permutation_file_path, perm)
+
+        assert len(list(ligand_data_list)) == len(list(perm)), 'Invalid permutation file! Did you change [filter_size] and/or [filter_pocket_size]?'
 
         all_data = [ligand_data_list[i] for i in perm]
 
@@ -266,6 +269,7 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             np.save(default_permutation_file_path, perm)
         
         assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
+        assert len(list(ligand_data_list)) == len(list(perm)), 'Invalid permutation file! Did you change [filter_size] and/or [filter_pocket_size]?'
         
         ligand_data_list = [ligand_data_list[i] for i in perm]
         pocket_data_list = [pocket_data_list[i] for i in perm]
