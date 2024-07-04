@@ -70,19 +70,23 @@ def main():
                                                     test_proportion=0.1, 
                                                     filter_size=args.filter_molecule_size, 
                                                     permutation_file_path=args.permutation_file_path, 
-                                                    dataset_name=args.dataset)
+                                                    dataset_name=args.dataset,
+                                                    training_mode=args.training_mode,
+                                                    filter_pocket_size=args.filter_pocket_size)
     # ~!to ~!mp
+    # ['positions'], ['one_hot'], ['charges'], ['atonm_mask'], ['edge_mask'] are added here
     transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, args.device, args.sequential)
 
     dataloaders = {}
     for key, data_list in zip(['train', 'val', 'test'], split_data):
-        dataset = build_geom_dataset.GeomDrugsDataset(data_list, transform=transform)
-        shuffle = (key == 'train') and not args.sequential
+        dataset = build_geom_dataset.GeomDrugsDataset(data_list, transform=transform, training_mode=args.training_mode)
+        # shuffle = (key == 'train') and not args.sequential
+        shuffle = False
 
         # Sequential dataloading disabled for now.
         dataloaders[key] = build_geom_dataset.GeomDrugsDataLoader(
             sequential=args.sequential, dataset=dataset, batch_size=args.batch_size,
-            shuffle=shuffle)
+            shuffle=shuffle, training_mode=args.training_mode)
     del split_data
 
 
@@ -116,18 +120,20 @@ def main():
         mode = 'disabled'
     else:
         mode = 'online' if args.online else 'offline'
-    kwargs = {'entity': args.wandb_usr, 'name': args.exp_name, 'project': 'e3_diffusion_geom', 'config': args,
+    proj_name = args.proj_name if hasattr(args, 'proj_name') else 'e3_diffusion_geom'
+    kwargs = {'entity': args.wandb_usr, 'name': args.exp_name, 'project': proj_name, 'config': args,
             'settings': wandb.Settings(_disable_stats=True), 'reinit': True, 'mode': mode}
     wandb.init(**kwargs)
     wandb.save('*.txt')
 
 
-    data_dummy = next(iter(dataloaders['train']))
     if len(args.conditioning) > 0:
-        print(f'Conditioning on {args.conditioning}')
-        property_norms = compute_mean_mad(dataloaders, args.conditioning)
-        context_dummy = prepare_context(args.conditioning, data_dummy, property_norms)
-        context_node_nf = context_dummy.size(2)
+        raise NotImplementedError()
+        # print(f'Conditioning on {args.conditioning}')
+        # data_dummy = next(iter(dataloaders['train']))
+        # property_norms = compute_mean_mad(dataloaders, args.conditioning)
+        # context_dummy = prepare_context(args.conditioning, data_dummy, property_norms)
+        # context_node_nf = context_dummy.size(2)
     else:
         context_node_nf = 0
         property_norms = None

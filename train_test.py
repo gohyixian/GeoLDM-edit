@@ -34,9 +34,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 
         if args.augment_noise > 0:
             raise NotImplementedError()
-            # Add noise eps ~ N(0, augment_noise) around points.
-            eps = sample_center_gravity_zero_gaussian_with_mask(x.size(), x.device, node_mask)
-            x = x + eps * args.augment_noise
+            # # Add noise eps ~ N(0, augment_noise) around points.
+            # eps = sample_center_gravity_zero_gaussian_with_mask(x.size(), x.device, node_mask)
+            # x = x + eps * args.augment_noise
 
         x = remove_mean_with_mask(x, node_mask)
         if args.data_augmentation:
@@ -107,11 +107,11 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
                                             prop_dist, epoch=epoch)
             print(f'Sampling took {time.time() - start:.2f} seconds')
 
-            vis.visualize(f"outputs/{args.exp_name}/epoch_{epoch}_{i}", dataset_info=dataset_info, wandb=wandb)
-            vis.visualize_chain(f"outputs/{args.exp_name}/epoch_{epoch}_{i}/chain/", dataset_info, wandb=wandb)
-            if len(args.conditioning) > 0:
-                vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
-                                    wandb=wandb, mode='conditional')
+            # vis.visualize(f"outputs/{args.exp_name}/epoch_{epoch}_{i}", dataset_info=dataset_info, wandb=wandb)
+            # vis.visualize_chain(f"outputs/{args.exp_name}/epoch_{epoch}_{i}/chain/", dataset_info, wandb=wandb)
+            # if len(args.conditioning) > 0:
+            #     vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
+            #                         wandb=wandb, mode='conditional')
 
         wandb.log({"Batch NLL": nll_item}, commit=True)
         
@@ -159,11 +159,11 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
 
             if args.augment_noise > 0:
                 raise NotImplementedError()
-                # Add noise eps ~ N(0, augment_noise) around points.
-                eps = sample_center_gravity_zero_gaussian_with_mask(x.size(),
-                                                                    x.device,
-                                                                    node_mask)
-                x = x + eps * args.augment_noise
+                # # Add noise eps ~ N(0, augment_noise) around points.
+                # eps = sample_center_gravity_zero_gaussian_with_mask(x.size(),
+                #                                                     x.device,
+                #                                                     node_mask)
+                # x = x + eps * args.augment_noise
 
             x = remove_mean_with_mask(x, node_mask)
             check_mask_correct([x, one_hot, charges], node_mask)

@@ -1,9 +1,12 @@
-
+proj_name: Control-GeoLDM
 exp_name: base_geom_all_config__ssn_TEST
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
 train_diffusion: true
+
+# training mode: VAE | LDM | ControlNet
+training_mode: 'VAE'
 
 # Specify first stage model path
 ae_path: null
@@ -42,6 +45,7 @@ filter_n_atoms: null
 
 # Only use molecules below this size. Int, default null  ~!geom
 filter_molecule_size: null
+filter_pocket_size: 80
 
 # Organize data by size to reduce average memory usage. ~!geom
 sequential: false
