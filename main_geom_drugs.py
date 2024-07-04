@@ -82,7 +82,7 @@ def main():
     for key, data_list in zip(['train', 'val', 'test'], split_data):
         dataset = build_geom_dataset.GeomDrugsDataset(data_list, transform=transform, training_mode=args.training_mode)
         # shuffle = (key == 'train') and not args.sequential
-        shuffle = False
+        shuffle = (key == 'train')
 
         # Sequential dataloading disabled for now.
         dataloaders[key] = build_geom_dataset.GeomDrugsDataLoader(
