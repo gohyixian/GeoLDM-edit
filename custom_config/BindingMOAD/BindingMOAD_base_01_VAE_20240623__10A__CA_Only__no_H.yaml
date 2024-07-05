@@ -37,14 +37,14 @@ data_file: ./data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__1
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
 # Please set the path to the DATASET_permutation.npy file after it is generated.
-permutation_file_path: ./data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H_permutation.npy
-
+# permutation_file_path: ./data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H_permutation.npy
+permutation_file_path: null
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
 
 # Only use molecules below this size. Int, default null  ~!geom
-filter_molecule_size: null
-filter_pocket_size: null
+filter_molecule_size: 100
+filter_pocket_size: 100
 
 # Organize data by size to reduce average memory usage. ~!geom
 sequential: false
@@ -67,7 +67,7 @@ test_epochs: 1
 
 
 n_epochs: 40  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 32    # 32
+batch_size: 24    # 32
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01

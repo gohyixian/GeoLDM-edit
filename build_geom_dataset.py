@@ -151,6 +151,10 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             perm = np.load(permutation_file_path)
         else:
             file_name = conformation_file.split(os.path.sep)[-1][:-4]
+            if filter_size is not None:
+                file_name += f"_LG{filter_size}"
+            if filter_pocket_size is not None:
+                file_name += f"_PKT{filter_pocket_size}"
             default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
             # CAREFUL! Only for first time run:
             assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
@@ -201,6 +205,10 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             perm = np.load(permutation_file_path)
         else:
             file_name = conformation_file.split(os.path.sep)[-1][:-4]
+            if filter_size is not None:
+                file_name += f"_LG{filter_size}"
+            if filter_pocket_size is not None:
+                file_name += f"_PKT{filter_pocket_size}"
             default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
             # CAREFUL! Only for first time run:
             perm = np.random.permutation(len(ligand_data_list)).astype('int32')
@@ -258,6 +266,10 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             perm = np.load(permutation_file_path)
         else:
             file_name = conformation_file.split(os.path.sep)[-1][:-4]
+            if filter_size is not None:
+                file_name += f"_LG{filter_size}"
+            if filter_pocket_size is not None:
+                file_name += f"_PKT{filter_pocket_size}"
             default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
             # CAREFUL! Only for first time run:
             assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
