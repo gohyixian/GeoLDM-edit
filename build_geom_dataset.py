@@ -187,18 +187,34 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
     elif training_mode == 'LDM':
         # load ligand data only
         ligand_data = all_data['ligand']
+        pocket_data = all_data['pocket']
         
         # ligand
         ligand_mol_id = ligand_data[:, 0].astype(int)
         ligands = ligand_data[:, 1:]
         ligand_split_indices = np.nonzero(ligand_mol_id[:-1] - ligand_mol_id[1:])[0] + 1
         ligand_data_list = np.split(ligands, ligand_split_indices)
-
+        
+        # pocket
+        pocket_mol_id = pocket_data[:, 0].astype(int)
+        pockets = pocket_data[:, 1:]
+        pocket_split_indices = np.nonzero(pocket_mol_id[:-1] - pocket_mol_id[1:])[0] + 1
+        pocket_data_list = np.split(pockets, pocket_split_indices)
+        
         # Keep only molecules <= filter_size
         if filter_size is not None and filter_pocket_size is not None:
-            ligand_data_list = [lg for lg in ligand_data_list if lg.shape[0] <= filter_size]
+            
+            assert len(list(ligand_data_list)) == len(list(pocket_data_list))
+            
+            tmp_ligand_data_list = []
+            for i in range(len(list(ligand_data_list))):
+                if (ligand_data_list[i].shape[0] <= filter_size) and (pocket_data_list[i].shape[0] <= filter_pocket_size):
+                    # ligand only
+                    tmp_ligand_data_list.append(ligand_data_list[i])
+            
+            ligand_data_list = tmp_ligand_data_list
             assert len(ligand_data_list) > 0, 'No molecules left after filter.'
-        
+
         # permutation
         if permutation_file_path is not None:
             print(">> Loading permutation file from:", permutation_file_path)

@@ -1,19 +1,19 @@
 proj_name: Control-GeoLDM
-exp_name: BindingMOAD_base_01_VAE_20240623__10A__CA_Only__no_H
+exp_name: BindingMOAD_base_02_LDM_20240623__10A__CA_Only__no_H
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
-train_diffusion: false
+train_diffusion: true
 
 # training mode: VAE | LDM | ControlNet
-training_mode: 'VAE'
+training_mode: 'LDM'
 
 # Specify first stage model path
-ae_path: null
+ae_path: ./outputs/BindingMOAD_base_01_VAE_20240623__10A__CA_Only__no_H
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
-trainable_ae_encoder: true
-trainable_ae_decoder: true
+trainable_ae_encoder: false
+trainable_ae_decoder: false
 
 # can contain multiple: homo | onehot | lumo | num_atoms | etc
 conditioning: []
@@ -66,8 +66,8 @@ start_epoch: 0
 test_epochs: 1
 
 
-n_epochs: 40  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 24    # 32
+n_epochs: 80  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 12    # 32
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01
