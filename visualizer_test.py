@@ -134,7 +134,7 @@ def plot_molecule(ax, positions, atom_type, alpha, spheres_3d, hex_bg_color,
             if 'qm9' in dataset_info['name']:
                 draw_edge_int = bond_analyze.get_bond_order(atom1, atom2, dist)
                 line_width = (3 - 2) * 2 * 2
-            elif dataset_info['name'] == 'geom':
+            elif dataset_info['name'] == 'geom' or 'ligand' in dataset_info['name'].lower():
                 draw_edge_int = bond_analyze.geom_predictor(pair, dist)
                 # Draw edge outputs 1 / -1 value, convert to True / False.
                 line_width = 2
@@ -190,7 +190,7 @@ def plot_data3d(positions, atom_type, dataset_info, camera_elev=0, camera_azim=0
         ax.set_xlim(-axis_lim, axis_lim)
         ax.set_ylim(-axis_lim, axis_lim)
         ax.set_zlim(-axis_lim, axis_lim)
-    elif dataset_info['name'] == 'geom':
+    elif dataset_info['name'] == 'geom' or 'ligand' in dataset_info['name'].lower():
         max_value = positions.abs().max().item()
 
         # axis_lim = 3.2
@@ -256,7 +256,7 @@ def plot_data3d_uncertainty(
         ax.set_xlim(-axis_lim, axis_lim)
         ax.set_ylim(-axis_lim, axis_lim)
         ax.set_zlim(-axis_lim, axis_lim)
-    elif dataset_info['name'] == 'geom':
+    elif dataset_info['name'] == 'geom' or 'ligand' in dataset_info['name'].lower():
         max_value = all_positions[0].abs().max().item()
 
         # axis_lim = 3.2

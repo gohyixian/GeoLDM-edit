@@ -191,7 +191,7 @@ def build_xae_molecule(positions, atom_types, dataset_info):
                 # based on the types of atoms of the 2 adjacent atoms, and the Euclidean distances between them, 
                 # we can know if they have a bond connection, and also the bond type: i.e. none / single / double / triple / aromatic
                 order = get_bond_order(atom_decoder[pair[0]], atom_decoder[pair[1]], dists[i, j])
-            elif dataset_info['name'] == 'geom':
+            elif dataset_info['name'] == 'geom' or 'ligand' in dataset_info['name'].lower():
                 order = geom_predictor((atom_decoder[pair[0]], atom_decoder[pair[1]]), dists[i, j], limit_bonds_to_one=True)
             # TODO: a batched version of get_bond_order to avoid the for loop
             if order > 0:
