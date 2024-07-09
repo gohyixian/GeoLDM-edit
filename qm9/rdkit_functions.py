@@ -94,6 +94,10 @@ class BasicMolecularMetrics(object):
 
         for graph in generated:
             mol = build_molecule(*graph, self.dataset_info)
+            # aa
+            if mol is None:
+                continue
+
             smiles = mol2smiles(mol)
             if smiles is not None:
                 mol_frags = Chem.rdmolops.GetMolFrags(mol, asMols=True)
@@ -146,11 +150,17 @@ def mol2smiles(mol):
 
 
 # single molecule
-def build_molecule(positions, atom_types, dataset_info):
+def build_molecule(positions, atom_types, dataset_info, skip_aa=False):
     atom_decoder = dataset_info["atom_decoder"]
     X, A, E = build_xae_molecule(positions, atom_types, dataset_info)
     mol = Chem.RWMol()
     for atom in X:
+        # aa
+        if skip_aa and (len(atom_decoder[atom.item()]) == 3):
+            continue
+        elif (not skip_aa) and (len(atom_decoder[atom.item()]) == 3):
+            return None
+        
         a = Chem.Atom(atom_decoder[atom.item()])
         mol.AddAtom(a)
 
