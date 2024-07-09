@@ -8,7 +8,6 @@ def zero_module(module):
     return module
 
 
-
 def low_vram_shift(self, is_diffusing):
     if is_diffusing:
         self.model = self.model.cuda()
@@ -20,3 +19,21 @@ def low_vram_shift(self, is_diffusing):
         self.control_model = self.control_model.cpu()
         self.first_stage_model = self.first_stage_model.cuda()
         self.cond_stage_model = self.cond_stage_model.cuda()
+
+
+from egnn.egnn_fusion import EGNN_Fusion
+# Initialize the EGNN_Fusion model
+model = EGNN_Fusion(in_node_nf=10, in_edge_nf=2, hidden_nf=256)
+
+# Zero out all weights and biases
+for param in model.parameters():
+    param.data.zero_()
+
+# Verify that all parameters are zero
+all_zero = True
+for name, param in model.named_parameters():
+    print(f"Name: {name}, Sum of parameter values: {param.shape} {param.sum().item()} ")
+    # print(f"Name: {name}, Sum of parameter values: {param} ")
+    if param.sum().item() != 0.0:
+        all_zero=False
+print(all_zero)  # True

@@ -17,39 +17,33 @@ def low_vram_forward(layer, tensor):
     Returns:
         _type_: _description_
     """
-    
-    # tensor_device = tensor.device
-    # layer_device = next(layer.parameters()).device
 
-    # print(f"%% NAN count {int(bool(sum([1 if torch.isnan(w).any() else 0 for w in layer.parameters()])))}") if PARAM_REGISTRY.get('verbose')==True else None
-    
-    # print(f">>> model:{next(layer.parameters()).dtype}, tensor:{tensor.dtype}")
-    
     max_tensor_size = int(PARAM_REGISTRY.get('forward_tensor_chunk_size'))
     splits = list(torch.split(tensor, max_tensor_size, dim=0))
-    
+
     for i, split in enumerate(splits):
         # ~!to
         # splits[i] = layer(split.to(layer_device)).to(tensor_device)
         splits[i] = layer(split)
-        
-    
+
     tensor = torch.cat(splits, dim=0)
     return tensor
 
 
-def checkpoint_equiv_block(inputs):
-    """Wrapper function for Equivariant block checkpointing, used
+
+def checkpoint_fusion_block(inputs):
+    """Wrapper function for Fusion block checkpointing, used
        in EGNN.forward().
 
     Args:
         inputs (_type_): block & inputs wrapped in a single tuple
 
     Returns:
-        _type_: Equiv_block(...inputs)
+        _type_: Fusion_block(...inputs)
     """
-    block, h, x, edge_index, node_mask, edge_mask, distances = inputs
-    return block(h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
+    block, h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances = inputs
+    return block(h1=h1, h2=h2, x1=x1, x2=x2, edge_index=edge_index, node_mask_1=node_mask_1, 
+                 joint_edge_mask=joint_edge_mask, edge_attr=distances)
 
 
 
@@ -77,9 +71,10 @@ class GCL(nn.Module):
             self.att_mlp = nn.Sequential(
                 nn.Linear(hidden_nf, 1),   # 256, 1
                 nn.Sigmoid())
+            # TODO: implement softmax here
 
-    def edge_model(self, source, target, edge_attr, edge_mask):
-        # h[row]=source, h[col]=target
+    def edge_model(self, source, target, edge_attr, joint_edge_mask):
+        # h1[n1]=source, h2[n2]=target
         if edge_attr is None:  # Unused.
             out = torch.cat([source, target], dim=1)  # torch.Size([bs*27*27, 256+256])
         else:
@@ -95,15 +90,15 @@ class GCL(nn.Module):
         else:
             out = mij
 
-        if edge_mask is not None:
-            out = out * edge_mask
+        if joint_edge_mask is not None:
+            out = out * joint_edge_mask
         return out, mij
 
     def node_model(self, x, edge_index, edge_attr, node_attr):
-        row, col = edge_index
+        n1, n2 = edge_index
         # edge_attr: [bs*27*27, 256]
         # aggregate: sum / normalization_factor=1
-        agg = unsorted_segment_sum(edge_attr, row, num_segments=x.size(0),
+        agg = unsorted_segment_sum(edge_attr, n1, num_segments=x.size(0),
                                    normalization_factor=self.normalization_factor,  # 1
                                    aggregation_method=self.aggregation_method)      # sum
         if node_attr is not None: # None
@@ -115,19 +110,19 @@ class GCL(nn.Module):
         
         return out, agg
 
-    def forward(self, h, edge_index, edge_attr=None, node_attr=None, node_mask=None, edge_mask=None):
-        row, col = edge_index
+    def forward(self, h1, h2, edge_index, edge_attr=None, node_attr=None, node_mask_1=None, joint_edge_mask=None):
+        n1, n2 = edge_index
         # node_attr = None
         # bs=64, n_nodes=27
         # 256 because there is an embedding layer in EGNN called self.embedding
         # print(">>", h.shape,       row.shape,          col.shape,          h[row].shape,            h[col].shape,            edge_attr.shape,       edge_mask.shape)
         # >> torch.Size([1728, 256]) torch.Size([46656]) torch.Size([46656]) torch.Size([46656, 256]) torch.Size([46656, 256]) torch.Size([46656, 2]) torch.Size([46656, 1])
         #                64x27                   64x27x27                                64x27x27
-        edge_feat, mij = self.edge_model(h[row], h[col], edge_attr, edge_mask)
-        h, agg = self.node_model(h, edge_index, edge_feat, node_attr)
-        if node_mask is not None:
-            h = h * node_mask
-        return h, mij
+        edge_feat, mij = self.edge_model(h1[n1], h2[n2], edge_attr, joint_edge_mask)
+        h1, agg = self.node_model(h1, edge_index, edge_feat, node_attr)
+        if node_mask_1 is not None:
+            h1 = h1 * node_mask_1
+        return h1, mij
 
 
 class EquivariantUpdate(nn.Module):
@@ -148,9 +143,9 @@ class EquivariantUpdate(nn.Module):
         self.normalization_factor = normalization_factor
         self.aggregation_method = aggregation_method
 
-    def coord_model(self, h, coord, edge_index, coord_diff, edge_attr, edge_mask):
-        row, col = edge_index
-        input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
+    def coord_model(self, h1, h2, coord1, coord2, edge_index, coord_diff, edge_attr, joint_edge_mask):
+        n1, n2 = edge_index
+        input_tensor = torch.cat([h1[n1], h2[n2], edge_attr], dim=1)
         if self.tanh:  # true
             trans = coord_diff * torch.tanh(self.coord_mlp(input_tensor)) * self.coords_range
             # trans = coord_diff * torch.tanh(low_vram_forward(self.coord_mlp, input_tensor)) * self.coords_range
@@ -158,26 +153,26 @@ class EquivariantUpdate(nn.Module):
         else:
             trans = coord_diff * self.coord_mlp(input_tensor)
             # trans = coord_diff * low_vram_forward(self.coord_mlp, input_tensor)
-        if edge_mask is not None:
-            trans = trans * edge_mask
-        agg = unsorted_segment_sum(trans, row, num_segments=coord.size(0),
+        if joint_edge_mask is not None:
+            trans = trans * joint_edge_mask
+        agg = unsorted_segment_sum(trans, n1, num_segments=coord1.size(0),
                                    normalization_factor=self.normalization_factor,
                                    aggregation_method=self.aggregation_method)
-        coord = coord + agg
-        return coord
+        coord1 = coord1 + agg
+        return coord1
 
-    def forward(self, h, coord, edge_index, coord_diff, edge_attr=None, node_mask=None, edge_mask=None):
-        coord = self.coord_model(h, coord, edge_index, coord_diff, edge_attr, edge_mask)
-        if node_mask is not None:
-            coord = coord * node_mask
-        return coord
+    def forward(self, h1, h2, coord1, coord2, edge_index, coord_diff, edge_attr=None, node_mask_1=None, joint_edge_mask=None):
+        coord1 = self.coord_model(h1, h2, coord1, coord2, edge_index, coord_diff, edge_attr, joint_edge_mask)
+        if node_mask_1 is not None:
+            coord1 = coord1 * node_mask_1
+        return coord1
 
 
-class EquivariantBlock(nn.Module):
+class FusionBlock(nn.Module):
     def __init__(self, hidden_nf, edge_feat_nf=2, device='cpu', act_fn=nn.SiLU(), n_layers=2, attention=True,
                  norm_diff=True, tanh=False, coords_range=15, norm_constant=1, sin_embedding=None,
                  normalization_factor=100, aggregation_method='sum'):
-        super(EquivariantBlock, self).__init__()
+        super(FusionBlock, self).__init__()
         self.hidden_nf = hidden_nf  # 256
         self.device = device
         self.n_layers = n_layers    # 1
@@ -199,26 +194,28 @@ class EquivariantBlock(nn.Module):
                                                        aggregation_method=self.aggregation_method))
         self.to(self.device)
 
-    def forward(self, h, x, edge_index, node_mask=None, edge_mask=None, edge_attr=None):
+    def forward(self, h1=None, h2=None, x1=None, x2=None, edge_index=None, node_mask_1=None, 
+                joint_edge_mask=None, edge_attr=None):
         # Edit Emiel: Remove velocity as input
-        distances, coord_diff = coord2diff(x, edge_index, self.norm_constant)
+        distances, coord_diff = coord2diff_fusion(x1, x2, edge_index, self.norm_constant)
         if self.sin_embedding is not None:
             distances = self.sin_embedding(distances)
         edge_attr = torch.cat([distances, edge_attr], dim=1)
         for i in range(0, self.n_layers):
-            h, _ = self._modules["gcl_%d" % i](h, edge_index, edge_attr=edge_attr, node_mask=node_mask, edge_mask=edge_mask)
-        x = self._modules["gcl_equiv"](h, x, edge_index, coord_diff, edge_attr, node_mask, edge_mask)
+            h1, _ = self._modules["gcl_%d" % i](h1, h2, edge_index, edge_attr, node_attr=None, node_mask_1=node_mask_1, joint_edge_mask=joint_edge_mask)
+        x1 = self._modules["gcl_equiv"](h1, h2, x1, x2, edge_index, coord_diff, edge_attr, node_mask_1, joint_edge_mask)
+
         # Important, the bias of the last linear might be non-zero
-        if node_mask is not None:
-            h = h * node_mask
-        return h, x
+        if node_mask_1 is not None:
+            h1 = h1 * node_mask_1
+        return h1, x1
 
 
-class EGNN(nn.Module):
+class EGNN_Fusion(nn.Module):
     def __init__(self, in_node_nf, in_edge_nf, hidden_nf, device='cpu', act_fn=nn.SiLU(), n_layers=3, attention=False,
                  norm_diff=True, out_node_nf=None, tanh=False, coords_range=15, norm_constant=1, inv_sublayers=2,
                  sin_embedding=False, normalization_factor=100, aggregation_method='sum'):
-        super(EGNN, self).__init__()
+        super(EGNN_Fusion, self).__init__()
         if out_node_nf is None:
             out_node_nf = in_node_nf  # 2+(nf+?) for ldm
         self.hidden_nf = hidden_nf  # 256
@@ -237,30 +234,33 @@ class EGNN(nn.Module):
             edge_feat_nf = 2
 
         self.embedding = nn.Linear(in_node_nf, self.hidden_nf)        # [6+(nf+?), 256] for enc, [1+(nf+?), 256] for dec, # [2+(nf+?), 256] for ldm
-        self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)   # [256,256] for enc [256,6] for dec, [256, 2+(nf+?)] for ldm
+        # self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)   # [256,256] for enc [256,6] for dec, [256, 2+(nf+?)] for ldm
         for i in range(0, n_layers):   # 1 for enc, 9 for dec & ldm
-            self.add_module("e_block_%d" % i, EquivariantBlock(hidden_nf,     # 256
-                                                               edge_feat_nf=edge_feat_nf,    # 2
-                                                               device=device,
-                                                               act_fn=act_fn,     # torch.nn.SiLU()
-                                                               n_layers=inv_sublayers,  # 1
-                                                               attention=attention,  # true
-                                                               norm_diff=norm_diff,  # true
-                                                               tanh=tanh,    # true
-                                                               coords_range=coords_range,   # 15
-                                                               norm_constant=norm_constant,  # 1
-                                                               sin_embedding=self.sin_embedding,  # false
-                                                               normalization_factor=self.normalization_factor, # 1
-                                                               aggregation_method=self.aggregation_method))  # sum
+            self.add_module("fusion_e_block_%d" % i, FusionBlock(hidden_nf,     # 256
+                                                                 edge_feat_nf=edge_feat_nf,    # 2
+                                                                 device=device,
+                                                                 act_fn=act_fn,     # torch.nn.SiLU()
+                                                                 n_layers=inv_sublayers,  # 1
+                                                                 attention=attention,  # true
+                                                                 norm_diff=norm_diff,  # true
+                                                                 tanh=tanh,    # true
+                                                                 coords_range=coords_range,   # 15
+                                                                 norm_constant=norm_constant,  # 1
+                                                                 sin_embedding=self.sin_embedding,  # false
+                                                                 normalization_factor=self.normalization_factor, # 1
+                                                                 aggregation_method=self.aggregation_method))  # sum
         self.to(self.device)
 
-    def forward(self, h, x, edge_index, node_mask=None, edge_mask=None):
+    def forward(self, h1, x1, h2, x2, edge_index, node_mask_1=None, joint_edge_mask=None):
         # Edit Emiel: Remove velocity as input
-        distances, _ = coord2diff(x, edge_index)
+        distances, _ = coord2diff_fusion(x1, x2, edge_index)
         if self.sin_embedding is not None:      # none
             distances = self.sin_embedding(distances)
-        h = self.embedding(h)
+        h1 = self.embedding(h1)
+        h2 = self.embedding(h2)
         # h = low_vram_forward(self.embedding, h)
+        
+        intermediate_conditions = []
         
         for i in range(0, self.n_layers):
             # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
@@ -269,67 +269,31 @@ class EGNN(nn.Module):
                 ((i+1) % int(math.sqrt(self.n_layers)) == 0) and \
                 self.n_layers > 1:
                     
-                print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
-                h, x = checkpoint(checkpoint_equiv_block, 
-                                  (self._modules["e_block_%d" % i], h, x, edge_index, node_mask, edge_mask, distances), 
+                print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
+                h1, x1 = checkpoint(checkpoint_fusion_block, 
+                                  (self._modules["fusion_e_block_%d" % i], h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances), 
                                   use_reentrant=False)
                 
             # checkpointing all blocks (not so optimal but helps if input size is too large)
             elif PARAM_REGISTRY.get('use_checkpointing') and \
                 (PARAM_REGISTRY.get('checkpointing_mode') == 'all'):
                     
-                print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
-                h, x = checkpoint(checkpoint_equiv_block, 
-                                  (self._modules["e_block_%d" % i], h, x, edge_index, node_mask, edge_mask, distances), 
+                print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
+                h1, x1 = checkpoint(checkpoint_fusion_block, 
+                                  (self._modules["fusion_e_block_%d" % i], h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances), 
                                   use_reentrant=False)
                 
             # no checkpointing done
             else:
-                print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape}") if PARAM_REGISTRY.get('verbose')==True else None
-                h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
+                print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape}") if PARAM_REGISTRY.get('verbose')==True else None
+                h1, x1 = self._modules["fusion_e_block_%d" % i](h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances)
 
-        # Important, the bias of the last linear might be non-zero
-        h = self.embedding_out(h)
-        # h = low_vram_forward(self.embedding_out, h)
-        
-        if node_mask is not None:
-            h = h * node_mask
-        return h, x
+            if node_mask_1 is not None:
+                h1 = h1 * node_mask_1
 
+            intermediate_conditions.append((h1, x1))
+        return intermediate_conditions
 
-class GNN(nn.Module):
-    def __init__(self, in_node_nf, in_edge_nf, hidden_nf, aggregation_method='sum', device='cpu',
-                 act_fn=nn.SiLU(), n_layers=4, attention=False,
-                 normalization_factor=1, out_node_nf=None):
-        super(GNN, self).__init__()
-        if out_node_nf is None:
-            out_node_nf = in_node_nf
-        self.hidden_nf = hidden_nf
-        self.device = device
-        self.n_layers = n_layers
-        ### Encoder
-        self.embedding = nn.Linear(in_node_nf, self.hidden_nf)
-        self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)
-        for i in range(0, n_layers):
-            self.add_module("gcl_%d" % i, GCL(
-                self.hidden_nf, self.hidden_nf, self.hidden_nf,
-                normalization_factor=normalization_factor,
-                aggregation_method=aggregation_method,
-                edges_in_d=in_edge_nf, act_fn=act_fn,
-                attention=attention))
-        self.to(self.device)
-
-    def forward(self, h, edges, edge_attr=None, node_mask=None, edge_mask=None):
-        # Edit Emiel: Remove velocity as input
-        h = self.embedding(h)
-        for i in range(0, self.n_layers):
-            h, _ = self._modules["gcl_%d" % i](h, edges, edge_attr=edge_attr, node_mask=node_mask, edge_mask=edge_mask)
-        h = self.embedding_out(h)
-
-        # Important, the bias of the last linear might be non-zero
-        if node_mask is not None:
-            h = h * node_mask
-        return h
 
 
 class SinusoidsEmbeddingNew(nn.Module):
@@ -347,9 +311,9 @@ class SinusoidsEmbeddingNew(nn.Module):
         return emb.detach()
 
 
-def coord2diff(x, edge_index, norm_constant=1):
-    row, col = edge_index
-    coord_diff = x[row] - x[col]     # feeding this to model, relative difference
+def coord2diff_fusion(x1, x2, edge_index, norm_constant=1):
+    n1, n2 = edge_index
+    coord_diff = x1[n1] - x2[n2]     # feeding this to model, relative difference
     radial = torch.sum((coord_diff) ** 2, 1).unsqueeze(1)
     # ~!fp16
     norm = torch.sqrt(radial + 1e-8)
@@ -358,54 +322,17 @@ def coord2diff(x, edge_index, norm_constant=1):
     return radial, coord_diff
 
 
-# In summary, this function takes input data along with segment IDs and aggregates the data 
-# based on these segment IDs using either sum or mean aggregation methods. It's a useful 
-# operation for tasks such as grouping or pooling in neural network architectures.
-#
-# does addition using scatter_add_():
-# Initialize a result tensor
-    # result = torch.zeros(3)
 
-    # # Indices where elements will be scattered
-    # indices = torch.tensor([0, 1, 1])
-
-    # # Values to scatter
-    # values = torch.tensor([1, 2, 3])
-
-    # # Perform scatter-add operation
-    # result.scatter_add_(0, indices, values)  <-- 0=dim to perform scatter operation
-
-    # print(result)   >>> tensor([1., 5., 0.])
-    # idx: [0, 1, 1]    <-- index position of where elem at this positions (the idx takes) would end up on
-    # val: [1, 2, 3]
-    #
-    #              0, 1,   2
-    # scattering: [1, 2+3, 0]   <-- 1 kept at position 0, while 2 3 scattered/moved to position 1, position 2 empty
-    #           = [1, 5,   0]
     
 def unsorted_segment_sum(data, segment_ids, num_segments, normalization_factor, aggregation_method: str):
-    # unsorted_segment_sum(edge_attr, row, num_segments=x.size(0),..)
     """Custom PyTorch op to replicate TensorFlow's `unsorted_segment_sum`.
         Normalization: 'sum' or 'mean'.
     """
-    # num_segments: bs * num_nodes
-    # data.size(1): 256
     result_shape = (num_segments, data.size(1))
     result = data.new_full(result_shape, 0)  # Init empty result tensor of shape result_shape, all with value 0, and same data type as data
-    #         say (100)       (100, 1)      (100, 256)
     segment_ids = segment_ids.unsqueeze(-1).expand(-1, data.size(1))   # [bs*n_nodes*n_nodes, 256]
     segment_ids = segment_ids.to(data.device)
-    # since here we have n_nodes=5, meaning each molecule has 5 atoms / 5 nodes
-    #
-    #               Molecule 1: [0,1,2,3,4]                                                        Molecule 2: [5,6,7,8,9]
-    #
-    #  row: tensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4,     5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9]), 
-    #               <----------->  <----------->  <----------->  <----------->  <----------->      <----------->  <----------->  <----------->  <----------->  <----------->  
-    #               sum-to-idx-0   sum-to-idx-1   sum-to-idx-2   sum-to-idx-3   sum-to-idx-4       sum-to-idx-5   sum-to-idx-6   sum-to-idx-7   sum-to-idx-8   sum-to-idx-9   
-    #               <----------------------------------------------------------------------->      <----------------------------------------------------------------------->
-    #                           all possible node combinations in molecule 1                                   all possible node combinations in molecule 2
-    #               <------------------------------------------------------------------------------------------------------------------------------------------------------>
-    #                                                                        batch size = 2   (2 molecules per batch)
+
     result.scatter_add_(0, segment_ids, data)      # runs on dim=0, collapes dim 0 from bs*n_nodes*n_nodes to bs*n_nodes
     if aggregation_method == 'sum':
         result = result / normalization_factor
