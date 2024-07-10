@@ -312,13 +312,15 @@ class EnVariationalDiffusion(torch.nn.Module):
     """
     def __init__(
             self,
-            dynamics: models.EGNN_dynamics_QM9, in_node_nf: int, n_dims: int,
+            dynamics, in_node_nf: int, n_dims: int,
             timesteps: int = 1000, parametrization='eps', noise_schedule='learned',
             noise_precision=1e-4, loss_type='vlb', norm_values=(1., 1., 1.),
             norm_biases=(None, 0., 0.), include_charges=True):
         super().__init__()
 
+        assert isinstance(dynamics, models.EGNN_dynamics_QM9) or isinstance(dynamics, models.ControlNet_Module_Wrapper)
         assert loss_type in {'vlb', 'l2'}
+
         self.loss_type = loss_type   # L2
         self.include_charges = include_charges  # true
         if noise_schedule == 'learned':
@@ -1396,10 +1398,25 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             self.vae.train = disabled_train
             for param in self.vae.parameters():
                 param.requires_grad = False
+            print(">>> [VAE] (Encoder) (Decoder) requires_grad = False")
         else:
             # set whole model to trainable, but if self.trainable_ae_encoder=False,
             # will detach the VAE Encoder's outputs from the loss computational graph
             # hence weights not updated.
+
+            # update: setting requires_grad part by part - more secure
             self.vae = vae.train()
-            for param in self.vae.parameters():
-                param.requires_grad = True
+            # Encoder
+            for param in self.vae.encoder.parameters():
+                if self.trainable_ae_encoder:
+                    param.requires_grad = True
+                else:
+                    param.requires_grad = False
+            print(f">>> [VAE] (Encoder) requires_grad = {self.trainable_ae_encoder}")
+            # Decoder
+            for param in self.vae.decoder.parameters():
+                if self.trainable_ae_decoder:
+                    param.requires_grad = True
+                else:
+                    param.requires_grad = False
+            print(f">>> [VAE] (Decoder) requires_grad = {self.trainable_ae_decoder}")
