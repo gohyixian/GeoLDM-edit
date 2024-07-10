@@ -262,22 +262,19 @@ class EGNN(nn.Module):
         h = self.embedding(h)
         # h = low_vram_forward(self.embedding, h)
         
+        use_ckpt = PARAM_REGISTRY.get('use_checkpointing')
+        ckpt_mode = PARAM_REGISTRY.get('checkpointing_mode')
+        
         for i in range(0, self.n_layers):
             # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
-            if PARAM_REGISTRY.get('use_checkpointing') and \
-                (PARAM_REGISTRY.get('checkpointing_mode') == 'sqrt') and \
-                ((i+1) % int(math.sqrt(self.n_layers)) == 0) and \
-                self.n_layers > 1:
-                    
+            if use_ckpt and (ckpt_mode == 'sqrt') and ((i+1) % int(math.sqrt(self.n_layers)) == 0) and self.n_layers > 1:
                 print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
                 h, x = checkpoint(checkpoint_equiv_block, 
                                   (self._modules["e_block_%d" % i], h, x, edge_index, node_mask, edge_mask, distances), 
                                   use_reentrant=False)
                 
             # checkpointing all blocks (not so optimal but helps if input size is too large)
-            elif PARAM_REGISTRY.get('use_checkpointing') and \
-                (PARAM_REGISTRY.get('checkpointing_mode') == 'all'):
-                    
+            elif use_ckpt and (ckpt_mode == 'all'):
                 print(f"            >>> EGNN e_block_{i} ... h:{h.shape}   x:{x.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
                 h, x = checkpoint(checkpoint_equiv_block, 
                                   (self._modules["e_block_%d" % i], h, x, edge_index, node_mask, edge_mask, distances), 

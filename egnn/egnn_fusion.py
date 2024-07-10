@@ -3,32 +3,17 @@ import torch
 import math
 from torch.utils.checkpoint import checkpoint
 from global_registry import PARAM_REGISTRY
+from egnn.egnn_new import low_vram_forward, unsorted_segment_sum, SinusoidsEmbeddingNew
 
 
-def low_vram_forward(layer, tensor):
-    """Chunks tensor into smaller sizes along dim=0, and performs forward 
-       propagation before combining them back together.
-
-    Args:
-        layer (nn.module): Layer for forward propagation.
-        tensor (nn.tensor): Input to layer.
-        max_tensor_size (int, optional): Maximum chunk size, defaults to 50000.
-
-    Returns:
-        _type_: _description_
+def zero_module(module):
     """
-
-    max_tensor_size = int(PARAM_REGISTRY.get('forward_tensor_chunk_size'))
-    splits = list(torch.split(tensor, max_tensor_size, dim=0))
-
-    for i, split in enumerate(splits):
-        # ~!to
-        # splits[i] = layer(split.to(layer_device)).to(tensor_device)
-        splits[i] = layer(split)
-
-    tensor = torch.cat(splits, dim=0)
-    return tensor
-
+    :module: i.e. nn.Module
+    Zero out the parameters of a module and return it.
+    """
+    for param in module.parameters():
+        param.data.zero_()
+    return module
 
 
 def checkpoint_fusion_block(inputs):
@@ -216,8 +201,7 @@ class EGNN_Fusion(nn.Module):
                  norm_diff=True, out_node_nf=None, tanh=False, coords_range=15, norm_constant=1, inv_sublayers=2,
                  sin_embedding=False, normalization_factor=100, aggregation_method='sum'):
         super(EGNN_Fusion, self).__init__()
-        if out_node_nf is None:
-            out_node_nf = in_node_nf  # 2+(nf+?) for ldm
+
         self.hidden_nf = hidden_nf  # 256
         self.device = device
         self.n_layers = n_layers    # 1 for enc, 9 for dec & ldm
@@ -233,8 +217,6 @@ class EGNN_Fusion(nn.Module):
             self.sin_embedding = None
             edge_feat_nf = 2
 
-        self.embedding = nn.Linear(in_node_nf, self.hidden_nf)        # [6+(nf+?), 256] for enc, [1+(nf+?), 256] for dec, # [2+(nf+?), 256] for ldm
-        # self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)   # [256,256] for enc [256,6] for dec, [256, 2+(nf+?)] for ldm
         for i in range(0, n_layers):   # 1 for enc, 9 for dec & ldm
             self.add_module("fusion_e_block_%d" % i, FusionBlock(hidden_nf,     # 256
                                                                  edge_feat_nf=edge_feat_nf,    # 2
@@ -252,32 +234,28 @@ class EGNN_Fusion(nn.Module):
         self.to(self.device)
 
     def forward(self, h1, x1, h2, x2, edge_index, node_mask_1=None, joint_edge_mask=None):
+        """Managed by EGNN_Wrapper class"""
+        raise NotImplementedError()
         # Edit Emiel: Remove velocity as input
         distances, _ = coord2diff_fusion(x1, x2, edge_index)
         if self.sin_embedding is not None:      # none
             distances = self.sin_embedding(distances)
-        h1 = self.embedding(h1)
-        h2 = self.embedding(h2)
-        # h = low_vram_forward(self.embedding, h)
         
         intermediate_conditions = []
         
+        use_ckpt = PARAM_REGISTRY.get('use_checkpointing')
+        ckpt_mode = PARAM_REGISTRY.get('checkpointing_mode')
+        
         for i in range(0, self.n_layers):
             # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
-            if PARAM_REGISTRY.get('use_checkpointing') and \
-                (PARAM_REGISTRY.get('checkpointing_mode') == 'sqrt') and \
-                ((i+1) % int(math.sqrt(self.n_layers)) == 0) and \
-                self.n_layers > 1:
-                    
+            if use_ckpt and (ckpt_mode == 'sqrt') and ((i+1) % int(math.sqrt(self.n_layers)) == 0) and self.n_layers > 1:
                 print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
                 h1, x1 = checkpoint(checkpoint_fusion_block, 
                                   (self._modules["fusion_e_block_%d" % i], h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances), 
                                   use_reentrant=False)
                 
             # checkpointing all blocks (not so optimal but helps if input size is too large)
-            elif PARAM_REGISTRY.get('use_checkpointing') and \
-                (PARAM_REGISTRY.get('checkpointing_mode') == 'all'):
-                    
+            elif use_ckpt and (ckpt_mode == 'all'):
                 print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
                 h1, x1 = checkpoint(checkpoint_fusion_block, 
                                   (self._modules["fusion_e_block_%d" % i], h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances), 
@@ -296,20 +274,6 @@ class EGNN_Fusion(nn.Module):
 
 
 
-class SinusoidsEmbeddingNew(nn.Module):
-    def __init__(self, max_res=15., min_res=15. / 2000., div_factor=4):
-        super().__init__()
-        self.n_frequencies = int(math.log(max_res / min_res, div_factor)) + 1
-        self.frequencies = 2 * math.pi * div_factor ** torch.arange(self.n_frequencies)/max_res
-        self.dim = len(self.frequencies) * 2
-
-    def forward(self, x):
-        # ~!fp16
-        x = torch.sqrt(x + 1e-8)
-        emb = x * self.frequencies[None, :].to(x.device)
-        emb = torch.cat((emb.sin(), emb.cos()), dim=-1)
-        return emb.detach()
-
 
 def coord2diff_fusion(x1, x2, edge_index, norm_constant=1):
     n1, n2 = edge_index
@@ -321,25 +285,3 @@ def coord2diff_fusion(x1, x2, edge_index, norm_constant=1):
     coord_diff = coord_diff/(norm + norm_constant)
     return radial, coord_diff
 
-
-
-    
-def unsorted_segment_sum(data, segment_ids, num_segments, normalization_factor, aggregation_method: str):
-    """Custom PyTorch op to replicate TensorFlow's `unsorted_segment_sum`.
-        Normalization: 'sum' or 'mean'.
-    """
-    result_shape = (num_segments, data.size(1))
-    result = data.new_full(result_shape, 0)  # Init empty result tensor of shape result_shape, all with value 0, and same data type as data
-    segment_ids = segment_ids.unsqueeze(-1).expand(-1, data.size(1))   # [bs*n_nodes*n_nodes, 256]
-    segment_ids = segment_ids.to(data.device)
-
-    result.scatter_add_(0, segment_ids, data)      # runs on dim=0, collapes dim 0 from bs*n_nodes*n_nodes to bs*n_nodes
-    if aggregation_method == 'sum':
-        result = result / normalization_factor
-
-    if aggregation_method == 'mean':
-        norm = data.new_zeros(result.shape)
-        norm.scatter_add_(0, segment_ids, data.new_ones(data.shape))   # N, sum up number of elems, i.e.  (..sum..) / N  <--
-        norm[norm == 0] = 1  # 0 div error
-        result = result / norm
-    return result

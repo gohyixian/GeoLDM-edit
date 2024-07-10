@@ -444,6 +444,7 @@ def collate_fn_controlnet(batch):
     assert ligand_batch_size == pocket_batch_size, f"Different batch sizes: Ligand={ligand_batch_size}, Pocket={pocket_batch_size}"
     
     ligand_edge_mask = ligand_atom_mask.unsqueeze(1) * ligand_atom_mask.unsqueeze(2)
+    pocket_edge_mask = pocket_atom_mask.unsqueeze(1) * pocket_atom_mask.unsqueeze(2)
     joint_edge_mask = pocket_atom_mask.unsqueeze(1) * ligand_atom_mask.unsqueeze(2)
     # tested, same as:
     # edge_index = get_adj_matrix(n_nodes_1=3, n_nodes_2=2, batch_size=2)
@@ -453,11 +454,15 @@ def collate_fn_controlnet(batch):
     # mask diagonal
     ligand_diag_mask = ~torch.eye(ligand_edge_mask.size(1), dtype=torch.bool,
                            device=ligand_edge_mask.device).unsqueeze(0)
+    pocket_diag_mask = ~torch.eye(pocket_edge_mask.size(1), dtype=torch.bool,
+                           device=pocket_edge_mask.device).unsqueeze(0)
     ligand_edge_mask *= ligand_diag_mask
+    pocket_edge_mask *= pocket_diag_mask
     # mask diagonal: No need for joint_edge_mask
 
     # edge_mask = atom_mask.unsqueeze(1) * atom_mask.unsqueeze(2)
     ligand_batch['edge_mask'] = ligand_edge_mask.view(ligand_batch_size * ligand_n_nodes * ligand_n_nodes, 1)
+    pocket_batch['edge_mask'] = pocket_edge_mask.view(pocket_batch_size * pocket_n_nodes * pocket_n_nodes, 1)
     joint_edge_mask = joint_edge_mask.view(ligand_batch_size * ligand_n_nodes * pocket_n_nodes, 1)
     
     batch = dict()

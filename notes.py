@@ -29,6 +29,15 @@ model = EGNN_Fusion(in_node_nf=10, in_edge_nf=2, hidden_nf=256)
 for param in model.parameters():
     param.data.zero_()
 
+def zero_module(module):
+    """
+    :module: i.e. nn.Module
+    Zero out the parameters of a module and return it.
+    """
+    for param in module.parameters():
+        param.data.zero_()
+    return module
+
 # Verify that all parameters are zero
 all_zero = True
 for name, param in model.named_parameters():
