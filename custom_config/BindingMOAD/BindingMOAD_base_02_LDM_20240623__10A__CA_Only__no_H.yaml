@@ -6,7 +6,7 @@ exp_name: BindingMOAD_base_02_LDM_20240623__10A__CA_Only__no_H
 train_diffusion: true
 
 # training mode: VAE | LDM | ControlNet
-training_mode: 'LDM'
+training_mode: LDM
 
 # Specify first stage model path
 ae_path: ./outputs/BindingMOAD_base_01_VAE_20240623__10A__CA_Only__no_H
@@ -29,7 +29,7 @@ condition_time: true
 
 # ========================================================================================================== Dataset
 
-dataset: d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H__LIGAND+POCKET
+dataset: d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H__LIGAND
 
 # geom directory  ~!geom
 data_file: ./data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H.npz

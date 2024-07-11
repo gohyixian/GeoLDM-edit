@@ -6,7 +6,7 @@ exp_name: CrossDocked_base_01_VAE_20240623__10A__CA_Only__no_H
 train_diffusion: false
 
 # training mode: VAE | LDM | ControlNet
-training_mode: 'VAE'
+training_mode: VAE
 
 # Specify first stage model path
 ae_path: null

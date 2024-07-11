@@ -95,7 +95,7 @@ def main():
 
     # additional data extracted for stability and quickvina tests on controlnet
     if args.training_mode == CONTROLNET:
-        split = args.controlnet_eval_split
+        split = args.n_stability_eval_split
         # Ligands' & Pockets' ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are already available
         controlnet_eval_datalist = [deepcopy(dataloaders[split].dataset[idx]) for idx in range(args.n_stability_samples)]
 

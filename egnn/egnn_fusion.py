@@ -6,13 +6,23 @@ from global_registry import PARAM_REGISTRY
 from egnn.egnn_new import low_vram_forward, unsorted_segment_sum, SinusoidsEmbeddingNew
 
 
-def zero_module(module):
+def zero_module(module: nn.Module):
     """
     :module: i.e. nn.Module
     Zero out the parameters of a module and return it.
     """
     for param in module.parameters():
         param.data.zero_()
+
+    if PARAM_REGISTRY.get('verbose')==True:
+        print(f">>> Zeroing out parameters")
+        all_zero = True
+        for name, param in module.named_parameters():
+            print(f"{name}, {param.shape}, SUM={param.sum().item()} ")
+            if param.sum().item() != 0.0:
+                all_zero=False
+        print(f"All weights zero: {all_zero}")
+
     return module
 
 

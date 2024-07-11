@@ -1,19 +1,25 @@
 proj_name: Control-GeoLDM
-exp_name: BindingMOAD_base_01_VAE_20240623__10A__CA_Only__no_H
+exp_name: CrossDocked_base_03_CONTROL_20240623__10A__CA_Only__no_H
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
-train_diffusion: false
+train_diffusion: true
 
 # training mode: VAE | LDM | ControlNet
-training_mode: VAE
+training_mode: ControlNet
 
 # Specify first stage model path
-ae_path: null
+ae_path: ./outputs/CrossDocked_base_01_VAE_20240623__10A__CA_Only__no_H
+ldm_path: ./outputs/CrossDocked_base_02_LDM_20240623__10A__CA_Only__no_H
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
-trainable_ae_encoder: true
-trainable_ae_decoder: true
+trainable_ae_encoder: false
+trainable_ae_decoder: false
+
+# ControlNet specific settings
+trainable_ldm: false
+trainable_controlnet: true
+trainable_fusion_blocks: true
 
 # can contain multiple: homo | onehot | lumo | num_atoms | etc
 conditioning: []
@@ -29,15 +35,15 @@ condition_time: true
 
 # ========================================================================================================== Dataset
 
-dataset: d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H__LIGAND+POCKET
+dataset: d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND
 
 # geom directory  ~!geom
-data_file: ./data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H.npz
+data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H.npz
 
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
 # Please set the path to the DATASET_permutation.npy file after it is generated.
-permutation_file_path: ./data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H_LG100_PKT100_permutation.npy
+permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H_LG100_PKT100_permutation.npy
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
@@ -66,8 +72,8 @@ start_epoch: 0
 test_epochs: 1
 
 
-n_epochs: 40  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 24    # 32
+n_epochs: 80  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 12    # 32
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01
@@ -90,8 +96,12 @@ ema_decay: 0.9999
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 500
+n_stability_samples: 100  # 500
+n_stability_samples_batch_size: 10
 
+# Dataset partition where pocket samples will be drawn from for analyzing 
+# generated ligands' stability: train | test | val
+n_stability_eval_split: val
 
 # disables CUDA training
 no_cuda: false
@@ -100,7 +110,7 @@ no_cuda: false
 trace: hutch
 
 # verbose logging
-verbose: false
+verbose: true
 
 dtype: torch.float32
 
@@ -181,6 +191,22 @@ normalization_factor: 1
 
 # EGNN aggregation method: sum | mean
 aggregation_method: sum
+
+
+# Fusion Block specific settings
+fusion_weights: [1, 1, 1, 1]
+# Condition fusion method:
+#  - scaled_sum   : (h1_i,x1_i) = (h1_i,x1_i) + w_i * (f_h1_i,f_x1_i)
+#  - balanced_sum : (h1_i,x1_i) = [(1 - w_i) * (h1_i,x1_i)] + [w_i * (f_h1_i,f_x1_i)]
+#  - replace      : (h1_i,x1_i) = (f_h1_i,f_x1_i)
+fusion_mode: scaled_sum    # scaled_sum | balanced_sum | replace
+# Zero out all weights of fusion blocks instead of randomly instantiated
+zero_fusion_block_weights: true
+
+# Initial Noise Injection / Feedback Mechanism
+noise_injection_weights: [0.5, 0.5]       # pkt = w[0]*lg + w[1]*pkt
+noise_injection_aggregation_method: mean  # mean | sum
+noise_injection_normalization_factor: 1   # aggregation normalization factor
 
 
 
