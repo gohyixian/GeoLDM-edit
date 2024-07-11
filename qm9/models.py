@@ -2,10 +2,12 @@ import torch
 from torch.distributions.categorical import Categorical
 
 import numpy as np
-from egnn.models import EGNN_dynamics_QM9, EGNN_encoder_QM9, EGNN_decoder_QM9
+from egnn.models import EGNN_dynamics_QM9, EGNN_encoder_QM9, EGNN_decoder_QM9, EGNN_dynamics_fusion, ControlNet_Module_Wrapper
 
 from equivariant_diffusion.en_diffusion import EnVariationalDiffusion, EnHierarchicalVAE, EnLatentDiffusion
+from equivariant_diffusion.control_en_diffusion import ControlEnLatentDiffusion
 
+from copy import deepcopy
 import pickle
 from os.path import join
 
@@ -196,6 +198,147 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
 
     else:
         raise ValueError(args.probabilistic_model)
+
+
+def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train):
+
+    # # Create (and load) the first stage model (Autoencoder).
+    # if args.ae_path is not None:
+    #     with open(join(args.ae_path, 'args.pickle'), 'rb') as f:
+    #         first_stage_args = pickle.load(f)
+    # else:
+    first_stage_args = args
+    
+    # CAREFUL with this -->
+    if not hasattr(first_stage_args, 'normalization_factor'):
+        first_stage_args.normalization_factor = 1
+    if not hasattr(first_stage_args, 'aggregation_method'):
+        first_stage_args.aggregation_method = 'sum'
+
+    device = torch.device("cuda" if first_stage_args.cuda else "cpu")
+
+    first_stage_model, nodes_dist, prop_dist = get_autoencoder(
+        first_stage_args, device, dataset_info, dataloader_train)
+    first_stage_model.to(device)
+
+    # if args.ae_path is not None:   # null
+    #     print(f">> Loading VAE weights from {args.ae_path}")
+    #     fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
+    #     flow_state_dict = torch.load(join(args.ae_path, fn),
+    #                                     map_location=device)
+    #     first_stage_model.load_state_dict(flow_state_dict)
+
+    # Create the second stage model (Latent Diffusions).
+    args.latent_nf = first_stage_args.latent_nf
+    in_node_nf = args.latent_nf  # 1
+
+    if args.condition_time:   # true
+        dynamics_in_node_nf = in_node_nf + 1  # 2
+    else:
+        print('Warning: dynamics model is _not_ conditioned on time.')
+        dynamics_in_node_nf = in_node_nf
+    
+    net_dynamics = EGNN_dynamics_QM9(
+        in_node_nf=dynamics_in_node_nf,  # args.latent_nf + time = 2
+        context_node_nf=args.context_node_nf,  # nf+? = 0
+        n_dims=3, 
+        device=device, # cuda
+        hidden_nf=args.nf,  # 256
+        act_fn=torch.nn.SiLU(), 
+        n_layers=args.n_layers,  # 9
+        attention=args.attention,  # true
+        tanh=args.tanh,    # true
+        mode=args.model,   # egnn_dynamics
+        norm_constant=args.norm_constant,  # 1
+        inv_sublayers=args.inv_sublayers,  # 1
+        sin_embedding=args.sin_embedding,  # false
+        normalization_factor=args.normalization_factor, # 1
+        aggregation_method=args.aggregation_method  # sum
+        )
+
+    if args.probabilistic_model == 'diffusion':
+        vdm = EnLatentDiffusion(
+            vae=first_stage_model,    # VAE model
+            trainable_ae_encoder=args.trainable_ae_encoder,    # false
+            trainable_ae_decoder=args.trainable_ae_decoder,    # true
+            dynamics=net_dynamics,    # LDM model
+            in_node_nf=in_node_nf,    # 1
+            n_dims=3,
+            timesteps=args.diffusion_steps,    # 1000
+            noise_schedule=args.diffusion_noise_schedule,  # polynomial_2
+            noise_precision=args.diffusion_noise_precision, # 1.0e-05
+            loss_type=args.diffusion_loss_type,  # L2
+            norm_values=args.normalize_factors,  # [1,4,10]
+            include_charges=args.include_charges # true
+            )
+        
+        vdm.to(device)
+        if args.ldm_path is not None:
+            fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
+            flow_state_dict = torch.load(join(args.ldm_path, fn), map_location=device)
+            vdm.load_state_dict(flow_state_dict)
+        else:
+            raise ValueError(args.ldm_path)
+        
+        control_network = deepcopy(vdm.dynamics)
+        fusion_network = EGNN_dynamics_fusion(
+            in_node_nf=dynamics_in_node_nf,  # args.latent_nf + time = 2
+            context_node_nf=args.context_node_nf,  # nf+? = 0
+            n_dims=3, 
+            device=device, # cuda
+            hidden_nf=args.nf,  # 256
+            act_fn=torch.nn.SiLU(), 
+            n_layers=args.n_layers,  # 9
+            attention=args.attention,  # true
+            tanh=args.tanh,    # true
+            mode=args.model,   # egnn_dynamics
+            norm_constant=args.norm_constant,  # 1
+            inv_sublayers=args.inv_sublayers,  # 1
+            sin_embedding=args.sin_embedding,  # false
+            normalization_factor=args.normalization_factor, # 1
+            aggregation_method=args.aggregation_method  # sum
+        )
+        control_network.to(device)
+        fusion_network.to(device)
+        
+        controlnet_module_wrapper = ControlNet_Module_Wrapper(
+            diffusion_network=vdm.dynamics,
+            control_network=control_network,
+            fusion_network=fusion_network,
+            fusion_weights=[float(i) for i in args.fusion_weights],
+            fusion_mode=args.fusion_mode,
+            device=device,
+            noise_injection_weights=[float(i) for i in args.noise_injection_weights],
+            noise_injection_aggregation_method=args.noise_injection_aggregation_method,
+            noise_injection_normalization_factor=float(args.noise_injection_normalization_factor)
+        )
+
+        # return vdm, nodes_dist, prop_dist
+        controlldm = ControlEnLatentDiffusion(
+            vae=vdm.vae,                         # VAE model
+            dynamics=controlnet_module_wrapper,  # central stage ldm and controlnet
+            trainable_ae_encoder=args.trainable_ae_encoder,
+            trainable_ae_decoder=args.trainable_ae_decoder,
+            trainable_ldm=args.trainable_ldm,
+            trainable_controlnet=args.trainable_controlnet,
+            trainable_fusion_block=args.trainable_fusion_blocks,
+            dynamics=net_dynamics,    # LDM model
+            in_node_nf=in_node_nf,    # 1
+            n_dims=3,
+            timesteps=args.diffusion_steps,    # 1000
+            noise_schedule=args.diffusion_noise_schedule,  # polynomial_2
+            noise_precision=args.diffusion_noise_precision, # 1.0e-05
+            loss_type=args.diffusion_loss_type,  # L2
+            norm_values=args.normalize_factors,  # [1,4,10]
+            include_charges=args.include_charges # true
+        )
+        controlldm.to(device)
+
+        return controlldm, nodes_dist, prop_dist
+
+    else:
+        raise ValueError(args.probabilistic_model)
+
 
 
 def get_optim(args, generative_model):

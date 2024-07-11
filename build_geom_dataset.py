@@ -340,7 +340,7 @@ class GeomDrugsDataset(Dataset):
             ligand_data_list = data_list['ligand']
             pocket_data_list = data_list['pocket']
             
-            # sort according to ligand
+            # sort according to ligand size
             lengths = [s.shape[0] for s in ligand_data_list]
             argsort = np.argsort(lengths)
             self.data_list = [ligand_data_list[i] for i in argsort]

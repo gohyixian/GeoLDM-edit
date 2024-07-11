@@ -14,8 +14,8 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
     The E(n) Latent Diffusion Module.
     """
     def __init__(self, **kwargs):
-        vae = kwargs.pop('vae')
-        controlled_diffusion_model = kwargs.pop('controlled_diffusion_model')
+        vae                     = kwargs.pop('vae')
+        dynamics                = kwargs.pop('dynamics')
         trainable_ae_encoder    = kwargs.pop('trainable_ae_encoder', False)
         trainable_ae_decoder    = kwargs.pop('trainable_ae_decoder', False)
         trainable_ldm           = kwargs.pop('trainable_ldm', False)
@@ -25,7 +25,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         super().__init__(**kwargs)
         
         assert isinstance(vae, EnHierarchicalVAE), f"required VAE class of EnHierarchicalVAE but {vae.__class__.__name__} given"
-        assert isinstance(controlled_diffusion_model, models.ControlNet_Module_Wrapper), f"required controlled_ldm class of ControlNet_Module_Wrapper but {controlled_diffusion_model} given"
+        assert isinstance(dynamics, models.ControlNet_Module_Wrapper), f"required controlled_ldm class of ControlNet_Module_Wrapper but {dynamics} given"
 
         # Create self.vae as the first stage model.
         self.trainable_ae_encoder = trainable_ae_encoder
@@ -34,7 +34,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         self.trainable_controlnet = trainable_controlnet
         self.trainable_fusion_blocks = trainable_fusion_blocks
         
-        self.instantiate_first_second_stage(vae, controlled_diffusion_model)
+        self.instantiate_first_second_stage(vae, dynamics)
     
     # def unnormalize_z(self, z, node_mask):
     #     # Overwrite the unnormalize_z function to do nothing (for sample_chain). 
@@ -478,7 +478,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         return z_x, z_h
 
 
-    def instantiate_first_second_stage(self, vae: EnHierarchicalVAE, controlled_diffusion_model: models.ControlNet_Module_Wrapper):
+    def instantiate_first_second_stage(self, vae: EnHierarchicalVAE, dynamics: models.ControlNet_Module_Wrapper):
         # VAE
         if not self.trainable_ae_encoder and not self.trainable_ae_decoder:
             self.vae = vae.eval()
@@ -510,12 +510,12 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
 
         # Controlled Diffusion Model
         if (not self.trainable_ldm) and (not self.trainable_controlnet) and (not self.trainable_fusion_blocks):
-            self.controlled_diffusion_model = controlled_diffusion_model.eval()
+            self.dynamics = dynamics.eval()
         else: # one of them is trainable
-            self.controlled_diffusion_model = controlled_diffusion_model.train()
+            self.dynamics = dynamics.train()
 
         # LDM
-        for param in self.controlled_diffusion_model.controlnet_arch_wrapper.diffusion_net.parameters():
+        for param in self.dynamics.controlnet_arch_wrapper.diffusion_net.parameters():
             if self.trainable_ldm:
                 param.requires_grad = True
             else:
@@ -523,7 +523,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         print(f">>> [LDM] requires_grad = {self.trainable_ldm}")
 
         # ControlNet
-        for param in self.controlled_diffusion_model.controlnet_arch_wrapper.control_net.parameters():
+        for param in self.dynamics.controlnet_arch_wrapper.control_net.parameters():
             if self.trainable_controlnet:
                 param.requires_grad = True
             else:
@@ -531,7 +531,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         print(f">>> [ControlNet] requires_grad = {self.trainable_controlnet}")
 
         # Fusion Blocks
-        for param in self.controlled_diffusion_model.controlnet_arch_wrapper.fusion_net.parameters():
+        for param in self.dynamics.controlnet_arch_wrapper.fusion_net.parameters():
             if self.trainable_fusion_blocks:
                 param.requires_grad = True
             else:
