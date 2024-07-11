@@ -194,7 +194,7 @@ aggregation_method: sum
 
 
 # Fusion Block specific settings
-fusion_weights: [1, 1, 1, 1]
+fusion_weights: [0.25, 0.5, 0.75, 1]
 # Condition fusion method:
 #  - scaled_sum   : (h1_i,x1_i) = (h1_i,x1_i) + w_i * (f_h1_i,f_x1_i)
 #  - balanced_sum : (h1_i,x1_i) = [(1 - w_i) * (h1_i,x1_i)] + [w_i * (f_h1_i,f_x1_i)]
