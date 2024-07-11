@@ -273,12 +273,18 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
             )
         
         vdm.to(device)
-        if args.ldm_path is not None:
-            fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
-            flow_state_dict = torch.load(join(args.ldm_path, fn), map_location=device)
-            vdm.load_state_dict(flow_state_dict)
+        if hasattr(args, 'ldm_path'):
+            # controlnet training: load trained LDM weights
+            if args.ldm_path is not None:
+                fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
+                flow_state_dict = torch.load(join(args.ldm_path, fn), map_location=device)
+                vdm.load_state_dict(flow_state_dict)
+                print(f">> Loading LDM weights from {join(args.ldm_path, fn)}")
+            else:
+                raise ValueError(args.ldm_path)
         else:
-            raise ValueError(args.ldm_path)
+            # controlnet eval: manually load whole network's weights after initialisation
+            print(f">> No LDM weights given, please load manually!")
         
         control_network = deepcopy(vdm.dynamics)
         fusion_network = EGNN_dynamics_fusion(
@@ -296,7 +302,8 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
             inv_sublayers=args.inv_sublayers,  # 1
             sin_embedding=args.sin_embedding,  # false
             normalization_factor=args.normalization_factor, # 1
-            aggregation_method=args.aggregation_method  # sum
+            aggregation_method=args.aggregation_method,  # sum
+            zero_weights=args.zero_fusion_block_weights  # zeros out fusion blocks' weights
         )
         control_network.to(device)
         fusion_network.to(device)
@@ -322,7 +329,6 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
             trainable_ldm=args.trainable_ldm,
             trainable_controlnet=args.trainable_controlnet,
             trainable_fusion_block=args.trainable_fusion_blocks,
-            dynamics=net_dynamics,    # LDM model
             in_node_nf=in_node_nf,    # 1
             n_dims=3,
             timesteps=args.diffusion_steps,    # 1000

@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from equivariant_diffusion.utils import assert_mean_zero_with_mask, remove_mean_with_mask,\
     assert_correctly_masked
 from qm9.analyze import check_stability
+from qm9.data import collate as qm9_collate
 
 
 def rotate_chain(z):
@@ -152,6 +153,91 @@ def sample(args, device, generative_model, dataset_info,
         raise ValueError(args.probabilistic_model)
 
     return one_hot, charges, x, node_mask
+
+
+
+def sample_controlnet(args, device, generative_model, dataset_info,
+                      prop_dist=None, nodesxsample=torch.tensor([10]), context=None,
+                      fix_noise=False, pocket_dict_list=[]):
+
+    max_n_nodes = dataset_info['max_n_nodes']  # this is the maximum node_size in QM9
+
+    # Pockets' ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are already available
+    assert int(torch.max(nodesxsample)) <= max_n_nodes
+    batch_size = len(nodesxsample)
+    
+    assert batch_size == len(pocket_dict_list), f"Different batch_size encountered! batch_size={batch_size}, len(pocket_dict_list)={len(pocket_dict_list)}"
+
+    # Ligand node_mask
+    lg_node_mask = torch.zeros(batch_size, max_n_nodes)
+    for i in range(batch_size):
+        lg_node_mask[i, 0:nodesxsample[i]] = 1
+
+    # Ligand edge_mask
+    lg_edge_mask = lg_node_mask.unsqueeze(1) * lg_node_mask.unsqueeze(2)
+    lg_diag_mask = ~torch.eye(lg_edge_mask.size(1), dtype=torch.bool).unsqueeze(0)
+    lg_edge_mask *= lg_diag_mask
+    lg_edge_mask = lg_edge_mask.view(batch_size * max_n_nodes * max_n_nodes, 1).to(device)
+    lg_node_mask = lg_node_mask.to(device)
+    # lg_node_mask = lg_node_mask.unsqueeze(2).to(device)
+
+    # Pocket: zero padding done here
+    pocket_batch = {prop: qm9_collate.batch_stack([mol[prop] for mol in pocket_dict_list])
+                    for prop in pocket_dict_list[0].keys()}
+    pkt_x = pocket_batch['positions'].to(device)
+    pkt_h = pocket_batch['one_hot'].to(device)
+    pkt_node_mask = pocket_batch['atom_mask'].to(device)
+    bs, pkt_n_nodes = pkt_node_mask.size()
+    assert batch_size == bs, f"Different batch_size encountered! ligand={batch_size}, pocket={bs}"
+    pkt_edge_mask = pkt_node_mask.unsqueeze(1) * pkt_node_mask.unsqueeze(2)
+    pkt_diag_mask = ~torch.eye(pkt_edge_mask.size(1), dtype=torch.bool).unsqueeze(0)
+    pkt_edge_mask *= pkt_diag_mask
+    pkt_edge_mask = pkt_edge_mask.view(batch_size * pkt_n_nodes * pkt_n_nodes, 1).to(device)
+
+    joint_edge_mask = pkt_node_mask.unsqueeze(1) * lg_node_mask.unsqueeze(2)
+    joint_edge_mask = joint_edge_mask.view(batch_size * max_n_nodes * pkt_n_nodes, 1).to(device)
+    # ~!joint_edge_mask tested, same as:
+    # edge_index = get_adj_matrix(n_nodes_1=3, n_nodes_2=2, batch_size=2)
+    # n1, n2 = edge_index
+    # joint_edge_mask_3 = ligand_atom_mask_batched[n1] * pocket_atom_mask_batched[n2]
+
+    # TODO FIX: This conditioning just zeros.
+    if args.context_node_nf > 0:
+        raise NotImplementedError()
+        # if context is None:
+        #     context = prop_dist.sample_batch(nodesxsample)
+        # context = context.unsqueeze(1).repeat(1, max_n_nodes, 1).to(device) * node_mask
+    else:
+        context = None
+
+    if args.probabilistic_model == 'diffusion':
+        x, h = generative_model.sample(n_samples=batch_size, 
+                                       n_nodes=max_n_nodes, 
+                                       x2=pkt_x, 
+                                       h2=pkt_h, 
+                                       node_mask_1=lg_node_mask, 
+                                       node_mask_2=pkt_node_mask, 
+                                       edge_mask_1=lg_edge_mask, 
+                                       edge_mask_2=pkt_edge_mask, 
+                                       joint_edge_mask=joint_edge_mask, 
+                                       context=context, 
+                                       fix_noise=fix_noise)
+
+        assert_correctly_masked(x, lg_node_mask)
+        assert_mean_zero_with_mask(x, lg_node_mask)
+
+        one_hot = h['categorical']
+        charges = h['integer']
+
+        assert_correctly_masked(one_hot.float(), lg_node_mask)
+        if args.include_charges:
+            assert_correctly_masked(charges.float(), lg_node_mask)
+
+    else:
+        raise ValueError(args.probabilistic_model)
+
+    return one_hot, charges, x, lg_node_mask
+
 
 
 def sample_sweep_conditional(args, device, generative_model, dataset_info, prop_dist, n_nodes=19, n_frames=100):

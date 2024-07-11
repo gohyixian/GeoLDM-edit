@@ -335,17 +335,21 @@ class GeomDrugsDataset(Dataset):
             self.data_list = [data_list[i] for i in argsort]
             # Store indices where the size changes (will be access in other methods)
             self.split_indices = np.unique(np.sort(lengths), return_index=True)[1][1:]
-            
+
         elif training_mode == 'ControlNet':
             ligand_data_list = data_list['ligand']
             pocket_data_list = data_list['pocket']
-            
+
             # sort according to ligand size
             lengths = [s.shape[0] for s in ligand_data_list]
             argsort = np.argsort(lengths)
-            self.data_list = [ligand_data_list[i] for i in argsort]
-            self.data_list_pocket = [pocket_data_list[i] for i in argsort]
-            
+            # self.data_list = [ligand_data_list[i] for i in argsort]
+            # self.data_list_pocket = [pocket_data_list[i] for i in argsort]
+
+            assert len(data_list) == len(pocket_data_list), f"Invalid data pairs encountered! ligand={len(data_list)} pocket={len(pocket_data_list)}"
+            self.data_list = data_list
+            self.data_list_pocket = pocket_data_list
+
             self.split_indices = np.unique(np.sort(lengths), return_index=True)[1][1:]
 
     def __len__(self):
@@ -446,7 +450,7 @@ def collate_fn_controlnet(batch):
     ligand_edge_mask = ligand_atom_mask.unsqueeze(1) * ligand_atom_mask.unsqueeze(2)
     pocket_edge_mask = pocket_atom_mask.unsqueeze(1) * pocket_atom_mask.unsqueeze(2)
     joint_edge_mask = pocket_atom_mask.unsqueeze(1) * ligand_atom_mask.unsqueeze(2)
-    # tested, same as:
+    # ~!joint_edge_mask tested, same as:
     # edge_index = get_adj_matrix(n_nodes_1=3, n_nodes_2=2, batch_size=2)
     # n1, n2 = edge_index
     # joint_edge_mask_3 = ligand_atom_mask_batched[n1] * pocket_atom_mask_batched[n2]
@@ -523,10 +527,11 @@ class GeomDrugsTransform(object):
         new_data['atom_mask'] = torch.ones(n, device=self.device)
 
         if self.sequential:
-            # ~!to ~!mp
-            edge_mask = torch.ones((n, n), device=self.device)
-            edge_mask[~torch.eye(edge_mask.shape[0], dtype=torch.bool)] = 0
-            new_data['edge_mask'] = edge_mask.flatten()
+            raise NotImplementedError()
+            # # ~!to ~!mp
+            # edge_mask = torch.ones((n, n), device=self.device)
+            # edge_mask[~torch.eye(edge_mask.shape[0], dtype=torch.bool)] = 0
+            # new_data['edge_mask'] = edge_mask.flatten()
         return new_data
 
 

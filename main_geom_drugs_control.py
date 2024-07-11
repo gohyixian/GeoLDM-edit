@@ -11,20 +11,23 @@ import yaml
 import argparse
 import wandb
 from os.path import join
-from qm9.models import get_optim, get_model, get_autoencoder, get_latent_diffusion
+from qm9.models import get_optim, get_model, get_autoencoder, get_latent_diffusion, get_controlled_latent_diffusion
 from equivariant_diffusion import en_diffusion, control_en_diffusion
 
 from equivariant_diffusion import utils as diffusion_utils
 import torch
 import time
 import pickle
+from copy import deepcopy
 
 from qm9.utils import prepare_context, compute_mean_mad
 import train_test
-
 from global_registry import PARAM_REGISTRY, Config
 
 
+CONTROLNET = 'ControlNet'
+LDM = "LDM"
+VAE = "VAE"
 
 
 def main():
@@ -35,7 +38,7 @@ def main():
     with open(opt.config_file, 'r') as file:
         args_dict = yaml.safe_load(file)
     args = Config(**args_dict)
-    
+
 
     # # priority check goes here
     # if args.remove_h:
@@ -43,7 +46,7 @@ def main():
     # else:
     #     dataset_info = geom_with_h
     dataset_info = get_dataset_info(dataset_name=args.dataset, remove_h=args.remove_h)
-    
+
 
     # device settings
     args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -57,8 +60,8 @@ def main():
     dtype = getattr(torch, dtype_name)
     args.dtype = dtype
     torch.set_default_dtype(dtype)
-    
-    
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
@@ -75,7 +78,7 @@ def main():
                                                     training_mode=args.training_mode,
                                                     filter_pocket_size=args.filter_pocket_size)
     # ~!to ~!mp
-    # ['positions'], ['one_hot'], ['charges'], ['atonm_mask'], ['edge_mask'] are added here
+    # ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are added here
     transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, args.device, args.sequential)
 
     dataloaders = {}
@@ -89,6 +92,12 @@ def main():
             sequential=args.sequential, dataset=dataset, batch_size=args.batch_size,
             shuffle=shuffle, training_mode=args.training_mode)
     del split_data
+
+    # additional data extracted for stability and quickvina tests on controlnet
+    if args.training_mode == CONTROLNET:
+        split = args.controlnet_eval_split
+        # Ligands' & Pockets' ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are already available
+        controlnet_eval_datalist = [deepcopy(dataloaders[split].dataset[idx]) for idx in range(args.n_stability_samples)]
 
 
     atom_encoder = dataset_info['atom_encoder']
@@ -142,11 +151,15 @@ def main():
     args.context_node_nf = context_node_nf
 
 
-    # Create Latent Diffusion Model or Audoencoder
-    if args.train_diffusion:
+    # Create Control-LDM, Latent Diffusion Model or Autoencoder
+    if args.training_mode == CONTROLNET:
+        model, nodes_dist, prop_dist = get_controlled_latent_diffusion(args, args.device, dataset_info, dataloaders['train'])
+    elif args.training_mode == LDM:
         model, nodes_dist, prop_dist = get_latent_diffusion(args, args.device, dataset_info, dataloaders['train'])
-    else:
+    elif args.training_mode == VAE:
         model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info, dataloaders['train'])
+    else:
+        raise NotImplementedError()
 
     model = model.to(args.device)
     optim = get_optim(args, model)
@@ -206,33 +219,51 @@ def main():
     nth_iter = 0
     for epoch in range(args.start_epoch, args.n_epochs):
         start_epoch = time.time()
-        n_iters = train_test.train_epoch(args, dataloaders['train'], epoch, model, model_dp, model_ema, ema, device, dtype,
-                               property_norms, optim, nodes_dist, gradnorm_queue, dataset_info,
-                               prop_dist)
+        if args.training_mode == CONTROLNET:
+            n_iters = train_test.train_epoch_controlnet(args, dataloaders['train'], epoch, model, model_dp, model_ema, ema, device, dtype,
+                                                        property_norms, optim, nodes_dist, gradnorm_queue, dataset_info,
+                                                        prop_dist)
+        else:
+            n_iters = train_test.train_epoch(args, dataloaders['train'], epoch, model, model_dp, model_ema, ema, device, dtype,
+                                             property_norms, optim, nodes_dist, gradnorm_queue, dataset_info,
+                                             prop_dist)
         print(f">>> Epoch took {time.time() - start_epoch:.1f} seconds.")
         nth_iter += n_iters
 
         if epoch % args.test_epochs == 0:
-            if isinstance(model, en_diffusion.EnVariationalDiffusion):
+            if isinstance(model, en_diffusion.EnVariationalDiffusion) or isinstance(model, control_en_diffusion.ControlEnLatentDiffusion):
                 wandb.log(model.log_info(), commit=True)
-            
-            if not args.break_train_epoch and args.train_diffusion:
+
+            if not args.break_train_epoch and args.training_mode in [LDM, CONTROLNET]:
                 start  = time.time()
                 print(">>> Entering analyze_and_save")
-                train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
-                                            dataset_info, prop_dist, n_samples=args.n_stability_samples)
+                if args.training_mode == CONTROLNET:
+                    train_test.analyze_and_save_controlnet(epoch, model_ema, nodes_dist, args, device, dataset_info, prop_dist,
+                                                           n_samples=args.n_stability_samples, batch_size=args.n_stability_samples_batch_size, 
+                                                           pair_dict_list=controlnet_eval_datalist)
+                else:
+                    train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
+                                                dataset_info, prop_dist, n_samples=args.n_stability_samples)
                 print(f">>> analyze_and_save took {time.time() - start:.1f} seconds.")
-                
+
             start  = time.time()
-            nll_val = train_test.test(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
-                                      property_norms, nodes_dist, partition='Val')
+            if args.training_mode == CONTROLNET:
+                nll_val = train_test.test_controlnet(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
+                                                     property_norms, nodes_dist, partition='Val')
+            else:
+                nll_val = train_test.test(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
+                                          property_norms, nodes_dist, partition='Val')
             print(f">>> validation set test took {time.time() - start:.1f} seconds.")
-            
+
             start  = time.time()
-            nll_test = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
-                                       property_norms, nodes_dist, partition='Test')
+            if args.training_mode == CONTROLNET:
+                nll_test = train_test.test_controlnet(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
+                                                      property_norms, nodes_dist, partition='Test')
+            else:
+                nll_test = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
+                                           property_norms, nodes_dist, partition='Test')
             print(f">>> testing set test took {time.time() - start:.1f} seconds.")
-            
+
 
             if nll_val < best_nll_val:
                 best_nll_val = nll_val
