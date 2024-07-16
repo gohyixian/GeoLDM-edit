@@ -12,7 +12,8 @@ def zero_module(module: nn.Module):
     Zero out the parameters of a module and return it.
     """
     for param in module.parameters():
-        param.data.zero_()
+        if 'bias' not in name:
+            param.data.zero_()
 
     if PARAM_REGISTRY.get('verbose')==True:
         print(f">>> Zeroing out parameters")

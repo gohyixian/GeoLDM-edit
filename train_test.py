@@ -102,6 +102,13 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
         else:
             grad_norm = 0.
 
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                print(f"Gradients for {name}:")
+                print(param.grad)
+        import sys
+        sys.exit(0)
+
         # ~!mp
         optim.step()
 
