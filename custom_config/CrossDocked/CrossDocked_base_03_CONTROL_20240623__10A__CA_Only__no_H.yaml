@@ -201,7 +201,7 @@ fusion_weights: [0.25, 0.5, 0.75, 1]
 #  - replace      : (h1_i,x1_i) = (f_h1_i,f_x1_i)
 fusion_mode: scaled_sum    # scaled_sum | balanced_sum | replace
 # Zero out all weights of fusion blocks instead of randomly instantiated
-zero_fusion_block_weights: true
+zero_fusion_block_weights: false
 
 # Initial Noise Injection / Feedback Mechanism
 noise_injection_weights: [0.5, 0.5]       # pkt = w[0]*lg + w[1]*pkt
