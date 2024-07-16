@@ -14,13 +14,13 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
     The E(n) Latent Diffusion Module.
     """
     def __init__(self, **kwargs):
-        vae                     = kwargs.pop('vae')
-        dynamics                = kwargs.pop('dynamics')
-        trainable_ae_encoder    = kwargs.pop('trainable_ae_encoder', False)
-        trainable_ae_decoder    = kwargs.pop('trainable_ae_decoder', False)
-        trainable_ldm           = kwargs.pop('trainable_ldm', False)
-        trainable_controlnet    = kwargs.pop('trainable_controlnet', False)
-        trainable_fusion_blocks = kwargs.pop('trainable_fusion_blocks', False)
+        vae                     = kwargs.get('vae')
+        dynamics                = kwargs.get('dynamics')
+        trainable_ae_encoder    = kwargs.get('trainable_ae_encoder')
+        trainable_ae_decoder    = kwargs.get('trainable_ae_decoder')
+        trainable_ldm           = kwargs.pop('trainable_ldm')           # pop away, not required in Enlatentdiffusion.__init__()
+        trainable_controlnet    = kwargs.pop('trainable_controlnet')
+        trainable_fusion_blocks = kwargs.pop('trainable_fusion_blocks')
         
         super().__init__(**kwargs)
         
@@ -322,6 +322,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         
         """ VAE Encoding """
         # Encode data to latent space.
+        x2 = diffusion_utils.remove_mean_with_mask(x2, node_mask_2)
         z_x_mu_2, z_x_sigma_2, z_h_mu_2, z_h_sigma_2 = self.vae.encode(x2, h2, node_mask_2, edge_mask_2, context)
 
         # Infer latent z.
@@ -480,8 +481,9 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
 
     def instantiate_first_second_stage(self, vae: EnHierarchicalVAE, dynamics: models.ControlNet_Module_Wrapper):
         # VAE
+        self.vae = vae
         if not self.trainable_ae_encoder and not self.trainable_ae_decoder:
-            self.vae = vae.eval()
+            self.vae.eval()
             self.vae.train = disabled_train
             for param in self.vae.parameters():
                 param.requires_grad = False
@@ -492,7 +494,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
             # hence weights not updated.
 
             # update: setting requires_grad part by part - more secure
-            self.vae = vae.train()
+            self.vae.train()
             # Encoder
             for param in self.vae.encoder.parameters():
                 if self.trainable_ae_encoder:
@@ -509,10 +511,11 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
             print(f">>> [VAE] (Decoder) requires_grad = {self.trainable_ae_decoder}")
 
         # Controlled Diffusion Model
+        self.dynamics = dynamics
         if (not self.trainable_ldm) and (not self.trainable_controlnet) and (not self.trainable_fusion_blocks):
-            self.dynamics = dynamics.eval()
+            self.dynamics.eval()
         else: # one of them is trainable
-            self.dynamics = dynamics.train()
+            self.dynamics.train()
 
         # LDM
         for param in self.dynamics.controlnet_arch_wrapper.diffusion_net.parameters():

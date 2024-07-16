@@ -702,6 +702,7 @@ class ControlNet_Module_Wrapper(nn.Module):
         x2 = xh2[:, 0:self.n_dims].clone()
         
         edges_joint = [x.to(self.device) for x in edges_joint]
+        joint_edge_mask = joint_edge_mask.view(bs_1*n_nodes_1*n_nodes_2, 1)
         
         # [1600, 3]
         if h_dims == 0:

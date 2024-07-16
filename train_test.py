@@ -24,8 +24,8 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
 
     for i, data in enumerate(loader):
         # if i == 1002:  # vis test
-        # if i == 200:  # fast val test
-            # break
+        if i == 200:  # fast val test
+            break
         lg_x = data['ligand']['positions'].to(device, dtype)
         lg_node_mask = data['ligand']['atom_mask'].to(device, dtype).unsqueeze(2)
         lg_edge_mask = data['ligand']['edge_mask'].to(device, dtype)
@@ -478,7 +478,7 @@ def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, d
                                 n_samples=1000, batch_size=100, pair_dict_list=[]):
     print(f'Analyzing molecule stability at epoch {epoch}...')
     batch_size = min(batch_size, n_samples)
-    assert len(pair_dict_list) == len(n_samples)
+    assert len(pair_dict_list) == n_samples
     assert n_samples % batch_size == 0
     molecules = {'one_hot': [], 'x': [], 'node_mask': []}
     batch_id = 0

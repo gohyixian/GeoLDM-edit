@@ -1393,8 +1393,9 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         return chain_decoded_flat
 
     def instantiate_first_stage(self, vae: EnHierarchicalVAE):
+        self.vae = vae
         if not self.trainable_ae_encoder and not self.trainable_ae_decoder:
-            self.vae = vae.eval()
+            self.vae.eval()
             self.vae.train = disabled_train
             for param in self.vae.parameters():
                 param.requires_grad = False
@@ -1405,7 +1406,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             # hence weights not updated.
 
             # update: setting requires_grad part by part - more secure
-            self.vae = vae.train()
+            self.vae.train()
             # Encoder
             for param in self.vae.encoder.parameters():
                 if self.trainable_ae_encoder:

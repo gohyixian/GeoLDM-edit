@@ -346,8 +346,8 @@ class GeomDrugsDataset(Dataset):
             # self.data_list = [ligand_data_list[i] for i in argsort]
             # self.data_list_pocket = [pocket_data_list[i] for i in argsort]
 
-            assert len(data_list) == len(pocket_data_list), f"Invalid data pairs encountered! ligand={len(data_list)} pocket={len(pocket_data_list)}"
-            self.data_list = data_list
+            assert len(ligand_data_list) == len(pocket_data_list), f"Invalid data pairs encountered! ligand={len(ligand_data_list)} pocket={len(pocket_data_list)}"
+            self.data_list = ligand_data_list
             self.data_list_pocket = pocket_data_list
 
             self.split_indices = np.unique(np.sort(lengths), return_index=True)[1][1:]

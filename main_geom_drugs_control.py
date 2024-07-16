@@ -90,7 +90,7 @@ def main():
         # Sequential dataloading disabled for now.
         dataloaders[key] = build_geom_dataset.GeomDrugsDataLoader(
             sequential=args.sequential, dataset=dataset, batch_size=args.batch_size,
-            shuffle=shuffle, training_mode=args.training_mode)
+            shuffle=shuffle, training_mode=args.training_mode, drop_last=True)
     del split_data
 
     # additional data extracted for stability and quickvina tests on controlnet
@@ -234,17 +234,17 @@ def main():
             if isinstance(model, en_diffusion.EnVariationalDiffusion) or isinstance(model, control_en_diffusion.ControlEnLatentDiffusion):
                 wandb.log(model.log_info(), commit=True)
 
-            if not args.break_train_epoch and args.training_mode in [LDM, CONTROLNET]:
-                start  = time.time()
-                print(">>> Entering analyze_and_save")
-                if args.training_mode == CONTROLNET:
-                    train_test.analyze_and_save_controlnet(epoch, model_ema, nodes_dist, args, device, dataset_info, prop_dist,
-                                                           n_samples=args.n_stability_samples, batch_size=args.n_stability_samples_batch_size, 
-                                                           pair_dict_list=controlnet_eval_datalist)
-                else:
-                    train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
-                                                dataset_info, prop_dist, n_samples=args.n_stability_samples)
-                print(f">>> analyze_and_save took {time.time() - start:.1f} seconds.")
+            # if not args.break_train_epoch and args.training_mode in [LDM, CONTROLNET]:
+            #     start  = time.time()
+            #     print(">>> Entering analyze_and_save")
+            #     if args.training_mode == CONTROLNET:
+            #         train_test.analyze_and_save_controlnet(epoch, model_ema, nodes_dist, args, device, dataset_info, prop_dist,
+            #                                                n_samples=args.n_stability_samples, batch_size=args.n_stability_samples_batch_size, 
+            #                                                pair_dict_list=controlnet_eval_datalist)
+            #     else:
+            #         train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
+            #                                     dataset_info, prop_dist, n_samples=args.n_stability_samples)
+            #     print(f">>> analyze_and_save took {time.time() - start:.1f} seconds.")
 
             start  = time.time()
             if args.training_mode == CONTROLNET:

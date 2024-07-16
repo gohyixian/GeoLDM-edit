@@ -178,21 +178,25 @@ def sample_controlnet(args, device, generative_model, dataset_info,
     lg_diag_mask = ~torch.eye(lg_edge_mask.size(1), dtype=torch.bool).unsqueeze(0)
     lg_edge_mask *= lg_diag_mask
     lg_edge_mask = lg_edge_mask.view(batch_size * max_n_nodes * max_n_nodes, 1).to(device)
-    lg_node_mask = lg_node_mask.to(device)
+    lg_node_mask = lg_node_mask.unsqueeze(2).to(device)
     # lg_node_mask = lg_node_mask.unsqueeze(2).to(device)
 
     # Pocket: zero padding done here
     pocket_batch = {prop: qm9_collate.batch_stack([mol[prop] for mol in pocket_dict_list])
                     for prop in pocket_dict_list[0].keys()}
-    pkt_x = pocket_batch['positions'].to(device)
-    pkt_h = pocket_batch['one_hot'].to(device)
+    pkt_x = pocket_batch['positions'].to(device, dtype=args.dtype)
+    pkt_h_one_hot = pocket_batch['one_hot'].to(device, dtype=args.dtype)
+    pkt_h_charges = (pocket_batch['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype=args.dtype)
+    pkt_h = {'categorical': pkt_h_one_hot, 'integer': pkt_h_charges}
+
     pkt_node_mask = pocket_batch['atom_mask'].to(device)
     bs, pkt_n_nodes = pkt_node_mask.size()
     assert batch_size == bs, f"Different batch_size encountered! ligand={batch_size}, pocket={bs}"
     pkt_edge_mask = pkt_node_mask.unsqueeze(1) * pkt_node_mask.unsqueeze(2)
-    pkt_diag_mask = ~torch.eye(pkt_edge_mask.size(1), dtype=torch.bool).unsqueeze(0)
+    pkt_diag_mask = ~torch.eye(pkt_edge_mask.size(1), dtype=torch.bool).unsqueeze(0).to(device)
     pkt_edge_mask *= pkt_diag_mask
     pkt_edge_mask = pkt_edge_mask.view(batch_size * pkt_n_nodes * pkt_n_nodes, 1).to(device)
+    pkt_node_mask = pkt_node_mask.unsqueeze(2).to(device)
 
     joint_edge_mask = pkt_node_mask.unsqueeze(1) * lg_node_mask.unsqueeze(2)
     joint_edge_mask = joint_edge_mask.view(batch_size * max_n_nodes * pkt_n_nodes, 1).to(device)

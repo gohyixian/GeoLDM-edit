@@ -328,7 +328,7 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
             trainable_ae_decoder=args.trainable_ae_decoder,
             trainable_ldm=args.trainable_ldm,
             trainable_controlnet=args.trainable_controlnet,
-            trainable_fusion_block=args.trainable_fusion_blocks,
+            trainable_fusion_blocks=args.trainable_fusion_blocks,
             in_node_nf=in_node_nf,    # 1
             n_dims=3,
             timesteps=args.diffusion_steps,    # 1000

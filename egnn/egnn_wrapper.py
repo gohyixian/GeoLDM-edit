@@ -8,7 +8,7 @@ from egnn.egnn_new import EGNN, GNN, SinusoidsEmbeddingNew, low_vram_forward, \
 from egnn.egnn_fusion import EGNN_Fusion, coord2diff_fusion, checkpoint_fusion_block
 
 
-class ControlNet_Arch_Wrapper(nn.module):
+class ControlNet_Arch_Wrapper(nn.Module):
     """A wrapper class that manages the forward pass for LDM, Controlnet and Fusion Blocks"""
     def __init__(self, diffusion_network, control_network, fusion_network, fusion_weights=[], fusion_mode='scaled_sum', noise_injection_weights=[0.5, 0.5], noise_injection_aggregation_method='mean', noise_injection_normalization_factor=1.):
         super(ControlNet_Arch_Wrapper, self).__init__()
