@@ -209,6 +209,7 @@ def main():
     print(f"Model Size               : {mem_gb} GB  /  {mem_mb} MB  /  {mem} Bytes")
     print(f"Training Dataset Name    : {args.dataset}")
     print(f"Model Training Mode      : {args.training_mode}")
+    print(f"Fusion Blocks Zero Weight: {args.zero_fusion_block_weights}")
     print(f"================================")
     print(model)
     
