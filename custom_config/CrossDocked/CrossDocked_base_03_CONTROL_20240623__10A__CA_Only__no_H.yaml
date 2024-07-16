@@ -73,7 +73,7 @@ test_epochs: 1
 
 
 n_epochs: 80  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 4    # 12 32
+batch_size: 8    # 12 32
 lr: 0.0001
 
 # weight of KL term in ELBO, default 0.01
@@ -229,7 +229,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: true
+no_wandb: false
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true
