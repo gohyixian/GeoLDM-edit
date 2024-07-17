@@ -10,8 +10,8 @@ from global_registry import PARAM_REGISTRY, Config
 CONTROLNET = 'ControlNet'
 LDM = "LDM"
 VAE = "VAE"
-# CONTROLNET_WEIGHTS_PATH = '/Users/gohyixian/Downloads/test/generative_model_3_iter_40004.npy'
-CONTROLNET_WEIGHTS_PATH = '/Users/gohyixian/Downloads/test/generative_model_ema_3_iter_40004.npy'
+# CONTROLNET_WEIGHTS_PATH = '/Users/gohyixian/Downloads/test/generative_model_ema.npy'
+CONTROLNET_WEIGHTS_PATH = '/Users/gohyixian/Downloads/CrossDocked_base_03_CONTROL_20240623__10A__CA_Only__no_H/generative_model_ema.npy'
 
 def main():
     parser = argparse.ArgumentParser(description='e3_diffusion')
@@ -76,8 +76,11 @@ def main():
     
     for name, param in model.named_parameters():
         # print(f"{name}    {param.shape}    {param.sum().item()} ")
-        if param.sum().item() == 0.0:
+        # if param.sum().item() == 0.0:
+            # print(name)
+        if param.requires_grad == True:
             print(name)
+            print(param)
             # print(param)
             # print()
             # print()

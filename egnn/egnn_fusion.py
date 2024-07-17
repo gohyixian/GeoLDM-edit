@@ -15,14 +15,14 @@ def zero_module(module: nn.Module):
         if 'bias' not in name:
             param.data.zero_()
 
-    # if PARAM_REGISTRY.get('verbose')==True:
-    print(f">>> Zeroing out parameters")
-    all_zero = True
-    for name, param in module.named_parameters():
-        print(f"{name}, {param.shape}, SUM={param.sum().item()} ")
-        if param.sum().item() != 0.0:
-            all_zero=False
-    print(f"All weights zero: {all_zero}")
+    if PARAM_REGISTRY.get('verbose')==True:
+        print(f">>> Zeroing out parameters")
+        all_zero = True
+        for name, param in module.named_parameters():
+            print(f"{name}, {param.shape}, SUM={param.sum().item()} ")
+            if param.sum().item() != 0.0:
+                all_zero=False
+        print(f"All weights zero: {all_zero}")
 
     return module
 
