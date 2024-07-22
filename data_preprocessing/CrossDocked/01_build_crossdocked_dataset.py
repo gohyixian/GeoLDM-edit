@@ -12,7 +12,7 @@ from Bio.PDB.Polypeptide import is_aa
 from constants import get_periodictable_list
 
 
-def process_ligand_and_pocket(pdbfile, sdffile, dist_cutoff, ca_only, no_H, mol_id):
+def process_ligand_and_pocket(pdbfile, sdffile, dist_cutoff, ca_only, no_H, mol_id, determine_distance_by_ca=False):
     pdb_struct = PDBParser(QUIET=True).get_structure('', pdbfile)
 
     try:
@@ -41,11 +41,16 @@ def process_ligand_and_pocket(pdbfile, sdffile, dist_cutoff, ca_only, no_H, mol_
     lig_coords = np.array([list(ligand.GetConformer(0).GetAtomPosition(idx))
                            for idx in range(ligand.GetNumAtoms())])
     for residue in pdb_struct[0].get_residues():
-        res_coords = np.array([a.get_coord() for a in residue.get_atoms()])
-        if is_aa(residue.get_resname(), standard=True) and \
-                (((res_coords[:, None, :] - lig_coords[None, :, :]) ** 2).sum(
-                    -1) ** 0.5).min() < dist_cutoff:
-            pocket_residues.append(residue)
+        if determine_distance_by_ca:
+            res_ca_coord = np.array([residue['CA'].get_coord()])
+            if is_aa(residue.get_resname(), standard=True) and \
+                    (((res_ca_coord - lig_coords) ** 2).sum(-1) ** 0.5).min() < dist_cutoff:
+                pocket_residues.append(residue)
+        else:
+            res_coords = np.array([a.get_coord() for a in residue.get_atoms()])
+            if is_aa(residue.get_resname(), standard=True) and \
+                    (((res_coords[:, None, :] - lig_coords[None, :, :]) ** 2).sum(-1) ** 0.5).min() < dist_cutoff:
+                pocket_residues.append(residue)
 
     pocket_atom_charge_positions = []
     if ca_only:
@@ -75,6 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('--dist_cutoff', type=float, default=10.0)  # 8.0
     parser.add_argument('--ca_only', action='store_true')
     parser.add_argument('--no_H', action='store_true')
+    parser.add_argument('--determine_distance_by_ca', action='store_true')  # wrong method, do not use
     args = parser.parse_args()
 
     # python 01_build_crossdocked_dataset.py --raw_crossd_basedir /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/CrossDocked --dist_cutoff 10.0 --no_H --ca_only --save_dir /Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data/d_20240623_CrossDocked_LG_PKT --save_dataset_name d_20240623_CrossDocked_LG_PKT
@@ -121,7 +127,8 @@ if __name__ == '__main__':
         try:
             ligand_data, pocket_data = process_ligand_and_pocket(
                 pdbfile, sdffile, dist_cutoff=args.dist_cutoff,
-                ca_only=args.ca_only, no_H=args.no_H, mol_id=mol_id)
+                ca_only=args.ca_only, no_H=args.no_H, mol_id=mol_id,
+                determine_distance_by_ca=args.determine_distance_by_ca)
             
             # print("\nLIGAND DATA")
             # print(ligand_data.shape, '\n', ligand_data)
@@ -129,7 +136,8 @@ if __name__ == '__main__':
             # print(pocket_data.shape, '\n', pocket_data)
             
             if len(list(ligand_data.shape)) == 2 and len(list(pocket_data.shape)) == 2:
-                if ligand_data.shape[1] == 5 and pocket_data.shape[1] == 5:
+                if ligand_data.shape[0] > 0 and pocket_data.shape[0] > 0 and \
+                    ligand_data.shape[1] == 5 and pocket_data.shape[1] == 5:
                     ligand_dataset.append(ligand_data)
                     pocket_dataset.append(pocket_data)
                     mol_id += 1

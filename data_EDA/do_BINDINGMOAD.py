@@ -90,8 +90,8 @@ def ligand_list_to_dict(ligand_list):
     return out_dict
 
 
-def process_ligand_and_pocket(pdb_struct, ligand_name, ligand_chain,
-                              ligand_resi, dist_cutoff, ca_only):
+def process_ligand_and_pocket(pdb_struct, ligand_name, ligand_chain, ligand_resi, 
+                              dist_cutoff, ca_only, determine_distance_by_ca=False):
     try:
         residues = {obj.id[1]: obj for obj in
                     pdb_struct[0][ligand_chain].get_residues()}
@@ -131,13 +131,22 @@ def process_ligand_and_pocket(pdb_struct, ligand_name, ligand_chain,
     resi_num_atoms = 0
     resi_num_atoms_no_H = 0
     for residue in pdb_struct[0].get_residues():
-        res_coords = np.array([a.get_coord() for a in residue.get_atoms()])
-        if is_aa(residue.get_resname(), standard=True) and \
-                (((res_coords[:, None, :] - lig_coords[None, :, :]) ** 2).sum(-1) ** 0.5).min() < dist_cutoff:
-            pocket_residues.append(residue)
-            num_resi += 1
-            resi_num_atoms += len([a for a in residue.get_atoms()])
-            resi_num_atoms_no_H += len([a for a in residue.get_atoms() if a.element != 'H'])
+        if determine_distance_by_ca:
+            res_ca_coord = np.array([residue['CA'].get_coord()])
+            if is_aa(residue.get_resname(), standard=True) and \
+                    (((res_ca_coord - lig_coords) ** 2).sum(-1) ** 0.5).min() < dist_cutoff:
+                pocket_residues.append(residue)
+                num_resi += 1
+                resi_num_atoms += len([a for a in residue.get_atoms()])
+                resi_num_atoms_no_H += len([a for a in residue.get_atoms() if a.element != 'H'])
+        else:
+            res_coords = np.array([a.get_coord() for a in residue.get_atoms()])
+            if is_aa(residue.get_resname(), standard=True) and \
+                    (((res_coords[:, None, :] - lig_coords[None, :, :]) ** 2).sum(-1) ** 0.5).min() < dist_cutoff:
+                pocket_residues.append(residue)
+                num_resi += 1
+                resi_num_atoms += len([a for a in residue.get_atoms()])
+                resi_num_atoms_no_H += len([a for a in residue.get_atoms() if a.element != 'H'])
 
     # Compute transform of the canonical reference frame
     n_xyz = np.array([res['N'].get_coord() for res in pocket_residues])
@@ -210,6 +219,7 @@ if __name__ == '__main__':
     parser.add_argument('--dist_cutoff', type=float, default=10.0)  # 8.0
     parser.add_argument('--max_occurences', type=int, default=-1)  # 50
     parser.add_argument('--ca_only', action='store_true')
+    parser.add_argument('--determine_distance_by_ca', action='store_true')  # wrong method, do not use
     args = parser.parse_args()
 
     pdbdir = args.basedir / 'BindingMOAD_2020/'
@@ -279,33 +289,38 @@ if __name__ == '__main__':
                         print(ligand_name, ligand_chain, ligand_resi)
                         ligand_data, pocket_data = process_ligand_and_pocket(
                             pdb_struct, ligand_name, ligand_chain, ligand_resi,
-                            dist_cutoff=args.dist_cutoff, ca_only=args.ca_only)
+                            dist_cutoff=args.dist_cutoff, ca_only=args.ca_only,
+                            determine_distance_by_ca=args.determine_distance_by_ca)
                     except (KeyError, AssertionError, FileNotFoundError,
                             IndexError, ValueError) as e:
                         # print(type(e).__name__, e)
                         continue
 
-                    pdb_successful.add(m[0])
-                    n_bio_successful += 1
-                    
-                    ligand_data_obj.num_atoms.append(ligand_data['lig_num_atoms'])
-                    ligand_data_obj.num_atoms_no_H.append(ligand_data['lig_num_atoms_no_H'])
-                    ligand_data_obj.radius_mean.append(ligand_data['lig_radius_mean'])
-                    ligand_data_obj.radius_min.append(ligand_data['lig_radius_min'])
-                    ligand_data_obj.radius_max.append(ligand_data['lig_radius_max'])
-                    for k,v in ligand_data['lig_atomic_num_freq'].items():
-                        ligand_data_obj.atomic_num_freq[k] = ligand_data_obj.atomic_num_freq.get(k, 0) + v
-                    ligand_data_obj.mol_count += 1
-                    
-                    pocket_data_obj.num_atoms.append(pocket_data['pocket_num_atoms'])
-                    pocket_data_obj.num_atoms_no_H.append(pocket_data['pocket_num_atoms_no_H'])
-                    pocket_data_obj.radius_mean.append(pocket_data['pocket_radius_mean'])
-                    pocket_data_obj.radius_min.append(pocket_data['pocket_radius_min'])
-                    pocket_data_obj.radius_max.append(pocket_data['pocket_radius_max'])
-                    pocket_data_obj.num_resi.append(pocket_data['pocket_num_resi'])
-                    for k,v in pocket_data['pocket_atomic_num_freq'].items():
-                        pocket_data_obj.atomic_num_freq[k] = pocket_data_obj.atomic_num_freq.get(k, 0) + v
-                    pocket_data_obj.mol_count += 1
+                    # filter data the same way as in dataset preparation script
+                    if ligand_data['lig_num_atoms'] > 0 and ligand_data['lig_num_atoms_no_H'] > 0 and \
+                        pocket_data['pocket_num_atoms'] > 0 and pocket_data['pocket_num_atoms_no_H'] > 0:
+
+                        pdb_successful.add(m[0])
+                        n_bio_successful += 1
+                        
+                        ligand_data_obj.num_atoms.append(ligand_data['lig_num_atoms'])
+                        ligand_data_obj.num_atoms_no_H.append(ligand_data['lig_num_atoms_no_H'])
+                        ligand_data_obj.radius_mean.append(ligand_data['lig_radius_mean'])
+                        ligand_data_obj.radius_min.append(ligand_data['lig_radius_min'])
+                        ligand_data_obj.radius_max.append(ligand_data['lig_radius_max'])
+                        for k,v in ligand_data['lig_atomic_num_freq'].items():
+                            ligand_data_obj.atomic_num_freq[k] = ligand_data_obj.atomic_num_freq.get(k, 0) + v
+                        ligand_data_obj.mol_count += 1
+                        
+                        pocket_data_obj.num_atoms.append(pocket_data['pocket_num_atoms'])
+                        pocket_data_obj.num_atoms_no_H.append(pocket_data['pocket_num_atoms_no_H'])
+                        pocket_data_obj.radius_mean.append(pocket_data['pocket_radius_mean'])
+                        pocket_data_obj.radius_min.append(pocket_data['pocket_radius_min'])
+                        pocket_data_obj.radius_max.append(pocket_data['pocket_radius_max'])
+                        pocket_data_obj.num_resi.append(pocket_data['pocket_num_resi'])
+                        for k,v in pocket_data['pocket_atomic_num_freq'].items():
+                            pocket_data_obj.atomic_num_freq[k] = pocket_data_obj.atomic_num_freq.get(k, 0) + v
+                        pocket_data_obj.mol_count += 1
 
             pbar.update(len(pair_dict[p]))
             num_failed += (len(pair_dict[p]) - len(pdb_successful))
@@ -316,7 +331,8 @@ if __name__ == '__main__':
     print("=====================")
     # LIGAND
     # Store the object to a file using pickle
-    moad_ligand_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_LIGAND_data_object.pkl'
+    distance_by_ca = "ca_dist_" if args.determine_distance_by_ca else ""
+    moad_ligand_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_{distance_by_ca}LIGAND_data_object.pkl'
     with open(moad_ligand_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(ligand_data_obj, file)
     del ligand_data_obj
@@ -334,7 +350,7 @@ if __name__ == '__main__':
     # POCKET
     # Store the object to a file using pickle
     ca_only = 'CA_ONLY_' if args.ca_only else ''
-    moad_pocket_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_POCKET_{args.dist_cutoff}A_{ca_only}data_object.pkl'
+    moad_pocket_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_POCKET_{distance_by_ca}{args.dist_cutoff}A_{ca_only}data_object.pkl'
     with open(moad_pocket_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(pocket_data_obj, file)
     del pocket_data_obj
@@ -348,5 +364,7 @@ if __name__ == '__main__':
         print(f"{attr}: {value}")
 
 
-# python -W ignore do_BINDINGMOAD.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/BindingMOAD
+# python -W ignore do_BINDINGMOAD.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/BindingMOAD --dist_cutoff 10.0 --max_occurences 50
+
+# python -W ignore do_BINDINGMOAD.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/BindingMOAD --dist_cutoff 10.0 --max_occurences 50 --determine_distance_by_ca
 

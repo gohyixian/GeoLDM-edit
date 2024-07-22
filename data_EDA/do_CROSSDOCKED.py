@@ -15,8 +15,8 @@ from constants import dataset_params, get_periodictable_list
 from utils import euclidean_distance
 
 
-def process_ligand_and_pocket(pdbfile, sdffile,
-                              atom_dict, dist_cutoff, ca_only):
+def process_ligand_and_pocket(pdbfile, sdffile, atom_dict, dist_cutoff, 
+                              ca_only, determine_distance_by_ca=False):
     pdb_struct = PDBParser(QUIET=True).get_structure('', pdbfile)
 
     try:
@@ -52,14 +52,23 @@ def process_ligand_and_pocket(pdbfile, sdffile,
     resi_num_atoms = 0
     resi_num_atoms_no_H = 0
     for residue in pdb_struct[0].get_residues():
-        res_coords = np.array([a.get_coord() for a in residue.get_atoms()])
-        if is_aa(residue.get_resname(), standard=True) and \
-                (((res_coords[:, None, :] - lig_coords[None, :, :]) ** 2).sum(
-                    -1) ** 0.5).min() < dist_cutoff:
-            pocket_residues.append(residue)
-            num_resi += 1
-            resi_num_atoms += len([a for a in residue.get_atoms()])
-            resi_num_atoms_no_H += len([a for a in residue.get_atoms() if a.element != 'H'])
+        if determine_distance_by_ca:
+            res_ca_coord = np.array([residue['CA'].get_coord()])
+            if is_aa(residue.get_resname(), standard=True) and \
+                    (((res_ca_coord - lig_coords) ** 2).sum(-1) ** 0.5).min() < dist_cutoff:
+                pocket_residues.append(residue)
+                num_resi += 1
+                resi_num_atoms += len([a for a in residue.get_atoms()])
+                resi_num_atoms_no_H += len([a for a in residue.get_atoms() if a.element != 'H'])
+        else: 
+            res_coords = np.array([a.get_coord() for a in residue.get_atoms()])
+            if is_aa(residue.get_resname(), standard=True) and \
+                    (((res_coords[:, None, :] - lig_coords[None, :, :]) ** 2).sum(
+                        -1) ** 0.5).min() < dist_cutoff:
+                pocket_residues.append(residue)
+                num_resi += 1
+                resi_num_atoms += len([a for a in residue.get_atoms()])
+                resi_num_atoms_no_H += len([a for a in residue.get_atoms() if a.element != 'H'])
 
 
     pocket_atomic_num_freq = dict()
@@ -140,6 +149,7 @@ if __name__ == '__main__':
     parser.add_argument('basedir', type=Path)
     parser.add_argument('--ca_only', action='store_true')
     parser.add_argument('--dist_cutoff', type=float, default=10.0)  # 8.0
+    parser.add_argument('--determine_distance_by_ca', action='store_true')  # wrong method, do not use
     args = parser.parse_args()
 
     datadir = args.basedir / 'crossdocked_pocket10/'
@@ -186,9 +196,10 @@ if __name__ == '__main__':
 
         try:
             ligand_data, pocket_data = process_ligand_and_pocket(
-                pdbfile, sdffile,
-                atom_dict=atom_dict, dist_cutoff=args.dist_cutoff,
-                ca_only=args.ca_only)
+                pdbfile, sdffile, atom_dict=atom_dict, 
+                dist_cutoff=args.dist_cutoff,
+                ca_only=args.ca_only, 
+                determine_distance_by_ca=args.determine_distance_by_ca)
         except (KeyError, AssertionError, FileNotFoundError, IndexError,
                 ValueError) as e:
             print(type(e).__name__, e, pocket_fn, ligand_fn)
@@ -196,25 +207,28 @@ if __name__ == '__main__':
             pbar.set_description(f'#failed: {num_failed}')
             continue
 
+        # filter data the same way as in dataset preparation script
+        if ligand_data['lig_num_atoms'] > 0 and ligand_data['lig_num_atoms_no_H'] > 0 and \
+            pocket_data['pocket_num_atoms'] > 0 and pocket_data['pocket_num_atoms_no_H'] > 0:
 
-        ligand_data_obj.num_atoms.append(ligand_data['lig_num_atoms'])
-        ligand_data_obj.num_atoms_no_H.append(ligand_data['lig_num_atoms_no_H'])
-        ligand_data_obj.radius_mean.append(ligand_data['lig_radius_mean'])
-        ligand_data_obj.radius_min.append(ligand_data['lig_radius_min'])
-        ligand_data_obj.radius_max.append(ligand_data['lig_radius_max'])
-        for k,v in ligand_data['lig_atomic_num_freq'].items():
-            ligand_data_obj.atomic_num_freq[k] = ligand_data_obj.atomic_num_freq.get(k, 0) + v
-        ligand_data_obj.mol_count += 1
-        
-        pocket_data_obj.num_atoms.append(pocket_data['pocket_num_atoms'])
-        pocket_data_obj.num_atoms_no_H.append(pocket_data['pocket_num_atoms_no_H'])
-        pocket_data_obj.radius_mean.append(pocket_data['pocket_radius_mean'])
-        pocket_data_obj.radius_min.append(pocket_data['pocket_radius_min'])
-        pocket_data_obj.radius_max.append(pocket_data['pocket_radius_max'])
-        pocket_data_obj.num_resi.append(pocket_data['pocket_num_resi'])
-        for k,v in pocket_data['pocket_atomic_num_freq'].items():
-            pocket_data_obj.atomic_num_freq[k] = pocket_data_obj.atomic_num_freq.get(k, 0) + v
-        pocket_data_obj.mol_count += 1
+            ligand_data_obj.num_atoms.append(ligand_data['lig_num_atoms'])
+            ligand_data_obj.num_atoms_no_H.append(ligand_data['lig_num_atoms_no_H'])
+            ligand_data_obj.radius_mean.append(ligand_data['lig_radius_mean'])
+            ligand_data_obj.radius_min.append(ligand_data['lig_radius_min'])
+            ligand_data_obj.radius_max.append(ligand_data['lig_radius_max'])
+            for k,v in ligand_data['lig_atomic_num_freq'].items():
+                ligand_data_obj.atomic_num_freq[k] = ligand_data_obj.atomic_num_freq.get(k, 0) + v
+            ligand_data_obj.mol_count += 1
+            
+            pocket_data_obj.num_atoms.append(pocket_data['pocket_num_atoms'])
+            pocket_data_obj.num_atoms_no_H.append(pocket_data['pocket_num_atoms_no_H'])
+            pocket_data_obj.radius_mean.append(pocket_data['pocket_radius_mean'])
+            pocket_data_obj.radius_min.append(pocket_data['pocket_radius_min'])
+            pocket_data_obj.radius_max.append(pocket_data['pocket_radius_max'])
+            pocket_data_obj.num_resi.append(pocket_data['pocket_num_resi'])
+            for k,v in pocket_data['pocket_atomic_num_freq'].items():
+                pocket_data_obj.atomic_num_freq[k] = pocket_data_obj.atomic_num_freq.get(k, 0) + v
+            pocket_data_obj.mol_count += 1
 
     print(f"Processing took {(time() - tic) / 60.0:.2f} minutes")
 
@@ -223,7 +237,8 @@ if __name__ == '__main__':
     print("=====================")
     # LIGAND
     # Store the object to a file using pickle
-    crossdocked_ligand_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/CROSSDOCKED_LIGAND_data_object.pkl'
+    distance_by_ca = "ca_dist_" if args.determine_distance_by_ca else ""
+    crossdocked_ligand_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/CROSSDOCKED_LIGAND_{distance_by_ca}data_object.pkl'
     with open(crossdocked_ligand_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(ligand_data_obj, file)
     del ligand_data_obj
@@ -241,7 +256,7 @@ if __name__ == '__main__':
     # POCKET
     # Store the object to a file using pickle
     ca_only = 'CA_ONLY_' if args.ca_only else ''
-    crossdocked_pocket_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/CROSSDOCKED_POCKET_{args.dist_cutoff}A_{ca_only}data_object.pkl'
+    crossdocked_pocket_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/CROSSDOCKED_POCKET_{distance_by_ca}{args.dist_cutoff}A_{ca_only}data_object.pkl'
     with open(crossdocked_pocket_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(pocket_data_obj, file)
     del pocket_data_obj
@@ -254,4 +269,6 @@ if __name__ == '__main__':
     for attr, value in attributes_values.items():
         print(f"{attr}: {value}")
 
-# python do_CROSSDOCKED.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/CrossDocked
+# python do_CROSSDOCKED.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/CrossDocked --dist_cutoff 10.0
+
+# python do_CROSSDOCKED.py /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/CrossDocked --dist_cutoff 10.0 --determine_distance_by_ca
