@@ -38,6 +38,7 @@ Anaconda2024.02-1-Linux-x86_64.sh
 
 data_EDA/*.pkl
 data_EDA/data_object_cache/*.pkl
+data_EDA/data_object_cache/**/*.pkl
 
 data/**/*.npy
 data/**/*.npz
