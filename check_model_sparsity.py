@@ -17,8 +17,18 @@ from qm9.models import get_optim, get_model, get_autoencoder, get_latent_diffusi
 import torch
 import time
 import train_test
+from datetime import datetime
 from global_registry import PARAM_REGISTRY, Config
 
+
+def save_activations(activations: np.ndarray, save_path, filename):
+    activations_str = np.array2string(activations, separator=', ')
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    unique_id = datetime.now().strftime('%Y%m%d-%H%M%S-%f')
+    file = os.path.join(save_path, f"{filename}__{unique_id}.txt")
+    with open(file, 'w') as f:
+        f.write(activations_str)
 
 
 def plot_activation_distribution(tensor: np.ndarray, title: str, save_path: str, filename: str, save_tensor=False, bins=200):
@@ -54,14 +64,19 @@ def main():
 
 
     # additional & override settings for sparsity plots
-    args.plot_sparsity = True
-    args.save_tensor = True
     args.no_cuda = False
     args.batch_size = 1
-    args.plot_counter = 0
+    args.layer_id_counter = 0
+    # plot
+    args.plot_sparsity = False
+    args.save_tensor = True
     args.plot_func_bins = 200
     args.plot_func = plot_activation_distribution
     args.save_plot_dir = f'sparsity_check/plots/{args.exp_name}/{args.training_mode}/'
+    # save activations for combined plot
+    args.save_activations = True
+    args.save_act_func = save_activations
+    args.save_act_dir = f'sparsity_check/saved_activations/{args.exp_name}/{args.training_mode}/'
 
 
     # device settings

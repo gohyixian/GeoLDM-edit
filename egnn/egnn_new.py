@@ -255,9 +255,9 @@ class EGNN(nn.Module):
         self.to(self.device)
         
         # sparsity plot check
-        if PARAM_REGISTRY.get('plot_sparsity') == True:
-            self.sparsity_counter = PARAM_REGISTRY._registry.get('plot_counter')
-            PARAM_REGISTRY._registry['plot_counter'] = PARAM_REGISTRY._registry.get('plot_counter') + 1  # increase for next EGNN block
+        if PARAM_REGISTRY.get('plot_sparsity') == True or PARAM_REGISTRY.get('save_activations') == True:
+            self.layer_id = PARAM_REGISTRY._registry.get('layer_id_counter')
+            PARAM_REGISTRY._registry['layer_id_counter'] = PARAM_REGISTRY._registry.get('layer_id_counter') + 1  # increase for next EGNN block
 
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None):
         # Edit Emiel: Remove velocity as input
@@ -295,12 +295,17 @@ class EGNN(nn.Module):
                 h_clone = h.clone().detach().cpu().numpy()
                 plot_func = PARAM_REGISTRY.get('plot_func')
                 plot_func(tensor=h_clone,
-                          title=f"Distribution of Activations for EGNN-{self.sparsity_counter} EquivBlock-{i}  (bins={PARAM_REGISTRY.get('plot_func_bins')})",
+                          title=f"Distribution of Activations for EGNN-{self.layer_id} EquivBlock-{i}  (bins={PARAM_REGISTRY.get('plot_func_bins')})",
                           save_path=PARAM_REGISTRY.get('save_plot_dir'),
-                          filename=f"ActDist__EGNN_{self.sparsity_counter}__EquivBlock_{i}",
+                          filename=f"ActDist__EGNN_{self.layer_id}__EquivBlock_{i}",
                           bins=PARAM_REGISTRY.get('plot_func_bins'),
                           save_tensor=PARAM_REGISTRY.get('save_tensor'))
-
+            if PARAM_REGISTRY.get('save_activations') == True:
+                h_clone = h.clone().detach().cpu().numpy()
+                save_act_func = PARAM_REGISTRY.get('save_act_func')
+                save_act_func(activations=h_clone,
+                              save_path=PARAM_REGISTRY.get('save_act_dir'),
+                              filename=f"ActDist__EGNN_{self.layer_id}__EquivBlock_{i}")
         # Important, the bias of the last linear might be non-zero
         h = self.embedding_out(h)
         # h = low_vram_forward(self.embedding_out, h)

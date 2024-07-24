@@ -43,3 +43,5 @@ data_EDA/data_object_cache/**/*.pkl
 data/**/*.npy
 data/**/*.npz
 data/**/*.zip
+
+sparsity_check/saved_activations/*
