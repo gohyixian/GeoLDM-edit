@@ -108,7 +108,7 @@ def main():
     data_file = args.data_file
     print(">> Loading data from:", data_file)
     split_data = build_geom_dataset.load_split_data(data_file, 
-                                                    val_proportion=0.1,
+                                                    val_proportion=0.01,   # will only be using this
                                                     test_proportion=0.1, 
                                                     filter_size=args.filter_molecule_size, 
                                                     permutation_file_path=args.permutation_file_path, 
