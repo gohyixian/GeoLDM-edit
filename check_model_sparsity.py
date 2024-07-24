@@ -17,6 +17,7 @@ from qm9.models import get_optim, get_model, get_autoencoder, get_latent_diffusi
 import torch
 import time
 import train_test
+from tqdm import tqdm
 from datetime import datetime
 from global_registry import PARAM_REGISTRY, Config
 
@@ -26,14 +27,19 @@ def save_activations(activations: np.ndarray, save_path, filename):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     unique_id = datetime.now().strftime('%Y%m%d-%H%M%S-%f')
-    file = os.path.join(save_path, f"{filename}__{unique_id}.txt")
+    file = os.path.join(save_path, f"{filename}___t{unique_id}.txt")
     with open(file, 'w') as f:
         f.write(activations_str)
 
 
-def plot_activation_distribution(tensor: np.ndarray, title: str, save_path: str, filename: str, save_tensor=False, bins=200):
+def plot_activation_distribution(tensor: np.ndarray, title: str, save_path: str, filename: str, save_tensor=False, bins=200, normalize_frequency=False):
     tensor_flat = tensor.flatten()
-    plt.hist(tensor_flat, bins=bins)
+    if normalize_frequency:
+        weights = np.ones_like(tensor_flat) / tensor_flat.shape[0]
+        print(tensor_flat.shape[0])
+        plt.hist(tensor_flat, bins=bins, weights=weights)
+    else:
+        plt.hist(tensor_flat, bins=bins)
     plt.title(title)
     plt.xlabel('Activation Value')
     plt.ylabel('Frequency')
@@ -67,12 +73,12 @@ def main():
     args.no_cuda = False
     args.batch_size = 1
     args.layer_id_counter = 0
+    args.plot_func_bins = 200
+    args.save_plot_dir = f'sparsity_check/plots/{args.exp_name}/{args.training_mode}/'
     # plot
     args.plot_sparsity = False
-    args.save_tensor = True
-    args.plot_func_bins = 200
+    args.save_tensor = False
     args.plot_func = plot_activation_distribution
-    args.save_plot_dir = f'sparsity_check/plots/{args.exp_name}/{args.training_mode}/'
     # save activations for combined plot
     args.save_activations = True
     args.save_act_func = save_activations
@@ -172,6 +178,30 @@ def main():
                                 property_norms, nodes_dist, partition='Val')
     print(f">>> validation set test took {time.time() - start:.1f} seconds.")
 
+    # plot combined_sparsity_plots:
+    if args.save_activations:
+        # get unique layers' names
+        to_omit = ['.DS_Store']
+        unique_layers = sorted(list(set([f.split("___t")[0] for f in os.listdir(args.save_act_dir) if f not in to_omit])))
+        
+        # loop through every unique layer's saved activations
+        for layer in unique_layers:
+            layer_activations = sorted([f for f in os.listdir(args.save_act_dir) if f not in to_omit and f.startswith(layer)])
+            print(f"Working with {layer}'s {len(layer_activations)} activations ...")
+            activation_tensors = []
+            for file in tqdm(layer_activations):
+                with open(os.path.join(args.save_act_dir, file), 'r') as f:
+                    activation_str = f.read()
+                recreated_activation = eval(f"np.array({activation_str})")
+                activation_tensors.append(recreated_activation.flatten())
+            activation_tensors = np.concatenate(activation_tensors)
+            plot_activation_distribution(tensor=activation_tensors, 
+                                         title=f"Combined Distribution of Activations for {layer} over {len(layer_activations)} samples  (bins={args.plot_func_bins})", 
+                                         save_path=args.save_plot_dir, 
+                                         filename=f"combined_ActDist_{layer}__bins{args.plot_func_bins}", 
+                                         save_tensor=False, 
+                                         bins=args.plot_func_bins)
+    print("DONE.")
 
 
 if __name__ == "__main__":

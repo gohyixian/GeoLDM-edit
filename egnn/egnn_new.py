@@ -305,7 +305,7 @@ class EGNN(nn.Module):
                 save_act_func = PARAM_REGISTRY.get('save_act_func')
                 save_act_func(activations=h_clone,
                               save_path=PARAM_REGISTRY.get('save_act_dir'),
-                              filename=f"ActDist__EGNN_{self.layer_id}__EquivBlock_{i}")
+                              filename=f"EGNN_{self.layer_id}__EquivBlock_{i}")
         # Important, the bias of the last linear might be non-zero
         h = self.embedding_out(h)
         # h = low_vram_forward(self.embedding_out, h)
