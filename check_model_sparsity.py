@@ -23,6 +23,8 @@ from global_registry import PARAM_REGISTRY, Config
 
 
 def save_activations(activations: np.ndarray, save_path, filename):
+    original_options = np.get_printoptions()
+    np.set_printoptions(threshold=np.inf, linewidth=np.inf)
     activations_str = np.array2string(activations, separator=', ')
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -30,17 +32,14 @@ def save_activations(activations: np.ndarray, save_path, filename):
     file = os.path.join(save_path, f"{filename}___t{unique_id}.txt")
     with open(file, 'w') as f:
         f.write(activations_str)
+    np.set_printoptions(**original_options)
 
 
-def plot_activation_distribution(tensor: np.ndarray, title: str, save_path: str, filename: str, save_tensor=False, bins=200, normalize_frequency=False):
+def plot_activation_distribution(tensor: np.ndarray, title: str, save_path: str, filename: str, save_tensor=False, bins=200):
     tensor_flat = tensor.flatten()
-    if normalize_frequency:
-        weights = np.ones_like(tensor_flat) / tensor_flat.shape[0]
-        print(tensor_flat.shape[0])
-        plt.hist(tensor_flat, bins=bins, weights=weights)
-    else:
-        plt.hist(tensor_flat, bins=bins)
-    plt.title(title)
+    print(tensor_flat.shape)
+    plt.hist(tensor_flat, bins=bins)
+    plt.title(title, fontsize=7)
     plt.xlabel('Activation Value')
     plt.ylabel('Frequency')
     if not os.path.exists(save_path):
@@ -70,7 +69,6 @@ def main():
 
 
     # additional & override settings for sparsity plots
-    args.no_cuda = False
     args.batch_size = 1
     args.layer_id_counter = 0
     args.plot_func_bins = 200
@@ -108,7 +106,7 @@ def main():
     data_file = args.data_file
     print(">> Loading data from:", data_file)
     split_data = build_geom_dataset.load_split_data(data_file, 
-                                                    val_proportion=0.01,   # will only be using this
+                                                    val_proportion=0.001,   # will only be using this
                                                     test_proportion=0.1, 
                                                     filter_size=args.filter_molecule_size, 
                                                     permutation_file_path=args.permutation_file_path, 
