@@ -1,9 +1,9 @@
 #! /bin/bash -l
 
 #SBATCH --partition=gpu-v100s
-#SBATCH --ntasks=48
+#SBATCH --ntasks=32
 #SBATCH --nodes=1
-#SBATCH --mem=100G
+#SBATCH --mem=60G
 #SBATCH --gpus=1
 #SBATCH --job-name=01_VAE_nf__epoch10_bs24_lr1e-4_latent2_nf32__20240623__10A__CA_Only__no_H
 #SBATCH --output=slurm_out/vae_optimal_params_test/01_VAE_nf__epoch10_bs24_lr1e-4_latent2_nf32__20240623__10A__CA_Only__no_H.out
@@ -13,7 +13,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 89263
+# 96218
 # module load cuda/12.1       # gpu-a100
 # module load miniconda/24.1.2
 # conda activate geoldm-a100
