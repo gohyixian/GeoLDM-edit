@@ -56,7 +56,7 @@ def main():
     # additional & override settings for sparsity plots
     args.plot_sparsity = True
     args.save_tensor = True
-    args.no_cuda = True
+    args.no_cuda = False
     args.batch_size = 1
     args.plot_counter = 0
     args.plot_func_bins = 200

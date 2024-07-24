@@ -295,7 +295,7 @@ class EGNN(nn.Module):
                 h_clone = h.clone().detach().cpu().numpy()
                 plot_func = PARAM_REGISTRY.get('plot_func')
                 plot_func(tensor=h_clone,
-                          title=f"Distribution of Activation for EGNN-{self.sparsity_counter} EquivBlock-{i}  (bins={PARAM_REGISTRY.get('plot_func_bins')})",
+                          title=f"Distribution of Activations for EGNN-{self.sparsity_counter} EquivBlock-{i}  (bins={PARAM_REGISTRY.get('plot_func_bins')})",
                           save_path=PARAM_REGISTRY.get('save_plot_dir'),
                           filename=f"ActDist__EGNN_{self.sparsity_counter}__EquivBlock_{i}",
                           bins=PARAM_REGISTRY.get('plot_func_bins'),
