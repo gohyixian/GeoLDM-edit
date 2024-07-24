@@ -17,8 +17,9 @@ from qm9.models import get_optim, get_model, get_autoencoder, get_latent_diffusi
 import torch
 import time
 import train_test
-
 from global_registry import PARAM_REGISTRY, Config
+
+
 
 def plot_activation_distribution(tensor: np.ndarray, title: str, save_path: str, filename: str, save_tensor=False, bins=200):
     tensor_flat = tensor.flatten()
@@ -52,6 +53,17 @@ def main():
     args = Config(**args_dict)
 
 
+    # additional & override settings for sparsity plots
+    args.plot_sparsity = True
+    args.save_tensor = True
+    args.no_cuda = True
+    args.batch_size = 1
+    args.plot_counter = 0
+    args.plot_func_bins = 200
+    args.plot_func = plot_activation_distribution
+    args.save_plot_dir = f'sparsity_check/plots/{args.exp_name}/{args.training_mode}/'
+
+
     # device settings
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if args.cuda else "cpu")
@@ -65,14 +77,6 @@ def main():
     args.dtype = dtype
     torch.set_default_dtype(dtype)
 
-    # additional & override settings for sparsity plots
-    args.plot_sparsity = True
-    args.save_tensor = True
-    args.batch_size = 1
-    args.plot_counter = 0
-    args.plot_func_bins = 200
-    args.plot_func = plot_activation_distribution
-    args.save_plot_dir = f'sparsity_check/plots/{args.exp_name}/{args.training_mode}/'
 
 
     # params global registry for easy access
