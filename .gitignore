@@ -42,3 +42,4 @@ data_EDA/data_object_cache/**/*.pkl
 
 data/**/*.npy
 data/**/*.npz
+data/**/*.zip
