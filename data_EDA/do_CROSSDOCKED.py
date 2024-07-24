@@ -238,6 +238,7 @@ if __name__ == '__main__':
     # LIGAND
     # Store the object to a file using pickle
     distance_by_ca = "ca_dist_" if args.determine_distance_by_ca else ""
+    # crossdocked_ligand_data_object_pkl = f"/mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data_EDA/data_object_cache/CROSSDOCKED_LIGAND_{distance_by_ca}data_object.pkl"
     crossdocked_ligand_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/CROSSDOCKED_LIGAND_{distance_by_ca}data_object.pkl'
     with open(crossdocked_ligand_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(ligand_data_obj, file)
@@ -256,6 +257,7 @@ if __name__ == '__main__':
     # POCKET
     # Store the object to a file using pickle
     ca_only = 'CA_ONLY_' if args.ca_only else ''
+    # crossdocked_pocket_data_object_pkl = f"/mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data_EDA/data_object_cache/CROSSDOCKED_POCKET_{distance_by_ca}{args.dist_cutoff}A_{ca_only}data_object.pkl"
     crossdocked_pocket_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/CROSSDOCKED_POCKET_{distance_by_ca}{args.dist_cutoff}A_{ca_only}data_object.pkl'
     with open(crossdocked_pocket_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(pocket_data_obj, file)
