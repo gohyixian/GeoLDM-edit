@@ -1,6 +1,7 @@
 import numpy as np
 import getpass
 import os
+import re
 import torch
 from global_registry import PARAM_REGISTRY
 
@@ -21,6 +22,23 @@ def get_periodictable_list():
     s2an = dict(zip(symbol, atom_num))
     
     return an2s, s2an
+
+
+def get_nvidia_smi_usage(smi_txt: str):
+    gpu_id_pattern = r'^\|\s*(\d+)\s+'
+    memory_pattern = r'(\d+)MiB\s*/\s*(\d+)MiB'
+
+    gpu_memory_usage = {}
+    gpu_ids = re.findall(gpu_id_pattern, smi_txt, re.MULTILINE)
+    memories = re.findall(memory_pattern, smi_txt)
+
+    # assuming GPU IDs and memories are in the same order
+    for gpu_id, (used_memory, total_memory) in zip(gpu_ids, memories):
+        gpu_memory_usage[int(gpu_id)] = {
+            'used_mem': int(used_memory),
+            'total_mem': int(total_memory)
+        }
+    return gpu_memory_usage
 
 
 # Folders

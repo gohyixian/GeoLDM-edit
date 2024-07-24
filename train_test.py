@@ -96,6 +96,8 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
         # ~!mp
         loss.backward()
         
+        # gpu usage monitoring
+        smi_txt = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8')
         
         if args.clip_grad:
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
@@ -117,7 +119,7 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
 
             # nvidia-smi 
             print(f">> MEM Allocated: {torch.cuda.memory_allocated() / (1024 ** 2):.2f} MB    Reserved: {torch.cuda.memory_reserved() / (1024 ** 2):.2f} MB")
-            print(subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
+            print(smi_txt)
 
         nll_epoch.append(nll.item())
         nll_item = nll.item()
@@ -129,7 +131,12 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
         torch.cuda.empty_cache()
         gc.collect()
 
-        wandb.log({"Batch NLL": nll_item}, commit=True)
+        smi_dict = utils.get_nvidia_smi_usage(smi_txt)
+        wandb_dict = {}
+        for k,v in smi_dict:
+            wandb_dict[f"gpu/{k}-{v.get('total_mem')}MiB"] = v.get('used_mem')
+        wandb_dict["Batch NLL"] = nll_item
+        wandb.log(wandb_dict, commit=True)
 
         if args.break_train_epoch:
             break
@@ -198,6 +205,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         # ~!mp
         loss.backward()
         
+        # gpu usage monitoring
+        smi_txt = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8')
+        
         
         if args.clip_grad:
             grad_norm = utils.gradient_clipping(model, gradnorm_queue)
@@ -220,7 +230,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             
             # nvidia-smi 
             print(f">> MEM Allocated: {torch.cuda.memory_allocated() / (1024 ** 2):.2f} MB    Reserved: {torch.cuda.memory_reserved() / (1024 ** 2):.2f} MB")
-            print(subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
+            print(smi_txt)
 
         nll_epoch.append(nll.item())
         nll_item = nll.item()
@@ -246,7 +256,12 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             #     vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
             #                         wandb=wandb, mode='conditional')
 
-        wandb.log({"Batch NLL": nll_item}, commit=True)
+        smi_dict = utils.get_nvidia_smi_usage(smi_txt)
+        wandb_dict = {}
+        for k,v in smi_dict:
+            wandb_dict[f"gpu/{k}-{v.get('total_mem')}MiB"] = v.get('used_mem')
+        wandb_dict["Batch NLL"] = nll_item
+        wandb.log(wandb_dict, commit=True)
         
         
         # cleanup
