@@ -133,7 +133,7 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
 
         smi_dict = utils.get_nvidia_smi_usage(smi_txt)
         wandb_dict = {}
-        for k,v in smi_dict:
+        for k,v in smi_dict.items():
             wandb_dict[f"gpu/{k}-{v.get('total_mem')}MiB"] = v.get('used_mem')
         wandb_dict["Batch NLL"] = nll_item
         wandb.log(wandb_dict, commit=True)
@@ -258,7 +258,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 
         smi_dict = utils.get_nvidia_smi_usage(smi_txt)
         wandb_dict = {}
-        for k,v in smi_dict:
+        for k,v in smi_dict.items():
             wandb_dict[f"gpu/{k}-{v.get('total_mem')}MiB"] = v.get('used_mem')
         wandb_dict["Batch NLL"] = nll_item
         wandb.log(wandb_dict, commit=True)
