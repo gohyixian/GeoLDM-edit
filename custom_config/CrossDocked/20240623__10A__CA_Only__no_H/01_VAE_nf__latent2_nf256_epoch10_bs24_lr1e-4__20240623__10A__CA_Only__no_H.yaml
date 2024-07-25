@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: 01_VAE_nf__epoch10_bs24_lr1e-4_latent2_nf128__20240623__10A__CA_Only__no_H
+exp_name: 01_VAE_nf__latent2_nf256_epoch10_bs24_lr1e-4__20240623__10A__CA_Only__no_H
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -160,7 +160,7 @@ n_layers: 4  # 9 for qm9
 inv_sublayers: 1
 
 # model's internal operating number of features
-nf: 128
+nf: 256
 
 # use tanh in the coord_mlp
 tanh: true

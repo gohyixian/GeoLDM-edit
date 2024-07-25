@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: 01_VAE_nf__epoch10_bs24_lr1e-4_latent2_nf256__20240623__10A__CA_Only__no_H
+exp_name: 01_VAE_nf__latent2_nf32_epoch10_bs12_lr1e-5__20240623__10A
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -29,23 +29,22 @@ condition_time: true
 
 # ========================================================================================================== Dataset
 
-dataset: d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND+POCKET
+dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET
 
 # geom directory  ~!geom
-data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H.npz
+data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz
 
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
 # Please set the path to the DATASET_permutation.npy file after it is generated.
-# permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H_permutation.npy
-permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H_LG100_PKT100_permutation.npy
+permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_LG100_PKT600_permutation.npy
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
 
 # Only use molecules below this size. Int, default null  ~!geom
 filter_molecule_size: 100
-filter_pocket_size: 100
+filter_pocket_size: 600   # refer EDA
 
 # Organize data by size to reduce average memory usage. ~!geom
 sequential: false
@@ -57,7 +56,7 @@ num_workers: 0
 data_augmentation: false
 
 # remove hydrogen atoms
-remove_h: true
+remove_h: false
 
 
 
@@ -67,9 +66,9 @@ start_epoch: 0
 test_epochs: 1
 
 
-n_epochs: 10  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 24    # 32
-lr: 1.0e-4   # 0.0001
+n_epochs: 20  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 12    # 24
+lr: 1.0e-5   # 0.0001
 
 # weight of KL term in ELBO, default 0.01
 kl_weight: 0.01
@@ -160,7 +159,7 @@ n_layers: 4  # 9 for qm9
 inv_sublayers: 1
 
 # model's internal operating number of features
-nf: 256
+nf: 32
 
 # use tanh in the coord_mlp
 tanh: true
