@@ -163,6 +163,7 @@ if __name__ == '__main__':
     
     # python -W ignore 01_build_bindingmoad_dataset.py --raw_moad_basedir /mnt/c/Users/PC/Desktop/yixian/data/BindingMOAD --dist_cutoff 10.0 --max_occurences 50 --no_H --ca_only --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20240623_BindingMOAD_LG_PKT --save_dataset_name d_20240623_BindingMOAD_LG_PKT
     
+    # python -W ignore 01_build_bindingmoad_dataset.py --raw_moad_basedir /mnt/c/Users/PC/Desktop/yixian/data/BindingMOAD --dist_cutoff 10.0 --max_occurences 50 --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20240623_BindingMOAD_LG_PKT --save_dataset_name d_20240623_BindingMOAD_LG_PKT
 
 
     pdbdir = args.raw_moad_basedir / 'BindingMOAD_2020/'
