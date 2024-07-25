@@ -27,7 +27,9 @@ from constants import get_periodictable_list
 #  [idx, atomic_num, x, y, z]]
 
 
-conformation_file = '../../data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H.npz'
+# conformation_file = '../../data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__CA_Only__no_H.npz'
+conformation_file = '../../data/d_20240623_BindingMOAD_LG_PKT/d_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50.npz'
+
 
 all_data = np.load(conformation_file)
 
