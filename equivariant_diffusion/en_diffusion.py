@@ -989,7 +989,20 @@ class EnHierarchicalVAE(torch.nn.Module):
 
         self.norm_values = norm_values  # (1., 1., 1.)
         self.norm_biases = norm_biases  # (1., 1., 1.)
+        print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
         self.register_buffer('buffer', torch.zeros(1))
+
+
+    # ~!norm
+    def normalize_x(self, x):
+        x = x / self.norm_values[0]
+        return x
+    # ~!norm
+    def unnormalize_x(self, x):
+        x = x * self.norm_values[0]
+        return x
+
+
 
     def forward(self, x, h, node_mask=None, edge_mask=None, context=None):
         """
@@ -1050,6 +1063,10 @@ class EnHierarchicalVAE(torch.nn.Module):
 
         # Decoder output (reconstruction).
         x_recon, h_recon = self.decoder._forward(z_xh, node_mask, edge_mask, context)
+        
+        # ~!norm
+        x_recon = self.unnormalize_x(x-x_recon)
+        
         xh_rec = torch.cat([x_recon, h_recon], dim=2)
         # --LOSS 03
         loss_recon = self.compute_reconstruction_error(xh_rec, xh)
@@ -1064,6 +1081,9 @@ class EnHierarchicalVAE(torch.nn.Module):
     
     def encode(self, x, h, node_mask=None, edge_mask=None, context=None):
         """Computes q(z|x)."""
+
+        # ~!norm
+        x = self.normalize_x(x)
 
         # Concatenate x, h[integer] and h[categorical].
         xh = torch.cat([x, h['categorical'], h['integer']], dim=2)
@@ -1085,6 +1105,9 @@ class EnHierarchicalVAE(torch.nn.Module):
         # Decoder output (reconstruction).
         x_recon, h_recon = self.decoder._forward(z_xh, node_mask, edge_mask, context)
         diffusion_utils.assert_mean_zero_with_mask(x_recon, node_mask)
+
+        # ~!norm
+        x_recon = self.unnormalize_x(x_recon)
 
         xh = torch.cat([x_recon, h_recon], dim=2)
 
@@ -1177,6 +1200,7 @@ class EnHierarchicalVAE(torch.nn.Module):
 
 
 def disabled_train(self, mode=True):
+    
     """Overwrite model.train with this dummy empty function to make sure train/eval mode
     does not change anymore."""
     return self
@@ -1312,6 +1336,10 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             xh = torch.cat([x, h['categorical'], h['integer']], dim=2)
             # Decoder output (reconstruction).
             x_recon, h_recon = self.vae.decoder._forward(z_xh, node_mask, edge_mask, context)
+            
+            # ~!norm
+            x_recon = self.vae.unnormalize_x(x_recon)
+            
             xh_rec = torch.cat([x_recon, h_recon], dim=2)
             loss_recon = self.vae.compute_reconstruction_error(xh_rec, xh)
 

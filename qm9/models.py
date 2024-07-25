@@ -115,7 +115,8 @@ def get_autoencoder(args, device, dataset_info, dataloader_train):
         n_dims=3,
         latent_node_nf=args.latent_nf,  # 1
         kl_weight=args.kl_weight,   # 0.01
-        norm_values=args.normalize_factors,   # 1,4,10
+        # norm_values=args.normalize_factors,   # 1,4,10
+        norm_values=args.vae_normalize_factors,   # 1,4,10
         include_charges=args.include_charges  # true
         )
 
