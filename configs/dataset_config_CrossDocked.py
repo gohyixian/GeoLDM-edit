@@ -53,7 +53,7 @@ d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND = {
 # CrossDocked
 # for VAE
 d_20240623_CrossDocked_LG_PKT__10A__LIGAND_POCKET_atom_decoder = \
-    ['H', 'C', 'N', 'O', 'F', 'P', 'S', 'Cl'],
+    ['H', 'C', 'N', 'O', 'F', 'P', 'S', 'Cl']
 
 d_20240623_CrossDocked_LG_PKT__10A__LIGAND_POCKET = {
     'name': 'd_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET',
@@ -70,7 +70,7 @@ d_20240623_CrossDocked_LG_PKT__10A__LIGAND_POCKET = {
 
 # for LDM, ControlNet
 d_20240623_CrossDocked_LG_PKT__10A__LIGAND_atom_decoder = \
-    ['H', 'C', 'N', 'O', 'F', 'P', 'S', 'Cl'],
+    ['H', 'C', 'N', 'O', 'F', 'P', 'S', 'Cl']
 
 d_20240623_CrossDocked_LG_PKT__10A__LIGAND = {
     'name': 'd_20240623_CrossDocked_LG_PKT__10A__LIGAND',

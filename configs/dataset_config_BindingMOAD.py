@@ -70,7 +70,7 @@ d_20240623_BindingMOAD__10A__MaxOcc50__LIGAND_POCKET = {
 
 # for LDM, ControlNet
 d_20240623_BindingMOAD__10A__MaxOcc50__LIGAND_atom_decoder = \
-    ['H', 'B', 'C', 'N', 'O', 'F', 'P', 'S', 'V', 'I', 'W'],
+    ['H', 'B', 'C', 'N', 'O', 'F', 'P', 'S', 'V', 'I', 'W']
 
 d_20240623_BindingMOAD__10A__MaxOcc50__LIGAND = {
     'name': 'd_20240623_BindingMOAD_LG_PKT__10.0A__MaxOcc50__LIGAND',

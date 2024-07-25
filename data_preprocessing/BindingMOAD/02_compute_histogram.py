@@ -154,7 +154,7 @@ with open(f'stats__{file_name}.txt', 'w') as f:
     print("=============", file=f)
     print(f"'atom_encoder': {all_atom_encoder},", file=f)
     print(f"'atomic_nb': {all_atomic_nb},", file=f)
-    print(f"'atom_decoder': {all_atom_decoder},", file=f)
+    print(f"'atom_decoder': {all_atom_decoder}", file=f)
     print(f"'max_n_nodes': {all_max_n_nodes},", file=f)
     print(f"'n_nodes': {all_n_nodes},", file=f)
     print(f"'atom_types': {all_atom_types},", file=f)
