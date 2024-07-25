@@ -298,7 +298,9 @@ if __name__ == '__main__':
 
 
 #failed: 15273: 100% || 66031/66031 [2:07:53<00:00, 8.60it/s]
-#
+
+# --dist_cutoff 10.0 --max_occurences 50 --no_H --ca_only
+
 # [LG] Total Atom Num : 1200758
 # [LG] Ave. Atom Num  : 23.65606099410942
 # [PT] Total Atom Num : 3390278
@@ -307,5 +309,14 @@ if __name__ == '__main__':
 # Dataset processed.
 
 
+
+# --dist_cutoff 10.0 --max_occurences 50
+
+# [LG] Total Atom Num  : 1264561
+# [LG] Ave. Atom Num   : 24.894403212788156
+# [PKT] Total Atom Num : 28514607
+# [PKT] Ave. Atom Num  : 561.3443116719492
+# Total number of Ligand-Pocket pairs: 50797
+# Dataset processed.
 
 
