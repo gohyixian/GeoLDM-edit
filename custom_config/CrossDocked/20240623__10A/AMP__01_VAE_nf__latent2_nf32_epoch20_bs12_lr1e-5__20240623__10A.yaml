@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: 01_VAE_nf__latent2_nf32_epoch10_bs12_lr1e-5__20240623__10A
+exp_name: AMP__01_VAE_nf__latent2_nf32_epoch10_bs12_lr1e-5__20240623__10A
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -146,7 +146,7 @@ diffusion_loss_type: l2
 latent_nf: 2  # 1
 
 # normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
-normalize_factors: [1, 4, 10]
+normalize_factors: [100, 4, 10]
 
 
 
@@ -203,7 +203,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: false
+no_wandb: true
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true

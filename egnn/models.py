@@ -280,11 +280,19 @@ class EGNN_encoder_QM9(nn.Module):
         #                64x25                                                             64x25x25
         if self.mode == 'egnn_dynamics':
             # ~!mp
+            print(torch.min(h).item(), torch.max(h).item(), torch.min(x).item(), torch.max(x).item())
             with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
                 h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)   # feed to model
+                if torch.any(torch.isnan(h_final)):
+                    print('Warning: detected nan in h_final (EQNN_encoder_QM9) *')
+                if torch.any(torch.isnan(x_final)):
+                    print('Warning: detected nan in x_final (EQNN_encoder_QM9) *')
             h_final = h_final.float()
             x_final = x_final.float()
-            
+            if torch.any(torch.isnan(h_final)):
+                print('Warning: detected nan in h_final (EQNN_encoder_QM9) **')
+            if torch.any(torch.isnan(x_final)):
+                print('Warning: detected nan in x_final (EQNN_encoder_QM9) **')
             vel = x_final * node_mask  # This masking operation is redundant but just in case
         elif self.mode == 'gnn_dynamics':
             raise NotImplementedError()
