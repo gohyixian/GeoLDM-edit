@@ -105,15 +105,22 @@ class EGNN_dynamics_QM9(nn.Module):
 
         if self.mode == 'egnn_dynamics':
             print(f"        >>> DYNAMICS (B4) h:{torch.isnan(h).any()} x:{torch.isnan(x).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
-            h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
+            
+            # ~!mp
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+                h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
+            h_final = h_final.float()
+            x_final = x_final.float()
+            
             print(f"        >>> DYNAMICS (A3) h_:{torch.isnan(h_final).any()} x_:{torch.isnan(x_final).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
             # [1600, 2]  [1600, 3]
             vel = (x_final - x) * node_mask  # This masking operation is redundant but just in case
         elif self.mode == 'gnn_dynamics':
-            xh = torch.cat([x, h], dim=1)
-            output = self.gnn(xh, edges, node_mask=node_mask)
-            vel = output[:, 0:3] * node_mask
-            h_final = output[:, 3:]
+            raise NotImplementedError()
+            # xh = torch.cat([x, h], dim=1)
+            # output = self.gnn(xh, edges, node_mask=node_mask)
+            # vel = output[:, 0:3] * node_mask
+            # h_final = output[:, 3:]
 
         else:
             raise Exception("Wrong mode %s" % self.mode)
@@ -272,13 +279,19 @@ class EGNN_encoder_QM9(nn.Module):
         # >> torch.Size([1600, 6]) torch.Size([1600, 3]) torch.Size([1600, 1]) torch.Size([40000, 1])
         #                64x25                                                             64x25x25
         if self.mode == 'egnn_dynamics':
-            h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)   # feed to model
+            # ~!mp
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+                h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)   # feed to model
+            h_final = h_final.float()
+            x_final = x_final.float()
+            
             vel = x_final * node_mask  # This masking operation is redundant but just in case
         elif self.mode == 'gnn_dynamics':
-            xh = torch.cat([x, h], dim=1)
-            output = self.gnn(xh, edges, node_mask=node_mask)
-            vel = output[:, 0:3] * node_mask
-            h_final = output[:, 3:]
+            raise NotImplementedError()
+            # xh = torch.cat([x, h], dim=1)
+            # output = self.gnn(xh, edges, node_mask=node_mask)
+            # vel = output[:, 0:3] * node_mask
+            # h_final = output[:, 3:]
         else:
             raise Exception("Wrong mode %s" % self.mode)
 
@@ -300,7 +313,11 @@ class EGNN_encoder_QM9(nn.Module):
 
         # final out mlp
         # h_final = low_vram_forward(self.final_mlp, h_final)      # h_final still flat
-        h_final = self.final_mlp(h_final)
+        # ~!mp
+        with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+            h_final = self.final_mlp(h_final)
+        h_final = h_final.float()
+        
         h_final = h_final * node_mask if node_mask is not None else h_final
         h_final = h_final.view(bs, n_nodes, -1)    # reshape back
 
@@ -495,17 +512,22 @@ class EGNN_decoder_QM9(nn.Module):
 
         if self.mode == 'egnn_dynamics':
             print(f"        >>> DECODER (B4) h:{torch.isnan(h).any()} x:{torch.isnan(x).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
-            h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
+            # ~!mp
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+                h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
+            h_final = h_final.float()
+            x_final = x_final.float()
+            
             print(f"        >>> DECODER (A3) h_:{torch.isnan(h_final).any()} x_:{torch.isnan(x_final).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
 
             # [1728, 6]    [1728, 3]
             vel = x_final * node_mask  # This masking operation is redundant but just in case
         elif self.mode == 'gnn_dynamics':
-            xh = torch.cat([x, h], dim=1)
-            output = self.gnn(xh, edges, node_mask=node_mask)
-            vel = output[:, 0:3] * node_mask
-            h_final = output[:, 3:]
-
+            raise NotImplementedError()
+            # xh = torch.cat([x, h], dim=1)
+            # output = self.gnn(xh, edges, node_mask=node_mask)
+            # vel = output[:, 0:3] * node_mask
+            # h_final = output[:, 3:]
         else:
             raise Exception("Wrong mode %s" % self.mode)
 
@@ -751,15 +773,19 @@ class ControlNet_Module_Wrapper(nn.Module):
                 node_mask_1:{torch.isnan(node_mask_1).any()}  node_mask_2:{torch.isnan(node_mask_2).any()}  edge_mask_1:{torch.isnan(edge_mask_1).any()}  \
                     edge_mask_2:{torch.isnan(edge_mask_2).any()}  joint_edge_mask:{torch.isnan(joint_edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
 
-            h_final, x_final = self.controlnet_arch_wrapper(h1=h1, h2=h2, x1=x1, x2=x2,
-                                                            node_mask_1=node_mask_1,
-                                                            node_mask_2=node_mask_2,
-                                                            edge_mask_1=edge_mask_1,
-                                                            edge_mask_2=edge_mask_2,
-                                                            edge_index_1=edges_1,
-                                                            edge_index_2=edges_2,
-                                                            joint_edge_index=edges_joint,
-                                                            joint_edge_mask=joint_edge_mask)
+            # ~!mp
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+                h_final, x_final = self.controlnet_arch_wrapper(h1=h1, h2=h2, x1=x1, x2=x2,
+                                                                node_mask_1=node_mask_1,
+                                                                node_mask_2=node_mask_2,
+                                                                edge_mask_1=edge_mask_1,
+                                                                edge_mask_2=edge_mask_2,
+                                                                edge_index_1=edges_1,
+                                                                edge_index_2=edges_2,
+                                                                joint_edge_index=edges_joint,
+                                                                joint_edge_mask=joint_edge_mask)
+            h_final = h_final.float()
+            x_final = x_final.float()
 
             print(f"        >>> ControlNet_Module_Wrapper (A3) t:{torch.isnan(t).any()}  xh1:{torch.isnan(xh1).any()}  xh2:{torch.isnan(xh2).any()}  \
                 node_mask_1:{torch.isnan(node_mask_1).any()}  node_mask_2:{torch.isnan(node_mask_2).any()}  edge_mask_1:{torch.isnan(edge_mask_1).any()}  \
