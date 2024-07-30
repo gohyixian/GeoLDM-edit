@@ -199,12 +199,13 @@ def main():
     mem_bufs = sum([buf.nelement()*buf.element_size() for buf in model.buffers()])
     mem = mem_params + mem_bufs # in bytes
     mem_mb, mem_gb = mem/(1024**2), mem/(1024**3)
-    print(f"Model running on device  : {args.device}")
-    # print(f"Mixed precision training : {args.mixed_precision_training}")
-    print(f"Model running on dtype   : {args.dtype}")
-    print(f"Model Size               : {mem_gb} GB  /  {mem_mb} MB  /  {mem} Bytes")
-    print(f"Training Dataset Name    : {args.dataset}")
-    print(f"Model Training Mode      : {args.training_mode}")
+    print(f"Model running on device        : {args.device}")
+    print(f"Mixed precision training       : {args.mixed_precision_training}")
+    print(f"Mixed precision autocast dtype : {args.mixed_precision_autocast_dtype}") if args.mixed_precision_training else None
+    print(f"Model running on dtype         : {args.dtype}")
+    print(f"Model Size                     : {mem_gb} GB  /  {mem_mb} MB  /  {mem} Bytes")
+    print(f"Training Dataset Name          : {args.dataset}")
+    print(f"Model Training Mode            : {args.training_mode}")
     print(f"================================")
     print(model)
     
