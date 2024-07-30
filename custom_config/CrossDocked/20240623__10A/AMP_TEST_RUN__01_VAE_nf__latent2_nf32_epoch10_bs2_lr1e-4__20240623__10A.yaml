@@ -92,7 +92,7 @@ ema_decay: 0.9999
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 500
+n_stability_samples: 20
 
 
 # disables CUDA training
