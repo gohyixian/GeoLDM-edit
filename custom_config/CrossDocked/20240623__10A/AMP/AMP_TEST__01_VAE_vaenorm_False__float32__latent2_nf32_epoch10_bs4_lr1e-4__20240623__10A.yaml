@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf32_epoch10_bs4_lr1e-4__20240623__10A
+exp_name: AMP_TEST__01_VAE_vaenorm_False__float32__latent2_nf32_epoch10_bs4_lr1e-4__20240623__10A
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model

@@ -64,6 +64,8 @@ def main():
         _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
         mp_dtype = getattr(torch, mp_dtype_name)
         args.mixed_precision_autocast_dtype = mp_dtype
+    else:
+        args.mixed_precision_autocast_dtype = dtype
 
 
     # params global registry for easy access
