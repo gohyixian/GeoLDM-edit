@@ -22,12 +22,12 @@ def main(args):
     all_pocket_data = all_data['pocket']
 
     # ligand
-    ligand_mol_id = all_ligand_data[:, 0].clone().astype(int)
+    ligand_mol_id = np.copy(all_ligand_data[:, 0]).astype(int)
     ligand_split_indices = np.nonzero(ligand_mol_id[:-1] - ligand_mol_id[1:])[0] + 1
     ligand_data_list = np.split(all_ligand_data, ligand_split_indices)
 
     # pocket
-    pocket_mol_id = all_pocket_data[:, 0].clone().astype(int)
+    pocket_mol_id = np.copy(all_pocket_data[:, 0]).astype(int)
     pocket_split_indices = np.nonzero(pocket_mol_id[:-1] - pocket_mol_id[1:])[0] + 1
     pocket_data_list = np.split(all_pocket_data, pocket_split_indices)
 
