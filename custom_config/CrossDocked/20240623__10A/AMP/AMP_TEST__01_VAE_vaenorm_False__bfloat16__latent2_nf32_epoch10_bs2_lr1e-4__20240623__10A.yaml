@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST_RUN__01_VAE_nf__latent2_nf32_epoch10_bs2_lr1e-4__20240623__10A
+exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf32_epoch10_bs2_lr1e-4__20240623__10A
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -92,7 +92,7 @@ ema_decay: 0.9999
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 500
+n_stability_samples: 20
 
 
 # disables CUDA training
@@ -209,7 +209,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: true
+no_wandb: false
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true

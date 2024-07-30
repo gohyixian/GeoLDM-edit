@@ -94,7 +94,7 @@ def main():
         # Sequential dataloading disabled for now.
         dataloaders[key] = build_geom_dataset.GeomDrugsDataLoader(
             sequential=args.sequential, dataset=dataset, batch_size=args.batch_size,
-            shuffle=shuffle, training_mode=args.training_mode)
+            shuffle=shuffle, training_mode=args.training_mode, drop_last=True)
     del split_data
 
 
