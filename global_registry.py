@@ -12,8 +12,8 @@ class Registry:
     def set(self, key, value):
         self._registry[key] = value
 
-    def get(self, key):
-        return self._registry.get(key, None)
+    def get(self, key, alt=None):
+        return self._registry.get(key, alt)
     
     def update_from_config(self, config):
         if isinstance(config, Config):

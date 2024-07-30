@@ -107,7 +107,7 @@ class EGNN_dynamics_QM9(nn.Module):
             print(f"        >>> DYNAMICS (B4) h:{torch.isnan(h).any()} x:{torch.isnan(x).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
             
             # ~!mp
-            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=PARAM_REGISTRY.get('mixed_precision_autocast_dtype', alt=torch.float16), enabled=PARAM_REGISTRY.get('mixed_precision_training')):
                 h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
             h_final = h_final.float()
             x_final = x_final.float()
@@ -281,7 +281,7 @@ class EGNN_encoder_QM9(nn.Module):
         if self.mode == 'egnn_dynamics':
             # ~!mp
             print(torch.min(h).item(), torch.max(h).item(), torch.min(x).item(), torch.max(x).item())
-            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=PARAM_REGISTRY.get('mixed_precision_autocast_dtype', alt=torch.float16), enabled=PARAM_REGISTRY.get('mixed_precision_training')):
                 h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)   # feed to model
                 if torch.any(torch.isnan(h_final)):
                     print('Warning: detected nan in h_final (EQNN_encoder_QM9) *')
@@ -322,7 +322,7 @@ class EGNN_encoder_QM9(nn.Module):
         # final out mlp
         # h_final = low_vram_forward(self.final_mlp, h_final)      # h_final still flat
         # ~!mp
-        with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+        with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=PARAM_REGISTRY.get('mixed_precision_autocast_dtype', alt=torch.float16), enabled=PARAM_REGISTRY.get('mixed_precision_training')):
             h_final = self.final_mlp(h_final)
         h_final = h_final.float()
         
@@ -521,7 +521,7 @@ class EGNN_decoder_QM9(nn.Module):
         if self.mode == 'egnn_dynamics':
             print(f"        >>> DECODER (B4) h:{torch.isnan(h).any()} x:{torch.isnan(x).any()}  node_mask:{torch.isnan(node_mask).any()}  edge_mask:{torch.isnan(edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
             # ~!mp
-            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=PARAM_REGISTRY.get('mixed_precision_autocast_dtype', alt=torch.float16), enabled=PARAM_REGISTRY.get('mixed_precision_training')):
                 h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
             h_final = h_final.float()
             x_final = x_final.float()
@@ -782,7 +782,7 @@ class ControlNet_Module_Wrapper(nn.Module):
                     edge_mask_2:{torch.isnan(edge_mask_2).any()}  joint_edge_mask:{torch.isnan(joint_edge_mask).any()}") if PARAM_REGISTRY.get('verbose')==True else None
 
             # ~!mp
-            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=torch.float16, enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=PARAM_REGISTRY.get('mixed_precision_autocast_dtype', alt=torch.float16), enabled=PARAM_REGISTRY.get('mixed_precision_training')):
                 h_final, x_final = self.controlnet_arch_wrapper(h1=h1, h2=h2, x1=x1, x2=x2,
                                                                 node_mask_1=node_mask_1,
                                                                 node_mask_2=node_mask_2,
