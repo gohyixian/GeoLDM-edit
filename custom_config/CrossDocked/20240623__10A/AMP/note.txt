@@ -1,0 +1,5 @@
+main goal of these samll scale training (dataset & model) are to only obtain the difference in
+GPU size required between AMP torch.bfloat16 and torch.float32
+
+vae_norm=True is just to test if normalising the atoms' coordinate values results in better
+training and faster convergence.

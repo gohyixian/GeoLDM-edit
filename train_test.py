@@ -162,8 +162,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     
     for i, data in enumerate(loader):
         # if i == 1002:  # vis test
-        # if i == 200:  # fast val test
-            # break
+        if i == 60:  # fast val test
+            break
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
         edge_mask = data['edge_mask'].to(device, dtype)
@@ -205,6 +205,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         # ~!mp
         loss.backward()
         
+        print(f"1. NaN in .grad  = {any(torch.isnan(p.grad).any() for p in model.parameters() if p.grad is not None)}")
+        print(f"2. NaN in params = {any(torch.isnan(p).any() for p in model.parameters())}")
+        
         # gpu usage monitoring
         smi_txt = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8')
         
@@ -216,6 +219,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 
         # ~!mp
         optim.step()
+
+        print(f"3. NaN in params = {any(torch.isnan(p).any() for p in model.parameters())}")
 
         # Update EMA if enabled.
         if args.ema_decay > 0:

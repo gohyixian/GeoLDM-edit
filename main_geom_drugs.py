@@ -53,12 +53,19 @@ def main():
 
 
     # dtype settings
-    module_name, dtype_name = args.dtype.split('.')
+    _, dtype_name = args.dtype.split('.')
     dtype = getattr(torch, dtype_name)
     args.dtype = dtype
     torch.set_default_dtype(dtype)
-    
-    
+
+
+    # mp autocast dtype
+    if args.mixed_precision_training == True:
+        _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
+        mp_dtype = getattr(torch, mp_dtype_name)
+        args.mixed_precision_autocast_dtype = mp_dtype
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
@@ -87,7 +94,7 @@ def main():
         # Sequential dataloading disabled for now.
         dataloaders[key] = build_geom_dataset.GeomDrugsDataLoader(
             sequential=args.sequential, dataset=dataset, batch_size=args.batch_size,
-            shuffle=shuffle, training_mode=args.training_mode)
+            shuffle=shuffle, training_mode=args.training_mode, drop_last=True)
     del split_data
 
 
@@ -192,12 +199,13 @@ def main():
     mem_bufs = sum([buf.nelement()*buf.element_size() for buf in model.buffers()])
     mem = mem_params + mem_bufs # in bytes
     mem_mb, mem_gb = mem/(1024**2), mem/(1024**3)
-    print(f"Model running on device  : {args.device}")
-    # print(f"Mixed precision training : {args.mixed_precision_training}")
-    print(f"Model running on dtype   : {args.dtype}")
-    print(f"Model Size               : {mem_gb} GB  /  {mem_mb} MB  /  {mem} Bytes")
-    print(f"Training Dataset Name    : {args.dataset}")
-    print(f"Model Training Mode      : {args.training_mode}")
+    print(f"Model running on device        : {args.device}")
+    print(f"Mixed precision training       : {args.mixed_precision_training}")
+    print(f"Mixed precision autocast dtype : {args.mixed_precision_autocast_dtype}") if args.mixed_precision_training else None
+    print(f"Model running on dtype         : {args.dtype}")
+    print(f"Model Size                     : {mem_gb} GB  /  {mem_mb} MB  /  {mem} Bytes")
+    print(f"Training Dataset Name          : {args.dataset}")
+    print(f"Model Training Mode            : {args.training_mode}")
     print(f"================================")
     print(model)
     
