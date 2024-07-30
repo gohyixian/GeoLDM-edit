@@ -987,6 +987,8 @@ class EnHierarchicalVAE(torch.nn.Module):
         self.num_classes = self.in_node_nf - self.include_charges  # 5
         self.kl_weight = kl_weight  # 0.01
 
+        self.vae_normalize_x = PARAM_REGISTRY.get('vae_normalize_x', False)
+        print(f">> EnHierarchicalVAE self.vae_normalize_x={self.vae_normalize_x}")
         self.norm_values = norm_values  # (1., 1., 1.)
         self.norm_biases = norm_biases  # (1., 1., 1.)
         print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
@@ -1065,7 +1067,8 @@ class EnHierarchicalVAE(torch.nn.Module):
         x_recon, h_recon = self.decoder._forward(z_xh, node_mask, edge_mask, context)
         
         # ~!norm
-        x_recon = self.unnormalize_x(x-x_recon)
+        if self.vae_normalize_x:
+            x_recon = self.unnormalize_x(x_recon)
         
         xh_rec = torch.cat([x_recon, h_recon], dim=2)
         # --LOSS 03
@@ -1083,7 +1086,8 @@ class EnHierarchicalVAE(torch.nn.Module):
         """Computes q(z|x)."""
 
         # ~!norm
-        x = self.normalize_x(x)
+        if self.vae_normalize_x:
+            x = self.normalize_x(x)
 
         # Concatenate x, h[integer] and h[categorical].
         xh = torch.cat([x, h['categorical'], h['integer']], dim=2)
@@ -1107,7 +1111,8 @@ class EnHierarchicalVAE(torch.nn.Module):
         diffusion_utils.assert_mean_zero_with_mask(x_recon, node_mask)
 
         # ~!norm
-        x_recon = self.unnormalize_x(x_recon)
+        if self.vae_normalize_x:
+            x_recon = self.unnormalize_x(x_recon)
 
         xh = torch.cat([x_recon, h_recon], dim=2)
 
