@@ -48,6 +48,8 @@ def main(args):
 
     print(f"len(original) : {len(list(ligand_data_list))}")
     print(f"len(subset)   : {len(list(ligand_data_list_subset))}")
+    ligand_data_list_subset = np.vstack(ligand_data_list_subset)
+    pocket_data_list_subset = np.vstack(pocket_data_list_subset)
 
     dir = os.path.dirname(args.saveas)
     if not os.path.exists(dir):
