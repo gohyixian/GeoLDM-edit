@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import BatchSampler, DataLoader, Dataset, SequentialSampler
 import argparse
 from qm9.data import collate as qm9_collate
+from global_registry import PARAM_REGISTRY
 
 
 def extract_conformers(args):
@@ -173,9 +174,18 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
         
         # combine both ligand+pocket together manually with [lg, pkt, lg, pkt, ..] ordering to ensure VAE sees same amount of both ligand and pockets
         all_data = []
+        vae_data_mode = PARAM_REGISTRY.get('vae_data_mode')
+        print(f">> load_split_data: [VAE] loading with data mode: {vae_data_mode}")
         for i in range(len(list(ligand_data_list))):
-            all_data.append(ligand_data_list[i])
-            all_data.append(pocket_data_list[i])
+            if vae_data_mode == 'ligand':
+                all_data.append(ligand_data_list[i])
+            elif vae_data_mode == 'pocket':
+                all_data.append(pocket_data_list[i])
+            elif vae_data_mode == 'all':
+                all_data.append(ligand_data_list[i])
+                all_data.append(pocket_data_list[i])
+            else:
+                raise NotImplementedError()
 
         # split
         num_mol = len(all_data)

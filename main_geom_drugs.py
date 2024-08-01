@@ -73,6 +73,11 @@ def main():
         args.grad_accumulation_steps = 1  # call optim every step
 
 
+    # vae data mode
+    if not hasattr(args, 'vae_data_mode'):
+        args.vae_data_mode = 'all'
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
