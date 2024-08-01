@@ -18,6 +18,7 @@ from equivariant_diffusion import utils as diffusion_utils
 import torch
 import time
 import pickle
+import math
 
 from qm9.utils import prepare_context, compute_mean_mad
 import train_test
@@ -223,8 +224,8 @@ def main():
     
     
     
-    best_nll_val = 1e8
-    best_nll_test = 1e8
+    best_nll_val = math.inf
+    best_nll_test = math.inf
     nth_iter = 0
     for epoch in range(args.start_epoch, args.n_epochs):
         start_epoch = time.time()

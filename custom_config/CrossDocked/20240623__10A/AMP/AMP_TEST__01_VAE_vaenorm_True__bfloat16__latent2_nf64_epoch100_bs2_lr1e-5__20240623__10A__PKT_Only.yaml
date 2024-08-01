@@ -9,7 +9,7 @@ train_diffusion: false
 training_mode: VAE
 
 # Specify first stage model path
-ae_path: null
+ae_path: ./outputs/AMP_TEST__01_VAE_vaenorm_True__bfloat16__latent2_nf64_epoch100_bs2_lr1e-5__20240623__10A__PKT_Only
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
 trainable_ae_encoder: true

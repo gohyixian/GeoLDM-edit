@@ -8,6 +8,7 @@ from configs.datasets_config import geom_with_h, get_dataset_info
 import utils
 import yaml
 import os
+import re
 import argparse
 import numpy as np
 from os.path import join
@@ -61,6 +62,7 @@ def plot_activation_distribution(tensor: np.ndarray, title: str, save_path: str,
 def main():
     parser = argparse.ArgumentParser(description='e3_diffusion')
     parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
+    parser.add_argument('--load_last', action='store_true', help='load weights of model of last epoch')
     opt = parser.parse_args()
 
     with open(opt.config_file, 'r') as file:
@@ -148,8 +150,17 @@ def main():
 
     model = model.to(args.device)
     
-    print(f">> Loading VAE weights from {args.ae_path}")
-    fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
+    if args.load_last:
+        if args.ema_decay > 0:
+            pattern = re.compile(r"generative_model_ema.*\.py")
+        else:
+            pattern = re.compile(r"generative_model.*\.py")
+        filtered_files = sorted([f for f in os.listdir(args.ae_path) if pattern.match(f)])
+        fn = filtered_files[-1]
+    else:
+        fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
+    
+    print(f">> Loading VAE weights from {join(args.ae_path, fn)}")
     flow_state_dict = torch.load(join(args.ae_path, fn), map_location=device)
     model.load_state_dict(flow_state_dict)
 
