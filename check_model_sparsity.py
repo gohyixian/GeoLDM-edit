@@ -183,6 +183,7 @@ def main():
             int(re.search(pattern_str, x).group(1)),
             int(re.search(pattern_str, x).group(2))
         ))
+        fn = filtered_files[-1]
     else:
         fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
     
