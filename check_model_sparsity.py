@@ -153,7 +153,7 @@ def main():
     if args.ae_path is None:
         args.ae_path = join(os.getcwd(), 'outputs', args.exp_name)
 
-    if args.load_last:
+    if opt.load_last:
         if args.ema_decay > 0:
             pattern = re.compile(r"generative_model_ema.*\.py")
         else:
