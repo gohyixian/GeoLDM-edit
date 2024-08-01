@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf64_epoch10_bs2_lr1e-5_ga10__20240623__10A
+exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf64_epoch30_bs2_lr1e-5_ga10__20240623__10A
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -68,7 +68,7 @@ start_epoch: 0
 test_epochs: 1
 
 
-n_epochs: 10  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+n_epochs: 30  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
 batch_size: 2    # 24
 lr: 1.0e-5   # 0.0001
 grad_accumulation_steps: 10
