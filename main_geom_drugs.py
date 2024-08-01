@@ -68,6 +68,11 @@ def main():
         args.mixed_precision_autocast_dtype = dtype
 
 
+    # gradient accumulation
+    if not hasattr(args, 'grad_accumulation_steps'):
+        args.grad_accumulation_steps = 1  # call optim every step
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
