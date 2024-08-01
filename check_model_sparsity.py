@@ -174,11 +174,15 @@ def main():
 
     if opt.load_last:
         if args.ema_decay > 0:
-            pattern = re.compile("generative_model_ema.*\.npy")
+            pattern_str = r'generative_model_ema_(\d+)_iter_(\d+)\.npy'
         else:
-            pattern = re.compile("generative_model.*\.npy")
-        filtered_files = sorted([f for f in os.listdir(args.ae_path) if pattern.match(f)])
-        fn = filtered_files[-1]
+            pattern_str = r'generative_model_(\d+)_iter_(\d+)\.npy'
+            
+        filtered_files = [f for f in os.listdir(args.ae_path) if re.compile(pattern_str).match(f)]
+        filtered_files.sort(key=lambda x: (
+            int(re.search(pattern_str, x).group(1)),
+            int(re.search(pattern_str, x).group(2))
+        ))
     else:
         fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
     
