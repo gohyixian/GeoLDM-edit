@@ -351,7 +351,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                                                     node_mask, edge_mask, context)
             # standard nll from forward KL
 
-            nll_epoch += nll.item() * batch_size
+            nll_epoch += (nll.item() * batch_size)
             n_samples += batch_size
             if i % args.n_report_steps == 0:
                 print(f"\r {partition} NLL \t epoch: {epoch}, iter: {i}/{n_iterations}, "
@@ -435,7 +435,7 @@ def test_controlnet(args, loader, epoch, eval_model, device, dtype, property_nor
             )
 
             # standard nll from forward KL
-            nll_epoch += nll.item() * lg_batch_size
+            nll_epoch += (nll.item() * lg_batch_size)
             n_samples += lg_batch_size
             if i % args.n_report_steps == 0:
                 print(f"\r {partition} NLL \t epoch: {epoch}, iter: {i}/{n_iterations}, "
