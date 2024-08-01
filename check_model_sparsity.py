@@ -63,6 +63,7 @@ def main():
     parser = argparse.ArgumentParser(description='e3_diffusion')
     parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
     parser.add_argument('--load_last', action='store_true', help='load weights of model of last epoch')
+    parser.add_argument('--data_size', type=float, default=0.001, help='portion of val data split to use for test')
     opt = parser.parse_args()
 
     with open(opt.config_file, 'r') as file:
@@ -99,6 +100,24 @@ def main():
     torch.set_default_dtype(dtype)
 
 
+    # mp autocast dtype
+    if args.mixed_precision_training == True:
+        _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
+        mp_dtype = getattr(torch, mp_dtype_name)
+        args.mixed_precision_autocast_dtype = mp_dtype
+    else:
+        args.mixed_precision_autocast_dtype = dtype
+
+
+    # gradient accumulation
+    if not hasattr(args, 'grad_accumulation_steps'):
+        args.grad_accumulation_steps = 1  # call optim every step
+
+
+    # vae data mode
+    if not hasattr(args, 'vae_data_mode'):
+        args.vae_data_mode = 'all'
+
 
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
@@ -108,7 +127,7 @@ def main():
     data_file = args.data_file
     print(">> Loading data from:", data_file)
     split_data = build_geom_dataset.load_split_data(data_file, 
-                                                    val_proportion=0.001,   # will only be using this
+                                                    val_proportion=opt.data_size,   # will only be using this
                                                     test_proportion=0.1, 
                                                     filter_size=args.filter_molecule_size, 
                                                     permutation_file_path=args.permutation_file_path, 
@@ -155,9 +174,9 @@ def main():
 
     if opt.load_last:
         if args.ema_decay > 0:
-            pattern = re.compile(r"generative_model_ema.*\.py")
+            pattern = re.compile("generative_model_ema.*\.npy")
         else:
-            pattern = re.compile(r"generative_model.*\.py")
+            pattern = re.compile("generative_model.*\.npy")
         filtered_files = sorted([f for f in os.listdir(args.ae_path) if pattern.match(f)])
         fn = filtered_files[-1]
     else:
