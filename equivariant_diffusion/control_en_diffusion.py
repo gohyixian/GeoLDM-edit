@@ -98,6 +98,10 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         t_zeros = torch.zeros(size=(x1.size(0), 1), device=x1.device)
         gamma_0 = self.inflate_batch_array(self.gamma(t_zeros), x1)
         sigma_0 = self.sigma(gamma_0, x1)
+        
+        t_zeros_x2 = torch.zeros(size=(x2.size(0), 1), device=x2.device)
+        gamma_0_x2 = self.inflate_batch_array(self.gamma(t_zeros_x2), x2)
+        sigma_0_x2 = self.sigma(gamma_0_x2, x2)
 
         # Infer latent z.
         z_xh_mean_1 = torch.cat([z_x_mu_1, z_h_mu_1], dim=2)
@@ -112,11 +116,12 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         z_xh_sigma = sigma_0  # time-controlled VAE std, same for both ligand pocket
         # z_xh_sigma = torch.cat([z_x_sigma.expand(-1, -1, 3), z_h_sigma], dim=2)
         
-        # Add noise to ligand only
+        # Add noise to ligand only (modified: pocket too)
         z_xh_1 = self.vae.sample_normal(z_xh_mean_1, z_xh_sigma, node_mask_1)  # z_xh = mu + sigma * eps
+        z_xh_2 = self.vae.sample_normal(z_xh_mean_2, sigma_0_x2, node_mask_2)
         if not self.trainable_ae_encoder:
             z_xh_1 = z_xh_1.detach()  # Always keep the VAE's Encoder fixed when training LDM and/or VAE's Decoder
-            z_xh_mean_2 = z_xh_mean_2.detach()
+            z_xh_2 = z_xh_2.detach()
         
         diffusion_utils.assert_correctly_masked(z_xh_1, node_mask_1)
 
@@ -136,13 +141,13 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         
         """ VAE Encoded features for LDM """
         # LDM
-        assert z_xh_1.size(0) == z_xh_mean_2.size(0), f"Different batch_size encountered! z_xh_1={z_xh_1.size()} z_xh_mean_2={z_xh_mean_2.size()}"
-        assert z_xh_1.size(2) == z_xh_mean_2.size(2), f"Different num embedding encountered! z_xh_1={z_xh_1.size()} z_xh_mean_2={z_xh_mean_2.size()}"
+        assert z_xh_1.size(0) == z_xh_2.size(0), f"Different batch_size encountered! z_xh_1={z_xh_1.size()} z_xh_mean_2={z_xh_mean_2.size()}"
+        assert z_xh_1.size(2) == z_xh_2.size(2), f"Different num embedding encountered! z_xh_1={z_xh_1.size()} z_xh_mean_2={z_xh_mean_2.size()}"
 
         z_x_1 = z_xh_1[:, :, :self.n_dims]
         z_h_1 = z_xh_1[:, :, self.n_dims:]
-        z_x_2 = z_xh_mean_2[:, :, :self.n_dims]
-        z_h_2 = z_xh_mean_2[:, :, self.n_dims:]
+        z_x_2 = z_xh_2[:, :, :self.n_dims]
+        z_h_2 = z_xh_2[:, :, self.n_dims:]
         diffusion_utils.assert_mean_zero_with_mask(z_x_1, node_mask_1)
         diffusion_utils.assert_mean_zero_with_mask(z_x_2, node_mask_2)
         
@@ -216,7 +221,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         xh2 = torch.cat([x2, h2['categorical'], h2['integer']], dim=2)
         # Sample z_t given x, h for timestep t, from q(z_t | x, h)
         z_t_1 = alpha_t * xh1 + sigma_t * eps
-        z_t_2 = xh2
+        z_t_2 = xh2   # keep pocket context clean
 
         diffusion_utils.assert_mean_zero_with_mask(z_t_1[:, :, :self.n_dims], node_mask_1)
 
@@ -325,13 +330,23 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         x2 = diffusion_utils.remove_mean_with_mask(x2, node_mask_2)
         z_x_mu_2, z_x_sigma_2, z_h_mu_2, z_h_sigma_2 = self.vae.encode(x2, h2, node_mask_2, edge_mask_2, context)
 
-        # Infer latent z.
         z_xh_mean_2 = torch.cat([z_x_mu_2, z_h_mu_2], dim=2)
+        diffusion_utils.assert_correctly_masked(z_xh_mean_2, node_mask_2)
 
+        # Compute fixed sigma values.
+        t_zeros_2 = torch.zeros(size=(x2.size(0), 1), device=x2.device)
+        gamma_0_2 = self.inflate_batch_array(self.gamma(t_zeros_2), x2)
+        sigma_0_2 = self.sigma(gamma_0_2, x2)
+
+        z_xh_mean_2 = self.vae.sample_normal(z_xh_mean_2, sigma_0_2, node_mask_2)
+
+        diffusion_utils.assert_correctly_masked(z_xh_mean_2, node_mask_2)
+
+        # Infer latent z.
         z_x_2 = z_xh_mean_2[:, :, :self.n_dims]
         z_h_2 = z_xh_mean_2[:, :, self.n_dims:]
         diffusion_utils.assert_mean_zero_with_mask(z_x_2, node_mask_2)
-        
+
         # Make the data structure compatible with the EnVariationalDiffusion compute_loss().
         z_h_2 = {'categorical': torch.zeros(0).to(z_h_2), 'integer': z_h_2}
         xh2 = torch.cat([z_x_2, z_h_2['categorical'], z_h_2['integer']], dim=2)  # from compute_loss, next line should be self.phi()
