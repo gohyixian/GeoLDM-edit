@@ -1343,7 +1343,8 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             x_recon, h_recon = self.vae.decoder._forward(z_xh, node_mask, edge_mask, context)
             
             # ~!norm
-            x_recon = self.vae.unnormalize_x(x_recon)
+            if self.vae.normalize_x:
+                x_recon = self.vae.unnormalize_x(x_recon)
             
             xh_rec = torch.cat([x_recon, h_recon], dim=2)
             loss_recon = self.vae.compute_reconstruction_error(xh_rec, xh)
