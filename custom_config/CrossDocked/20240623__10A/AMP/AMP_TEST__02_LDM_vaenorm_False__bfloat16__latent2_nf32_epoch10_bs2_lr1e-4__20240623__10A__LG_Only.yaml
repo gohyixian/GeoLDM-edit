@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: CrossDocked_base_02_LDM_20240623__10A__CA_Only__no_H
+exp_name: AMP_TEST__02_LDM_vaenorm_False__bfloat16__latent2_nf32_epoch10_bs2_lr1e-4__20240623__10A__LG_Only
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -9,7 +9,7 @@ train_diffusion: true
 training_mode: LDM
 
 # Specify first stage model path
-ae_path: ./outputs/CrossDocked_base_01_VAE_20240623__10A__CA_Only__no_H
+ae_path: ./outputs/AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf32_epoch10_bs2_lr1e-4__20240623__10A__LG_Only
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
 trainable_ae_encoder: false
@@ -29,22 +29,27 @@ condition_time: true
 
 # ========================================================================================================== Dataset
 
-dataset: d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND
+dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND
 
 # geom directory  ~!geom
-data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H.npz
+# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz
+data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01.npz
 
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
 # Please set the path to the DATASET_permutation.npy file after it is generated.
-permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H_LG100_PKT100_permutation.npy
+# permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_LG100_PKT600_permutation.npy
+permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_LG100_PKT600_permutation.npy
+
+# what data to load for VAE training: ligand | pocket | all
+vae_data_mode: ligand
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
 
 # Only use molecules below this size. Int, default null  ~!geom
 filter_molecule_size: 100
-filter_pocket_size: 100
+filter_pocket_size: 600   # refer EDA
 
 # Organize data by size to reduce average memory usage. ~!geom
 sequential: false
@@ -56,7 +61,7 @@ num_workers: 0
 data_augmentation: false
 
 # remove hydrogen atoms
-remove_h: true
+remove_h: false
 
 
 
@@ -66,9 +71,9 @@ start_epoch: 0
 test_epochs: 1
 
 
-n_epochs: 80  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 12    # 32
-lr: 0.0001
+n_epochs: 10  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 2    # 24
+lr: 1.0e-4   # 0.0001
 
 # weight of KL term in ELBO, default 0.01
 kl_weight: 0.01
@@ -90,7 +95,7 @@ ema_decay: 0.9999
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 50  # 500
+n_stability_samples: 20
 
 
 # disables CUDA training
@@ -105,7 +110,8 @@ verbose: false
 dtype: torch.float32
 
 # enable mixed precision training (fp32, fp16)
-mixed_precision_training: false
+mixed_precision_training: true
+mixed_precision_autocast_dtype: torch.bfloat16
 
 # use model checkpointing during training to reduce GPU memory usage
 use_checkpointing: true
@@ -148,6 +154,9 @@ latent_nf: 2  # 1
 # normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
 normalize_factors: [1, 4, 10]
 
+vae_normalize_x: false
+vae_normalize_factors: [100, 1, 1]
+
 
 
 
@@ -159,7 +168,7 @@ n_layers: 4  # 9 for qm9
 inv_sublayers: 1
 
 # model's internal operating number of features
-nf: 128
+nf: 32
 
 # use tanh in the coord_mlp
 tanh: true
@@ -187,7 +196,7 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_every_batch: 200 # 1000
+visualize_every_batch: 1000
 n_report_steps: 50
 
 
@@ -203,7 +212,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: false
+no_wandb: true
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true
