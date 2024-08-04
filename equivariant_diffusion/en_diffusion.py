@@ -815,9 +815,10 @@ class EnVariationalDiffusion(torch.nn.Module):
     def sample_p_xh_given_z0(self, z0, node_mask, edge_mask, context, fix_noise=False):
         """
         Samples x ~ p(x|z0).
-        NOTE: One sampling step. (final step z0)
+        One sampling step. (final step z0)
+        NOTE: This method will not run when called from LDM, LDM's sample_p_xh_given_z0()
+              will run instead. Refer line 1265.
         """
-        print("PARENT'S sample_p_xh_given_z0 RAN")
         zeros = torch.zeros(size=(z0.size(0), 1), device=z0.device)
         gamma_0 = self.gamma(zeros)
         # Computes sqrt(sigma_0^2 / alpha_0^2)
@@ -1262,8 +1263,12 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         return degrees_of_freedom_h * (- log_sigma_x - 0.5 * np.log(2 * np.pi))
 
     def sample_p_xh_given_z0(self, z0, node_mask, edge_mask, context, fix_noise=False):
-        """Samples x ~ p(x|z0)."""
-        print("CHILD'S sample_p_xh_given_z0 RAN!!")
+        """Samples x ~ p(x|z0).
+        
+        NOTE: This overrides the parent class' sample_p_xh_given_z0() function. This child
+            funciton will run instead.
+        """
+        
         zeros = torch.zeros(size=(z0.size(0), 1), device=z0.device)
         gamma_0 = self.gamma(zeros)
         # Computes sqrt(sigma_0^2 / alpha_0^2)
