@@ -342,9 +342,9 @@ class EnVariationalDiffusion(torch.nn.Module):
         # The network that will predict the denoising.
         self.dynamics = dynamics    # LDM model
 
-        self.in_node_nf = in_node_nf # 1
+        self.in_node_nf = in_node_nf # 2
         self.n_dims = n_dims         # 3
-        self.num_classes = self.in_node_nf - self.include_charges   # 0
+        self.num_classes = self.in_node_nf - self.include_charges   # 2-0 = 2
 
         self.T = timesteps    # 1000
         self.parametrization = parametrization   # eps
@@ -817,6 +817,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         Samples x ~ p(x|z0).
         NOTE: One sampling step. (final step z0)
         """
+        print("PARENT'S sample_p_xh_given_z0 RAN")
         zeros = torch.zeros(size=(z0.size(0), 1), device=z0.device)
         gamma_0 = self.gamma(zeros)
         # Computes sqrt(sigma_0^2 / alpha_0^2)
@@ -1262,6 +1263,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
 
     def sample_p_xh_given_z0(self, z0, node_mask, edge_mask, context, fix_noise=False):
         """Samples x ~ p(x|z0)."""
+        print("CHILD'S sample_p_xh_given_z0 RAN!!")
         zeros = torch.zeros(size=(z0.size(0), 1), device=z0.device)
         gamma_0 = self.gamma(zeros)
         # Computes sqrt(sigma_0^2 / alpha_0^2)

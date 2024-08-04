@@ -153,10 +153,10 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
 
     # Create the second stage model (Latent Diffusions).
     args.latent_nf = first_stage_args.latent_nf
-    in_node_nf = args.latent_nf  # 1
+    in_node_nf = args.latent_nf  # 2
 
     if args.condition_time:   # true
-        dynamics_in_node_nf = in_node_nf + 1  # 2
+        dynamics_in_node_nf = in_node_nf + 1  # 3
     else:
         print('Warning: dynamics model is _not_ conditioned on time.')
         dynamics_in_node_nf = in_node_nf
@@ -185,7 +185,7 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
             trainable_ae_encoder=args.trainable_ae_encoder,    # false
             trainable_ae_decoder=args.trainable_ae_decoder,    # true
             dynamics=net_dynamics,    # LDM model
-            in_node_nf=in_node_nf,    # 1
+            in_node_nf=in_node_nf,    # 2
             n_dims=3,
             timesteps=args.diffusion_steps,    # 1000
             noise_schedule=args.diffusion_noise_schedule,  # polynomial_2
