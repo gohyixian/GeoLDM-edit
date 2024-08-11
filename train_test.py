@@ -225,13 +225,16 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         smi_txt = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8')
         
         
-        if args.clip_grad:
-            grad_norm = utils.gradient_clipping(model, gradnorm_queue)
-        else:
-            grad_norm = 0.
+        # if args.clip_grad:
+        #     grad_norm = utils.gradient_clipping(model, gradnorm_queue)
+        # else:
+        grad_norm = 0.
 
         # ~!mp
         if ((i+1) % args.grad_accumulation_steps == 0) or ((i+1) == len(loader)) or args.break_train_epoch:
+            if args.clip_grad:
+                grad_norm = utils.gradient_clipping(model, gradnorm_queue)
+            
             optim.step()
             optim.zero_grad()
             print(f">> Optimizer Step taken")
