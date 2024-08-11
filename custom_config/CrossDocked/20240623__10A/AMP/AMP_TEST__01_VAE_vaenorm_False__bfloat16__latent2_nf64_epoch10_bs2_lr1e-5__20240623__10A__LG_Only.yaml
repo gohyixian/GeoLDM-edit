@@ -1,0 +1,218 @@
+proj_name: Control-GeoLDM
+exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf64_epoch10_bs2_lr1e-5__20240623__10A__LG_Only
+
+# ========================================================================================================== Training Mode (ldm/vae/both)
+# Train second stage LatentDiffusionModel model
+train_diffusion: false
+
+# training mode: VAE | LDM | ControlNet
+training_mode: VAE
+
+# Specify first stage model path
+ae_path: null
+
+# Train first stage AutoEncoder model (no effect if train_diffusion=False)
+trainable_ae_encoder: true
+trainable_ae_decoder: true
+
+# can contain multiple: homo | onehot | lumo | num_atoms | etc
+conditioning: []
+
+# include atom charge, according to periodic table
+include_charges: false   # true for qm9
+
+# only works for ldm, not for VAE
+condition_time: true
+
+
+
+
+# ========================================================================================================== Dataset
+
+dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET
+
+# geom directory  ~!geom
+# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz
+data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01.npz
+
+# set to null if you're running this dataset for the first time. 
+# Script will generate a random permutation to shuffle the dataset.
+# Please set the path to the DATASET_permutation.npy file after it is generated.
+# permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_LG100_PKT600_permutation.npy
+permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_LG100_PKT600_permutation.npy
+
+# what data to load for VAE training: ligand | pocket | all
+vae_data_mode: ligand
+
+# When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
+filter_n_atoms: null
+
+# Only use molecules below this size. Int, default null  ~!geom
+filter_molecule_size: 100
+filter_pocket_size: 600   # refer EDA
+
+# Organize data by size to reduce average memory usage. ~!geom
+sequential: false
+
+# Number of worker for the dataloader
+num_workers: 0
+
+# use data augmentation (i.e. random rotation of x atom coordinates)
+data_augmentation: false
+
+# remove hydrogen atoms
+remove_h: false
+
+
+
+
+# ========================================================================================================== Training Params
+start_epoch: 0
+test_epochs: 1
+
+
+n_epochs: 10  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 2    # 24
+lr: 1.0e-5   # 0.0001
+
+# weight of KL term in ELBO, default 0.01
+kl_weight: 0.01
+
+# ode_regularization weightage, default 1e-3
+ode_regularization: 0.001
+# brute_force: false
+# actnorm: true
+break_train_epoch: false
+
+# Data Parallel for multi GPU support
+dp: true
+clip_grad: true
+
+# Amount of EMA decay, 0 means off. A reasonable value is 0.999.
+ema_decay: 0.9999
+
+# add noise to x before encoding, data augmenting
+augment_noise: 0
+
+# Number of samples to compute the stability, default 500
+n_stability_samples: 20
+
+
+# disables CUDA training
+no_cuda: false
+
+# hutch | exact
+trace: hutch
+
+# verbose logging
+verbose: false
+
+dtype: torch.float32
+
+# enable mixed precision training (fp32, fp16)
+mixed_precision_training: true
+mixed_precision_autocast_dtype: torch.bfloat16
+
+# use model checkpointing during training to reduce GPU memory usage
+use_checkpointing: true
+
+# sqrt: checkpointing is done on the sqrt(block_num)'th Equivariant block of each EGNN for most optimal perf
+# all:  checkpointing is done on all Equivariant blocks. Not optimal but helps if input size is too large
+checkpointing_mode: sqrt
+
+# splits tensors into managable chunks and performs forward propagation without breaking GPU memory limit
+forward_tensor_chunk_size: 50000
+
+
+
+
+
+
+
+
+# ========================================================================================================== LDM
+# our_dynamics | schnet | simple_dynamics | kernel_dynamics | egnn_dynamics | gnn_dynamics
+model: egnn_dynamics
+
+probabilistic_model: diffusion
+
+# Training complexity is O(1) (unaffected), but sampling complexity is O(steps), default 500
+diffusion_steps: 1000
+
+# learned, cosine, polynomial_<power>
+diffusion_noise_schedule: polynomial_2       # polynomial power 2
+
+# default 1e-5
+diffusion_noise_precision: 1.0e-05 # ~!fp16
+
+# vlb | l2
+diffusion_loss_type: l2
+
+# number of latent features, default 4
+latent_nf: 2  # 1
+
+# normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
+normalize_factors: [1, 4, 10]
+
+vae_normalize_x: false
+vae_normalize_factors: [100, 1, 1]
+
+
+
+
+# ========================================================================================================== Network Architecture
+# number of layers of EquivariantBlock to use in LDM and VAE's Decoder
+n_layers: 4  # 9 for qm9
+
+# number of GCL Blocks to use in each EquivariantBlock
+inv_sublayers: 1
+
+# model's internal operating number of features
+nf: 64
+
+# use tanh in the coord_mlp
+tanh: true
+
+# use attention in the EGNN
+attention: true
+
+# diff/(|diff| + norm_constant)
+norm_constant: 1
+
+# whether using or not the sin embedding
+sin_embedding: false
+
+# uniform | variational | argmax_variational | deterministic
+dequantization: argmax_variational
+
+# Normalize the sum aggregation of EGNN
+normalization_factor: 1
+
+# EGNN aggregation method: sum | mean
+aggregation_method: sum
+
+
+
+
+# ========================================================================================================== Logging
+# Can be used to visualize multiple times per epoch, default 1e8
+visualize_every_batch: 1000
+n_report_steps: 50
+
+
+
+
+# ========================================================================================================== Saving & Resuming
+# str
+resume: null
+save_model: true
+
+
+
+
+# ========================================================================================================== Wandb
+# disable wandb
+no_wandb: false
+wandb_usr: gohyixian456
+# True = wandb online -- False = wandb offline
+online: true
