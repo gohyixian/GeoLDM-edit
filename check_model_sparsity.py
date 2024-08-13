@@ -210,6 +210,7 @@ def main():
 
     epoch = 0
     start  = time.time()
+    print(f">>> validation dataset number of samples: {len(dataloaders['val'].dataset)}")
     nll_val = train_test.test(args, dataloaders['val'], epoch, model, device, dtype,
                                 property_norms, nodes_dist, partition='Val')
     print(f">>> validation set test took {time.time() - start:.1f} seconds.")
