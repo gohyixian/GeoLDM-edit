@@ -73,6 +73,11 @@ def main():
     args = Config(**args_dict)
 
 
+    # vae encoder n layers
+    if not hasattr(args, 'encoder_n_layers'):
+        args.encoder_n_layers = 1
+
+
     # additional & override settings for sparsity plots
     args.batch_size = 1
     args.layer_id_counter = 0

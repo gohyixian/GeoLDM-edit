@@ -76,7 +76,7 @@ def get_autoencoder(args, device, dataset_info, dataloader_train):
         device=device, 
         hidden_nf=args.nf,   # 256
         act_fn=torch.nn.SiLU(), 
-        n_layers=1,
+        n_layers=args.encoder_n_layers,
         attention=args.attention,   # true
         tanh=args.tanh, 
         mode=args.model,     # egnn_dynamics

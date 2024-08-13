@@ -79,6 +79,11 @@ def main():
         args.vae_data_mode = 'all'
 
 
+    # vae encoder n layers
+    if not hasattr(args, 'encoder_n_layers'):
+        args.encoder_n_layers = 1
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
