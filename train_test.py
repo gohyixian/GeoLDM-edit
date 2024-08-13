@@ -90,9 +90,28 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
             joint_edge_mask=joint_edge_mask,
             context=context
         )
-            
+
         # standard nll from forward KL
         loss = nll + args.ode_regularization * reg_term
+
+        # gradient penalty
+        if args.grad_penalty:
+            # Creates gradients
+            grad_params = torch.autograd.grad(outputs=loss,
+                                            inputs=model_dp.parameters(),
+                                            create_graph=True)
+
+            # Computes the penalty term and adds it to the loss
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=PARAM_REGISTRY.get('mixed_precision_autocast_dtype', alt=torch.float16), enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+                grad_norm_gp = 0
+                for grad in grad_params:
+                    grad_norm_gp += grad.pow(2).sum()
+                grad_norm_gp = grad_norm_gp.sqrt()
+                loss = loss + grad_norm_gp
+
+        # gradient accumulation loss scaling
+        if args.grad_accumulation_steps > 0:
+            loss = loss / int(args.grad_accumulation_steps)
 
         # ~!mp
         loss.backward()
@@ -217,6 +236,25 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
                                                                 x, h, node_mask, edge_mask, context)
         # standard nll from forward KL
         loss = nll + args.ode_regularization * reg_term
+
+        # gradient penalty
+        if args.grad_penalty:
+            # Creates gradients
+            grad_params = torch.autograd.grad(outputs=loss,
+                                            inputs=model_dp.parameters(),
+                                            create_graph=True)
+
+            # Computes the penalty term and adds it to the loss
+            with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=PARAM_REGISTRY.get('mixed_precision_autocast_dtype', alt=torch.float16), enabled=PARAM_REGISTRY.get('mixed_precision_training')):
+                grad_norm_gp = 0
+                for grad in grad_params:
+                    grad_norm_gp += grad.pow(2).sum()
+                grad_norm_gp = grad_norm_gp.sqrt()
+                loss = loss + grad_norm_gp
+
+        # gradient accumulation loss scaling
+        if args.grad_accumulation_steps > 0:
+            loss = loss / int(args.grad_accumulation_steps)
 
         # ~!mp
         loss.backward()

@@ -84,6 +84,11 @@ def main():
         args.encoder_n_layers = 1
 
 
+    # grad prenalty
+    if not hasattr(args, 'grad_penalty'):
+        args.grad_penalty = False
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
