@@ -64,7 +64,7 @@ def main():
     parser = argparse.ArgumentParser(description='e3_diffusion')
     parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
     parser.add_argument('--load_last', action='store_true', help='load weights of model of last epoch')
-    parser.add_argument('--data_size', type=float, default=0.001, help='portion of val data split to use for test')
+    parser.add_argument('--data_size', type=float, default=0.1, help='portion of val data split to use for test')
     parser.add_argument('--store_activations', action='store_true', help='keeps activations samples from the same modle in previous runs, else deleted')
     opt = parser.parse_args()
 
@@ -89,8 +89,9 @@ def main():
     
     # remove activations from previous runs
     if not opt.store_activations:
-        print(f">>> Removing activations saved from previous runs as {args.save_act_dir}")
-        shutil.rmtree(args.save_act_dir)
+        if os.path.exists(args.save_act_dir):
+            print(f">>> Removing activations saved from previous runs as {args.save_act_dir}")
+            shutil.rmtree(args.save_act_dir)
 
     # device settings
     args.cuda = not args.no_cuda and torch.cuda.is_available()
