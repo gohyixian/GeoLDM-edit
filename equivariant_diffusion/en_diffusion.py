@@ -1240,6 +1240,8 @@ class EnHierarchicalVAE(torch.nn.Module):
         if self.training:
             denom = (self.n_dims + self.in_node_nf) * xh.shape[1]
             error = error / denom
+        else: 
+            denom = 0
 
         return {
             'error': error,

@@ -45,3 +45,4 @@ data/**/*.npz
 data/**/*.zip
 
 sparsity_check/saved_activations/*
+recon_loss_analysis/*

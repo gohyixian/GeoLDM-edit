@@ -39,7 +39,7 @@ def save_xyz_file(path, one_hot, charges, positions, dataset_info, id_from=0, na
         atomsxmol = [one_hot.size(1)] * one_hot.size(0)
 
     for batch_i in range(one_hot.size(0)):
-        f = open(path + name + '_' + "%03d.xyz" % (batch_i + id_from), "w")
+        f = open(os.path.join(path, name + '_' + "%03d.xyz" % (batch_i + id_from)), "w")
         f.write("%d\n\n" % atomsxmol[batch_i])
         atoms = torch.argmax(one_hot[batch_i], dim=1)
         n_atoms = int(atomsxmol[batch_i])
@@ -313,10 +313,10 @@ def main():
             # save losses
             with open(os.path.join(save_mol_path, "loss.txt"), "w") as f:
                 print(f"NLL             : {nll.item()}", file=f)
-                print(f"Error           : {nll_dict['recon_loss_dict']['error']}", file=f)
-                print(f"Error X         : {nll_dict['recon_loss_dict']['error_x']}", file=f)
-                print(f"Error H         : {nll_dict['recon_loss_dict']['error_h_cat']}", file=f)
-                print(f"Error H Charges : {nll_dict['recon_loss_dict']['error_h_int']}", file=f) if args.include_charges else None
+                print(f"Error           : {nll_dict['recon_loss_dict']['error'].item()}", file=f)
+                print(f"Error X         : {nll_dict['recon_loss_dict']['error_x'].item()}", file=f)
+                print(f"Error H         : {nll_dict['recon_loss_dict']['error_h_cat'].item()}", file=f)
+                print(f"Error H Charges : {nll_dict['recon_loss_dict']['error_h_int'].item()}", file=f) if args.include_charges else None
                 print(f"\n=================", file=f)
                 print(f"denom      : {nll_dict['recon_loss_dict']['denom']}", file=f)
                 print(f"n_dims     : {nll_dict['recon_loss_dict']['n_dims']}", file=f)
@@ -324,11 +324,11 @@ def main():
                 print(f"num_atoms  : {nll_dict['recon_loss_dict']['num_atoms']}", file=f)
             
             NLL.append(nll.item())
-            error.append(nll_dict['recon_loss_dict']['error'])
-            error_x.append(nll_dict['recon_loss_dict']['error_x'])
-            error_h.append(nll_dict['recon_loss_dict']['error_h_cat'])
+            error.append(nll_dict['recon_loss_dict']['error'].item())
+            error_x.append(nll_dict['recon_loss_dict']['error_x'].item())
+            error_h.append(nll_dict['recon_loss_dict']['error_h_cat'].item())
             if args.include_charges:
-                error_charges.append(nll_dict['recon_loss_dict']['error_h_int'])
+                error_charges.append(nll_dict['recon_loss_dict']['error_h_int'].item())
 
             # cleanup
             del x, h, node_mask, edge_mask, one_hot, charges, nll
@@ -343,8 +343,8 @@ def main():
             mean_error_charges = sum(error_charges) / len(error_charges)
         
         # save overall average loss
-        with open(os.path.join(save_mol_path, "loss.txt"), "w") as f:
-            print(f"num samples          : {len(mean_error)}", file=f)
+        with open(os.path.join(args.save_samples_dir, "loss.txt"), "w") as f:
+            print(f"num samples          : {len(error)}", file=f)
             print(f"mean NLL             : {mean_NLL}", file=f)
             print(f"mean Error           : {mean_error}", file=f)
             print(f"mean Error X         : {mean_error_x}", file=f)
