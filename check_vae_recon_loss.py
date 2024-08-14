@@ -42,12 +42,12 @@ def save_xyz_file(path, one_hot, charges, positions, dataset_info, id_from=0, na
         f = open(os.path.join(path, name + '_' + "%03d.xyz" % (batch_i + id_from)), "w")
         f.write("%d\n\n" % atomsxmol[batch_i])
         atoms = torch.argmax(one_hot[batch_i], dim=1)
-        print(atoms, dataset_info['atom_decoder']) if name=='REC' else None
+        # print(one_hot[batch_i], atoms, dataset_info['atom_decoder']) if name=='REC' else None
         n_atoms = int(atomsxmol[batch_i])
         for atom_i in range(n_atoms):
             atom = atoms[atom_i]
             atom = dataset_info['atom_decoder'][atom]
-            print(atom) if name=='REC' else None
+            # print(atom) if name=='REC' else None
             f.write("%s %.9f %.9f %.9f\n" % (atom, positions[batch_i, atom_i, 0], positions[batch_i, atom_i, 1], positions[batch_i, atom_i, 2]))
         f.close()
 
