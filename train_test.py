@@ -232,6 +232,8 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
 
         # ~!mp
         # transform batch through flow
+        print(x)
+        
         nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
                                                                 x, h, node_mask, edge_mask, context)
         # standard nll from forward KL
