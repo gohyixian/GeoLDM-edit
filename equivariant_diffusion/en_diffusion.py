@@ -1007,7 +1007,6 @@ class EnHierarchicalVAE(torch.nn.Module):
         return x
 
 
-
     def forward(self, x, h, node_mask=None, edge_mask=None, context=None):
         """
         Computes the ELBO if training. And if eval then always computes NLL.
@@ -1018,7 +1017,29 @@ class EnHierarchicalVAE(torch.nn.Module):
         neg_log_pxh = loss
 
         return neg_log_pxh
-    
+
+    def recon_loss_analysis(self, x, h, node_mask=None, edge_mask=None, context=None):
+        loss, loss_dict = self.compute_loss(x, h, node_mask, edge_mask, context)
+        return loss, loss_dict
+        # loss_dict: {
+        #     'loss_t': loss.squeeze(), 
+        #     'rec_error': loss_recon.squeeze(), 
+        #     'recon_loss_dict': recon_loss_dict,  # additional for rec loss analysis and xh saving
+        #     'xh_gt': xh_unpack_dict,
+        #     'xh_rec': xh_rec_unpack_dict
+        # }
+        # recon_loss_dict: {
+        #     'error': error,
+        #     'error_x': error_x, 
+        #     'error_h_cat': error_h_cat, 
+        #     'error_h_int': error_h_int,
+        #     'denom': denom,
+        #     'n_dims': self.n_dims,
+        #     'in_node_nf': self.in_node_nf,
+        #     'num_atoms': xh.shape[1]
+        # }
+
+
     def compute_loss(self, x, h, node_mask, edge_mask, context):
         """Computes an estimator for the variational lower bound."""
 
@@ -1075,6 +1096,12 @@ class EnHierarchicalVAE(torch.nn.Module):
         xh_rec = torch.cat([x_recon, h_recon], dim=2)
         # --LOSS 03
         loss_recon = self.compute_reconstruction_error(xh_rec, xh)
+        
+        # recon loss analysis use
+        recon_loss_dict = self.compute_reconstruction_error_components(xh_rec, xh)
+        # unpack xh
+        xh_unpack_dict = self.unpack_xh(xh, argmax_h_cat=False)
+        xh_rec_unpack_dict = self.unpack_xh(xh_rec, argmax_h_cat=False)
 
         # Combining the terms
         assert loss_recon.size() == loss_kl.size()
@@ -1082,7 +1109,12 @@ class EnHierarchicalVAE(torch.nn.Module):
 
         assert len(loss.shape) == 1, f'{loss.shape} has more than only batch dim.'
 
-        return loss, {'loss_t': loss.squeeze(), 'rec_error': loss_recon.squeeze()}
+        return loss, {'loss_t': loss.squeeze(), 
+                      'rec_error': loss_recon.squeeze(), 
+                      'recon_loss_dict': recon_loss_dict,  # additional for rec loss analysis and xh saving
+                      'xh_gt': xh_unpack_dict,
+                      'xh_rec': xh_rec_unpack_dict
+                      }
     
     def encode(self, x, h, node_mask=None, edge_mask=None, context=None):
         """Computes q(z|x)."""
@@ -1172,7 +1204,73 @@ class EnHierarchicalVAE(torch.nn.Module):
             error = error / denom
 
         return error
-    
+
+
+    def compute_reconstruction_error_components(self, xh_rec, xh):
+        bs, n_nodes, dims = xh.shape
+
+        # Error on positions. / coordinates loss
+        x_rec = xh_rec[:, :, :self.n_dims]
+        x = xh[:, :, :self.n_dims]
+        error_x = sum_except_batch((x_rec - x) ** 2)
+        
+        # Error on classes. / node features (one-hot) loss
+        h_cat_rec = xh_rec[:, :, self.n_dims:self.n_dims + self.num_classes]
+        h_cat = xh[:, :, self.n_dims:self.n_dims + self.num_classes]
+        h_cat_rec = h_cat_rec.reshape(bs * n_nodes, self.num_classes)
+        h_cat = h_cat.reshape(bs * n_nodes, self.num_classes)
+
+        # ~!fp16 ~!mp
+        error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
+
+        error_h_cat = error_h_cat.reshape(bs, n_nodes, 1)
+        error_h_cat = sum_except_batch(error_h_cat)
+        # error_h_cat = sum_except_batch((h_cat_rec - h_cat) ** 2)
+
+        # Error on charges. / periodic table atom charges loss
+        if self.include_charges:
+            h_int_rec = xh_rec[:, :, -self.include_charges:]
+            h_int = xh[:, :, -self.include_charges:]
+            error_h_int = sum_except_batch((h_int_rec - h_int) ** 2)
+        else:
+            error_h_int = 0.
+        
+        error = error_x + error_h_cat + error_h_int
+
+        if self.training:
+            denom = (self.n_dims + self.in_node_nf) * xh.shape[1]
+            error = error / denom
+
+        return {
+            'error': error,
+            'error_x': error_x, 
+            'error_h_cat': error_h_cat, 
+            'error_h_int': error_h_int,
+            'denom': denom,
+            'n_dims': self.n_dims,
+            'in_node_nf': self.in_node_nf,
+            'num_atoms': xh.shape[1]
+        }
+
+
+    def unpack_xh(self, xh, argmax_h_cat=False):
+        bs, n_nodes, dims = xh.shape
+
+        x = xh[:, :, :self.n_dims]
+
+        h_cat = xh[:, :, self.n_dims:self.n_dims + self.num_classes]
+        # h_cat = h_cat.reshape(bs * n_nodes, self.num_classes)
+        if argmax_h_cat:
+            h_cat = h_cat.argmax(dim=2)
+
+        if self.include_charges:
+            h_int = xh[:, :, -self.include_charges:]
+        else:
+            h_int = None
+
+        return {'x': x, 'h_cat': h_cat, 'h_int': h_int}
+
+
     def sample_normal(self, mu, sigma, node_mask, fix_noise=False):
         """Samples from a Normal distribution."""
         bs = 1 if fix_noise else mu.size(0)
