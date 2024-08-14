@@ -132,6 +132,11 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
             xh_1 = torch.cat([x1, h1['categorical'], h1['integer']], dim=2)
             # Decoder output (reconstruction).
             x_recon_1, h_recon_1 = self.vae.decoder._forward(z_xh_1, node_mask_1, edge_mask_1, context)
+
+            # ~!norm
+            if self.vae.vae_normalize_x:
+                x_recon_1 = self.vae.unnormalize_x(x_recon_1)
+
             xh_rec_1 = torch.cat([x_recon_1, h_recon_1], dim=2)
             loss_recon = self.vae.compute_reconstruction_error(xh_rec_1, xh_1)
 
