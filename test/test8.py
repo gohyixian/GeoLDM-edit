@@ -351,8 +351,8 @@ class EGNN_encoder_QM9(nn.Module):
 
     def _register_hooks(self):
         def hook_fn(module, input, output, name):
-            self.input_activations[name] = input.clone().detach().cpu().numpy()
-            self.output_activations[name] = output.clone().detach().cpu().numpy()
+            self.input_activations[name] = input[0].clone().to(torch.float32).detach().cpu().numpy()
+            self.output_activations[name] = output.clone().to(torch.float32).detach().cpu().numpy()
 
         # register hooks on all layers to track, i.e. nn.Linear 
         for name, layer in self.named_modules():
