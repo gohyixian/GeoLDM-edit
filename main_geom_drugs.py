@@ -104,7 +104,8 @@ def main():
     args.vis_activations_instances = (nn.Linear)
     args.save_activations_path = 'vis_activations'
     args.vis_activations_bins = 200
-    args.vis_activations_specific_ylim = [0, 40]
+    if not hasattr(args, 'vis_activations_specific_ylim'):
+        args.vis_activations_specific_ylim = [0, 40]
     if not hasattr(args, 'vis_activations'):
         args.vis_activations = False
     if not hasattr(args, 'vis_activations_batch_samples'):
