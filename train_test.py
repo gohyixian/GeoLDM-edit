@@ -450,7 +450,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 overall_recall.append(recon_loss_dict['overall_recall'])
                 overall_f1.append(recon_loss_dict['overall_f1'])
                 for cls, metric in recon_loss_dict['classwise_accuracy'].items():
-                    classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []).append(metric)
+                    classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), value=[]).append(metric)
 
     if (training_mode in loss_analysis_modes) and loss_analysis:
         wandb_dict = {}
