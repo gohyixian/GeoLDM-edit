@@ -133,6 +133,7 @@ def main():
     transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, args.device, args.sequential)
 
     dataloaders = {}
+    dataloaders['vis_activations'] = None
     for key, data_list in zip(['train', 'val', 'test'], split_data):
         dataset = build_geom_dataset.GeomDrugsDataset(data_list, transform=transform, training_mode=args.training_mode)
         # shuffle = (key == 'train') and not args.sequential
@@ -147,8 +148,7 @@ def main():
             dataloaders['vis_activations'] = build_geom_dataset.GeomDrugsDataLoader(
             sequential=args.sequential, dataset=dataset, batch_size=args.vis_activations_batch_size,
             shuffle=False, training_mode=args.training_mode, drop_last=True)
-        else:
-            dataloaders['vis_activations'] = None
+
     del split_data
 
 
