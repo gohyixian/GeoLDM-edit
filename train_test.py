@@ -379,8 +379,9 @@ def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, mo
 
 def save_and_vis_activations(args, loader, epoch, iter, model_ema, device, dtype, property_norms, nodes_dist):
 
-    for i in tqdm(range(args.vis_activations_batch_samples)):
-        data = loader[i]
+    for i, data in tqdm(enumerate(loader)):
+        if i >= args.vis_activations_batch_samples:
+            break
 
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
