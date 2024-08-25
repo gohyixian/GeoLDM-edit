@@ -332,11 +332,12 @@ def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, mo
         if args.vis_activations and (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (i == 0):
 
             # handle for saving intermediary activations
-            handle = model_ema._register_hooks()
-            print("handle", handle)
+            handles = model_ema._register_hooks()
+            print("handles", handles)
             save_and_vis_activations(args, loader_vis_activations, epoch, i, model_ema,\
                                      device, dtype, property_norms, nodes_dist)
-            handle.remove()
+            for handle in handles:
+                handle.remove()
 
 
         smi_dict = utils.get_nvidia_smi_usage(smi_txt)
@@ -419,9 +420,12 @@ def save_and_vis_activations(args, loader, epoch, iter, model_ema, device, dtype
 
         # input activation
         for name, activations in model_ema.input_activations.items():
-            activations_str = np.array2string(activations, separator=',', formatter={'float_kind':lambda x: f'{x:.5f}'})
+            original_options = np.get_printoptions()
+            np.set_printoptions(threshold=np.inf, linewidth=np.inf)
+            activations_str = np.array2string(activations, separator=', ')
             with open(os.path.join(base_path_activations, f"{name}__input.txt"), 'w') as f:
                 f.write(activations_str)
+            np.set_printoptions(**original_options)
             
             tensor_flat = activations.ravel()
             fig, ax = plt.subplots()
@@ -444,9 +448,12 @@ def save_and_vis_activations(args, loader, epoch, iter, model_ema, device, dtype
 
         # output activation
         for name, activations in model_ema.output_activations.items():
-            activations_str = np.array2string(activations, separator=',', formatter={'float_kind':lambda x: f'{x:.5f}'})
+            original_options = np.get_printoptions()
+            np.set_printoptions(threshold=np.inf, linewidth=np.inf)
+            activations_str = np.array2string(activations, separator=', ')
             with open(os.path.join(base_path_activations, f"{name}__output.txt"), 'w') as f:
                 f.write(activations_str)
+            np.set_printoptions(**original_options)
             
             tensor_flat = activations.ravel()
             fig, ax = plt.subplots()

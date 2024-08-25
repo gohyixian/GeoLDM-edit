@@ -1017,6 +1017,7 @@ class EnHierarchicalVAE(torch.nn.Module):
         self.output_activations = {}
 
     def _register_hooks(self):
+        self.hook_handles = []
         def hook_fn(module, input, output, name):
             self.input_activations[name] = input[0].clone().to(torch.float32).detach().cpu().numpy()
             self.output_activations[name] = output.clone().to(torch.float32).detach().cpu().numpy()
@@ -1024,8 +1025,10 @@ class EnHierarchicalVAE(torch.nn.Module):
         # register hooks on all layers to track, i.e. nn.Linear 
         for name, layer in self.named_modules():
             if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
-                print(name)
-                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
+                handle = layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
+                print(name, handle)
+                self.hook_handles.append(handle)
+        return self.hook_handles
 
     # ~!norm
     def normalize_x(self, x):
