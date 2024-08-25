@@ -89,16 +89,19 @@ def main():
     if not hasattr(args, 'grad_penalty'):
         args.grad_penalty = False
 
+
     # loss analysis
     if not hasattr(args, 'loss_analysis'):
         args.loss_analysis = False
     args.loss_analysis_modes = ['VAE']
+
 
     # loss analysis usage
     atom_encoder = dataset_info['atom_encoder']
     atom_decoder = dataset_info['atom_decoder']
     args.atom_encoder = atom_encoder
     args.atom_decoder = atom_decoder
+
 
     # intermediate activations analysis usage
     args.vis_activations_instances = (nn.Linear)
@@ -112,6 +115,7 @@ def main():
         args.vis_activations_batch_samples = 0
     if not hasattr(args, 'vis_activations_batch_size'):
         args.vis_activations_batch_size = 1
+
 
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
