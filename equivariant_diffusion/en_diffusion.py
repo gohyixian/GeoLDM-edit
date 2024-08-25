@@ -1230,7 +1230,6 @@ class EnHierarchicalVAE(torch.nn.Module):
         h_cat_rec_idx = h_cat_rec.argmax(dim=-1).view(-1).cpu()
         h_cat_idx = h_cat.argmax(dim=-1).view(-1).cpu()
         
-        print('compute_reconstruction_error_components', node_mask.shape, h_cat_idx.shape, h_cat_rec_idx.shape)
         assert h_cat_rec_idx.shape[-1] == node_mask.shape[-1], f"h_cat_rec_idx: {h_cat_rec_idx.shape}, node_mask: {node_mask.shape}"
         assert h_cat_idx.shape[-1] == node_mask.shape[-1], f"h_cat_idx: {h_cat_idx.shape}, node_mask: {node_mask.shape}"
         
@@ -1249,7 +1248,7 @@ class EnHierarchicalVAE(torch.nn.Module):
             class_mask = (h_cat_idx == class_idx)
             true_class = h_cat_idx[class_mask]
             pred_class = h_cat_rec_idx[class_mask]
-            if true_class.numel() > 0:
+            if true_class.size > 0:
                 acc = accuracy_score(true_class, pred_class)
                 classwise_accuracy[class_char] = acc
             else:

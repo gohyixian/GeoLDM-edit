@@ -336,7 +336,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         # loss_analysis
         if (training_mode in loss_analysis_modes) and loss_analysis:
             recon_loss_dict = loss_dict['recon_loss_dict']
-            print(f'training_test.py {recon_loss_dict['error_x'].shape}')
+            # print(f"training_test.py {recon_loss_dict['error_x'].shape}")
             wandb_dict['loss_analysis/error_x'] = recon_loss_dict['error_x'].mean().item()
             wandb_dict['loss_analysis/error_h_cat'] = recon_loss_dict['error_h_cat'].mean().item()
             if args.include_charges:
@@ -345,7 +345,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             wandb_dict['overall_metrics/overall_recall'] = recon_loss_dict['overall_recall']
             wandb_dict['overall_metrics/overall_f1'] = recon_loss_dict['overall_f1']
             for cls, metric in recon_loss_dict['classwise_accuracy'].items():
-                wandb_dict[f'classwise_accuracy/{cls}'] = metric
+                wandb_dict[f'classwise_accuracy/ {cls}'] = metric
 
         wandb.log(wandb_dict, commit=True)
         
