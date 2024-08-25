@@ -386,8 +386,6 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
         error_h_int = [] if args.include_charges else None
         overall_accuracy, overall_recall, overall_f1 = [], [], []
         classwise_accuracy = {}
-        for cls in PARAM_REGISTRY.get('atom_encoder').keys():
-            classwise_accuracy[str(cls)] = []
 
     # ~!mp
     with torch.no_grad():
@@ -454,7 +452,8 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 overall_f1.append(recon_loss_dict['overall_f1'])
                 for cls, metric in recon_loss_dict['classwise_accuracy'].items():
                     if not math.isnan(metric):
-                        classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls)).append(metric)
+                        print('\n\n', str(cls))
+                        classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []).append(metric)
 
     if (training_mode in loss_analysis_modes) and loss_analysis:
         wandb_dict = {}
