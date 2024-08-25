@@ -16,6 +16,7 @@ from equivariant_diffusion import en_diffusion
 
 from equivariant_diffusion import utils as diffusion_utils
 import torch
+from torch import nn
 import time
 import pickle
 import math
@@ -93,12 +94,23 @@ def main():
         args.loss_analysis = False
     args.loss_analysis_modes = ['VAE']
 
-    # loass analysis usage
+    # loss analysis usage
     atom_encoder = dataset_info['atom_encoder']
     atom_decoder = dataset_info['atom_decoder']
     args.atom_encoder = atom_encoder
     args.atom_decoder = atom_decoder
 
+    # intermediate activations analysis usage
+    args.vis_activations_instances = (nn.Linear)
+    args.save_activations_path = 'vis_activations'
+    args.vis_activations_bins = 200
+    args.vis_activations_specific_ylim = [0, 40]
+    if not hasattr(args, 'vis_activations'):
+        args.vis_activations = False
+    if not hasattr(args, 'vis_activations_batch_samples'):
+        args.vis_activations_batch_samples = 0
+    if not hasattr(args, 'vis_activations_batch_size'):
+        args.vis_activations_batch_size = 1
 
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
@@ -129,6 +141,13 @@ def main():
         dataloaders[key] = build_geom_dataset.GeomDrugsDataLoader(
             sequential=args.sequential, dataset=dataset, batch_size=args.batch_size,
             shuffle=shuffle, training_mode=args.training_mode, drop_last=True)
+
+        if args.vis_activations and key == 'val':
+            dataloaders['vis_activations'] = build_geom_dataset.GeomDrugsDataLoader(
+            sequential=args.sequential, dataset=dataset, batch_size=args.vis_activations_batch_size,
+            shuffle=False, training_mode=args.training_mode, drop_last=True)
+        else:
+            dataloaders['vis_activations'] = None
     del split_data
 
 
@@ -247,7 +266,7 @@ def main():
     nth_iter = 0
     for epoch in range(args.start_epoch, args.n_epochs):
         start_epoch = time.time()
-        n_iters = train_test.train_epoch(args, dataloaders['train'], epoch, model, model_dp, model_ema, ema, device, dtype,
+        n_iters = train_test.train_epoch(args, dataloaders['train'], dataloaders['vis_activations'], epoch, model, model_dp, model_ema, ema, device, dtype,
                                property_norms, optim, nodes_dist, gradnorm_queue, dataset_info,
                                prop_dist)
         print(f">>> Epoch took {time.time() - start_epoch:.1f} seconds.")

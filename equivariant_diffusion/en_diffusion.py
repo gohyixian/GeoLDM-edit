@@ -357,6 +357,21 @@ class EnVariationalDiffusion(torch.nn.Module):
         if noise_schedule != 'learned':
             self.check_issues_norm_values()
 
+        # dictionary to store activations
+        self.input_activations = {}
+        self.output_activations = {}
+
+    def _register_hooks(self):
+        def hook_fn(module, input, output, name):
+            self.input_activations[name] = input.clone().detach().cpu().numpy()
+            self.output_activations[name] = output.clone().detach().cpu().numpy()
+
+        # register hooks on all layers to track, i.e. nn.Linear 
+        for name, layer in self.named_modules():
+            if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
+                print(name)
+                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
+
     def check_issues_norm_values(self, num_stdevs=8):
         zeros = torch.zeros((1, 1))
         gamma_0 = self.gamma(zeros)
@@ -997,6 +1012,20 @@ class EnHierarchicalVAE(torch.nn.Module):
         print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
         self.register_buffer('buffer', torch.zeros(1))
 
+        # dictionary to store activations
+        self.input_activations = {}
+        self.output_activations = {}
+
+    def _register_hooks(self):
+        def hook_fn(module, input, output, name):
+            self.input_activations[name] = input.clone().detach().cpu().numpy()
+            self.output_activations[name] = output.clone().detach().cpu().numpy()
+
+        # register hooks on all layers to track, i.e. nn.Linear 
+        for name, layer in self.named_modules():
+            if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
+                print(name)
+                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
 
     # ~!norm
     def normalize_x(self, x):
@@ -1368,6 +1397,21 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         self.trainable_ae_decoder = trainable_ae_decoder
         
         self.instantiate_first_stage(vae)
+        
+        # dictionary to store activations
+        self.input_activations = {}
+        self.output_activations = {}
+
+    def _register_hooks(self):
+        def hook_fn(module, input, output, name):
+            self.input_activations[name] = input.clone().detach().cpu().numpy()
+            self.output_activations[name] = output.clone().detach().cpu().numpy()
+
+        # register hooks on all layers to track, i.e. nn.Linear 
+        for name, layer in self.named_modules():
+            if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
+                print(name)
+                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
     
     def unnormalize_z(self, z, node_mask):
         # Overwrite the unnormalize_z function to do nothing (for sample_chain). 

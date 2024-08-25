@@ -35,7 +35,22 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         self.trainable_fusion_blocks = trainable_fusion_blocks
         
         self.instantiate_first_second_stage(vae, dynamics)
-    
+
+        # dictionary to store activations
+        self.input_activations = {}
+        self.output_activations = {}
+
+    def _register_hooks(self):
+        def hook_fn(module, input, output, name):
+            self.input_activations[name] = input.clone().detach().cpu().numpy()
+            self.output_activations[name] = output.clone().detach().cpu().numpy()
+
+        # register hooks on all layers to track, i.e. nn.Linear 
+        for name, layer in self.named_modules():
+            if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
+                print(name)
+                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
+
     # def unnormalize_z(self, z, node_mask):
     #     # Overwrite the unnormalize_z function to do nothing (for sample_chain). 
 

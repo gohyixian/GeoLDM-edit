@@ -14,6 +14,10 @@ import torch
 from global_registry import PARAM_REGISTRY
 import subprocess
 import gc
+import os
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+
 
 
 def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
@@ -25,9 +29,6 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
     optim.zero_grad()
 
     for i, data in enumerate(loader):
-        # if i == 1002:  # vis test
-        # if i == 200:  # fast val test
-        #     break
         lg_x = data['ligand']['positions'].to(device, dtype)
         lg_node_mask = data['ligand']['atom_mask'].to(device, dtype).unsqueeze(2)
         lg_edge_mask = data['ligand']['edge_mask'].to(device, dtype)
@@ -187,7 +188,7 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
 
 
 
-def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
+def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
                 nodes_dist, gradnorm_queue, dataset_info, prop_dist):
     
     model_dp.train()
@@ -200,9 +201,6 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     loss_analysis_modes = PARAM_REGISTRY.get('loss_analysis_modes')
     
     for i, data in enumerate(loader):
-        # if i == 1002:  # vis test
-        # if i == 60:  # fast val test
-            # break
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
         edge_mask = data['edge_mask'].to(device, dtype)
@@ -304,6 +302,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             # nvidia-smi 
             print(f">> MEM Allocated: {torch.cuda.memory_allocated() / (1024 ** 2):.2f} MB    Reserved: {torch.cuda.memory_reserved() / (1024 ** 2):.2f} MB")
             print(smi_txt)
+            
 
         nll_epoch.append(nll.item())
         nll_item = nll.item()
@@ -328,6 +327,16 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             # if len(args.conditioning) > 0:
             #     vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
             #                         wandb=wandb, mode='conditional')
+
+        # VAE visualise activations
+        if args.vis_activations and (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (i == 0):
+
+            # handle for saving intermediary activations
+            handle = model_ema._register_hooks()
+            save_and_vis_activations(args, loader_vis_activations, epoch, i, model_ema,\
+                                     device, dtype, property_norms, nodes_dist)
+            handle.remove()
+
 
         smi_dict = utils.get_nvidia_smi_usage(smi_txt)
         wandb_dict = {}
@@ -366,6 +375,100 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     gc.collect()
     
     return n_iterations
+
+
+def save_and_vis_activations(args, loader, epoch, iter, model_ema, device, dtype, property_norms, nodes_dist):
+
+    for i in tqdm(range(args.vis_activations_batch_samples)):
+        data = loader[i]
+
+        x = data['positions'].to(device, dtype)
+        node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
+        edge_mask = data['edge_mask'].to(device, dtype)
+        one_hot = data['one_hot'].to(device, dtype)
+        charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
+        
+        x = remove_mean_with_mask(x, node_mask)
+
+        check_mask_correct([x, one_hot, charges], node_mask)
+        assert_mean_zero_with_mask(x, node_mask)
+
+        h = {'categorical': one_hot, 'integer': charges}
+
+        if len(args.conditioning) > 0:
+            context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(device, dtype)
+            assert_correctly_masked(context, node_mask)
+        else:
+            context = None
+
+        # ~!mp
+        # transform batch through flow
+        nll, _, _ = losses.compute_loss_and_nll(args, model_ema, nodes_dist,
+                                                                x, h, node_mask, edge_mask, context)
+
+        base_path_activations = os.path.join(args.save_activations_path, args.exp_name, "saved_activations", \
+            f"epoch_{str(epoch).zfill(3)}_iter_{str(iter).zfill(10)}", f"sample_{str(i).zfill(3)}")
+        base_path_plots = os.path.join(args.save_activations_path, args.exp_name, "plots", \
+            f"epoch_{str(epoch).zfill(3)}_iter_{str(iter).zfill(10)}", f"sample_{str(i).zfill(3)}")
+        if not os.path.exists(base_path_activations):
+            os.makedirs(base_path_activations)
+        if not os.path.exists(base_path_plots):
+            os.makedirs(base_path_plots)
+
+        # input activation
+        for name, activations in model_ema.input_activations.items():
+            activations_str = np.array2string(activations, separator=',', formatter={'float_kind':lambda x: f'{x:.5f}'})
+            with open(os.path.join(base_path_activations, f"{name}__input.txt"), 'w') as f:
+                f.write(activations_str)
+            
+            tensor_flat = activations.ravel()
+            fig, ax = plt.subplots()
+            ax.hist(tensor_flat, bins=args.vis_activations_bins)
+            ax.set_title(f"{name} (Input)", fontsize=7)
+            ax.set_xlabel('Activation Value')
+            ax.set_ylabel('Frequency')
+            plt.savefig(os.path.join(base_path_plots, f"{name}__input.png"))
+
+            if args.vis_activations_specific_ylim:
+                ymin = args.vis_activations_specific_ylim[0]
+                ymax = args.vis_activations_specific_ylim[1]
+                ax.set_ylim(ymin, ymax)
+                plt.savefig(os.path.join(base_path_plots, f"{name}__input__y{ymin}_{ymax}.png"))
+                plt.close()
+            else:
+                plt.close()
+        # clear
+        model_ema.input_activations = {}
+
+        # output activation
+        for name, activations in model_ema.output_activations.items():
+            activations_str = np.array2string(activations, separator=',', formatter={'float_kind':lambda x: f'{x:.5f}'})
+            with open(os.path.join(base_path_activations, f"{name}__output.txt"), 'w') as f:
+                f.write(activations_str)
+            
+            tensor_flat = activations.ravel()
+            fig, ax = plt.subplots()
+            ax.hist(tensor_flat, bins=args.vis_activations_bins)
+            ax.set_title(f"{name} (Output)", fontsize=7)
+            ax.set_xlabel('Activation Value')
+            ax.set_ylabel('Frequency')
+            plt.savefig(os.path.join(base_path_plots, f"{name}__output.png"))
+
+            if args.vis_activations_specific_ylim:
+                ymin = args.vis_activations_specific_ylim[0]
+                ymax = args.vis_activations_specific_ylim[1]
+                ax.set_ylim(ymin, ymax)
+                plt.savefig(os.path.join(base_path_plots, f"{name}__output__y{ymin}_{ymax}.png"))
+                plt.close()
+            else:
+                plt.close()
+        # clear
+        model_ema.output_activations = {}
+
+        # cleanup
+        torch.cuda.empty_cache()
+        gc.collect()
+
 
 
 def check_mask_correct(variables, node_mask):

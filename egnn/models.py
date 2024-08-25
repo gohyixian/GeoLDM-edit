@@ -47,6 +47,21 @@ class EGNN_dynamics_QM9(nn.Module):
         self._edges_dict = {}
         self.condition_time = condition_time
 
+        # dictionary to store activations
+        self.input_activations = {}
+        self.output_activations = {}
+
+    def _register_hooks(self):
+        def hook_fn(module, input, output, name):
+            self.input_activations[name] = input.clone().detach().cpu().numpy()
+            self.output_activations[name] = output.clone().detach().cpu().numpy()
+
+        # register hooks on all layers to track, i.e. nn.Linear 
+        for name, layer in self.named_modules():
+            if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
+                print(name)
+                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
+
     def forward(self, t, xh, node_mask, edge_mask, context=None):
         raise NotImplementedError
 
@@ -238,6 +253,21 @@ class EGNN_encoder_QM9(nn.Module):
         self._edges_dict = {}
         self.out_node_nf = out_node_nf           # 1
         # self.condition_time = condition_time
+
+        # dictionary to store activations
+        self.input_activations = {}
+        self.output_activations = {}
+
+    def _register_hooks(self):
+        def hook_fn(module, input, output, name):
+            self.input_activations[name] = input.clone().detach().cpu().numpy()
+            self.output_activations[name] = output.clone().detach().cpu().numpy()
+
+        # register hooks on all layers to track, i.e. nn.Linear 
+        for name, layer in self.named_modules():
+            if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
+                print(name)
+                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
 
     def forward(self, t, xh, node_mask, edge_mask, context=None):
         raise NotImplementedError
@@ -476,6 +506,21 @@ class EGNN_decoder_QM9(nn.Module):
         self._edges_dict = {}
         # self.condition_time = condition_time
 
+        # dictionary to store activations
+        self.input_activations = {}
+        self.output_activations = {}
+
+    def _register_hooks(self):
+        def hook_fn(module, input, output, name):
+            self.input_activations[name] = input.clone().detach().cpu().numpy()
+            self.output_activations[name] = output.clone().detach().cpu().numpy()
+
+        # register hooks on all layers to track, i.e. nn.Linear 
+        for name, layer in self.named_modules():
+            if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
+                print(name)
+                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
+
     def forward(self, t, xh, node_mask, edge_mask, context=None):
         raise NotImplementedError
 
@@ -629,6 +674,21 @@ class EGNN_dynamics_fusion(nn.Module):
         # self._edges_dict = {}
         self.condition_time = condition_time
 
+        # dictionary to store activations
+        self.input_activations = {}
+        self.output_activations = {}
+
+    def _register_hooks(self):
+        def hook_fn(module, input, output, name):
+            self.input_activations[name] = input.clone().detach().cpu().numpy()
+            self.output_activations[name] = output.clone().detach().cpu().numpy()
+
+        # register hooks on all layers to track, i.e. nn.Linear 
+        for name, layer in self.named_modules():
+            if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
+                print(name)
+                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
+
     def forward(self, t, xh, node_mask, edge_mask, context=None):
         raise NotImplementedError
 
@@ -697,6 +757,21 @@ class ControlNet_Module_Wrapper(nn.Module):
         self.context_node_nf = diffusion_network.context_node_nf
         self.n_dims = diffusion_network.n_dims
         self.condition_time = diffusion_network.condition_time
+
+        # dictionary to store activations
+        self.input_activations = {}
+        self.output_activations = {}
+
+    def _register_hooks(self):
+        def hook_fn(module, input, output, name):
+            self.input_activations[name] = input.clone().detach().cpu().numpy()
+            self.output_activations[name] = output.clone().detach().cpu().numpy()
+
+        # register hooks on all layers to track, i.e. nn.Linear 
+        for name, layer in self.named_modules():
+            if isinstance(layer, PARAM_REGISTRY.get('vis_activations_instances')):
+                print(name)
+                layer.register_forward_hook(lambda m, i, o, n=name: hook_fn(m, i, o, n))
 
 
     def _forward(self, t, xh1, xh2, node_mask_1, node_mask_2, edge_mask_1, edge_mask_2, joint_edge_mask, context):
