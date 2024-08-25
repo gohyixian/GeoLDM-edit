@@ -25,8 +25,8 @@ include_charges: false   # true for qm9
 # only works for ldm, not for VAE
 condition_time: true
 
-vis_activations: True
-vis_activations_batch_samples: 3
+vis_activations: true
+vis_activations_batch_samples: 5
 vis_activations_batch_size: 1
 vis_activations_specific_ylim: [0, 40]
 
@@ -200,7 +200,7 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_every_batch: 10
+visualize_every_batch: 21
 n_report_steps: 50
 
 
@@ -216,7 +216,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: true
+no_wandb: false
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true

@@ -25,7 +25,10 @@ include_charges: false   # true for qm9
 # only works for ldm, not for VAE
 condition_time: true
 
-
+vis_activations: true
+vis_activations_batch_samples: 5
+vis_activations_batch_size: 1
+vis_activations_specific_ylim: [0, 40]
 
 
 # ========================================================================================================== Dataset
@@ -197,7 +200,7 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_every_batch: 10
+visualize_every_batch: 21
 n_report_steps: 50
 
 
