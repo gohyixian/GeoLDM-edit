@@ -338,15 +338,15 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         if (training_mode in loss_analysis_modes) and loss_analysis:
             recon_loss_dict = loss_dict['recon_loss_dict']
             # print(f"training_test.py {recon_loss_dict['error_x'].shape}")
-            wandb_dict['loss_analysis/error_x'] = recon_loss_dict['error_x'].mean().item()
-            wandb_dict['loss_analysis/error_h_cat'] = recon_loss_dict['error_h_cat'].mean().item()
+            wandb_dict['Train/error_x'] = recon_loss_dict['error_x'].mean().item()
+            wandb_dict['Train/error_h_cat'] = recon_loss_dict['error_h_cat'].mean().item()
             if args.include_charges:
-                wandb_dict['loss_analysis/error_h_int'] = recon_loss_dict['error_h_int'].mean().item()
-            wandb_dict['overall_metrics/overall_accuracy'] = recon_loss_dict['overall_accuracy']
-            wandb_dict['overall_metrics/overall_recall'] = recon_loss_dict['overall_recall']
-            wandb_dict['overall_metrics/overall_f1'] = recon_loss_dict['overall_f1']
+                wandb_dict['Train/error_h_int'] = recon_loss_dict['error_h_int'].mean().item()
+            wandb_dict['Train/overall_accuracy'] = recon_loss_dict['overall_accuracy']
+            wandb_dict['Train/overall_recall'] = recon_loss_dict['overall_recall']
+            wandb_dict['Train/overall_f1'] = recon_loss_dict['overall_f1']
             for cls, metric in recon_loss_dict['classwise_accuracy'].items():
-                wandb_dict[f'classwise_accuracy/ {cls}'] = metric
+                wandb_dict[f'Train_classwise_accuracy/ {cls}'] = metric
 
         wandb.log(wandb_dict, commit=True)
         
@@ -452,9 +452,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 overall_f1.append(recon_loss_dict['overall_f1'])
                 for cls, metric in recon_loss_dict['classwise_accuracy'].items():
                     if not math.isnan(metric):
-                        cls_acc_list =  classwise_accuracy.get(str(cls), [])
-                        cls_acc_list.append(metric)
-                        classwise_accuracy[str(cls)] = cls_acc_list
+                        classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []) + [metric]
                     else:
                         classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), [])
 
