@@ -333,7 +333,6 @@ def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, mo
 
             # handle for saving intermediary activations
             handles = model_ema._register_hooks()
-            print("handles", handles)
             save_and_vis_activations(args, loader_vis_activations, epoch, i, model_ema,\
                                      device, dtype, property_norms, nodes_dist)
             for handle in handles:
