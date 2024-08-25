@@ -265,13 +265,13 @@ def main():
                 print(f">>> analyze_and_save took {time.time() - start:.1f} seconds.")
                 
             start  = time.time()
-            nll_val = train_test.test(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
-                                      property_norms, nodes_dist, partition='Val')
+            nll_val, val_dict = train_test.test(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
+                                                property_norms, nodes_dist, partition='Val')
             print(f">>> validation set test took {time.time() - start:.1f} seconds.")
             
             start  = time.time()
-            nll_test = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
-                                       property_norms, nodes_dist, partition='Test')
+            nll_test, test_dict = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
+                                                  property_norms, nodes_dist, partition='Test')
             print(f">>> testing set test took {time.time() - start:.1f} seconds.")
             
 
@@ -299,6 +299,10 @@ def main():
             wandb.log({"Val loss ": nll_val}, commit=True)
             wandb.log({"Test loss ": nll_test}, commit=True)
             wandb.log({"Best cross-validated test loss ": best_nll_test}, commit=True)
+            
+            if (args.training_mode in args.loss_analysis_modes) and args.loss_analysis:
+                wandb.log(test_dict, commit=True)
+                wandb.log(val_dict, commit=True)
 
 
 if __name__ == "__main__":

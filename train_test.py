@@ -375,7 +375,17 @@ def check_mask_correct(variables, node_mask):
 
 def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_dist, partition='Test'):
     eval_model.eval()
-    
+    training_mode = PARAM_REGISTRY.get('training_mode')
+    loss_analysis = PARAM_REGISTRY.get('loss_analysis')
+    loss_analysis_modes = PARAM_REGISTRY.get('loss_analysis_modes')
+
+    if (training_mode in loss_analysis_modes) and loss_analysis:
+        error_x = []
+        error_h_cat = []
+        error_h_int = [] if args.include_charges else None
+        overall_accuracy, overall_recall, overall_f1 = [], [], []
+        classwise_accuracy = {}
+
     # ~!mp
     with torch.no_grad():
         nll_epoch = 0
@@ -412,8 +422,12 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 context = None
 
             # transform batch through flow
-            nll, _, _ = losses.compute_loss_and_nll(args, eval_model, nodes_dist, x, h,
-                                                    node_mask, edge_mask, context)
+            if (training_mode in loss_analysis_modes) and loss_analysis:
+                nll, _, _, loss_dict = losses.compute_loss_and_nll(args, eval_model, nodes_dist, x, h,
+                                                                   node_mask, edge_mask, context, loss_analysis)
+            else:
+                nll, _, _ = losses.compute_loss_and_nll(args, eval_model, nodes_dist, x, h,
+                                                        node_mask, edge_mask, context)
             # standard nll from forward KL
 
             nll_epoch += (nll.item() * batch_size)
@@ -427,7 +441,34 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
             torch.cuda.empty_cache()
             gc.collect()
 
-    return nll_epoch/n_samples
+            if (training_mode in loss_analysis_modes) and loss_analysis:
+                recon_loss_dict = loss_dict['recon_loss_dict']
+                error_x.append(recon_loss_dict['error_x'].mean().item())
+                error_h_cat.append(recon_loss_dict['error_h_cat'].mean().item())
+                error_h_int.append(recon_loss_dict['error_h_int'].mean().item()) if args.include_charges else None
+                overall_accuracy.append(recon_loss_dict['overall_accuracy'])
+                overall_recall.append(recon_loss_dict['overall_recall'])
+                overall_f1.append(recon_loss_dict['overall_f1'])
+                for cls, metric in recon_loss_dict['classwise_accuracy'].items():
+                    classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []).append(metric)
+
+    if (training_mode in loss_analysis_modes) and loss_analysis:
+        wandb_dict = {}
+        # loss_analysis
+        if (training_mode in loss_analysis_modes) and loss_analysis:
+            wandb_dict[f'{partition}_loss_analysis/error_x'] = sum(error_x) / len(error_x)
+            wandb_dict[f'{partition}_loss_analysis/error_h_cat'] = sum(error_h_cat) / len(error_h_cat)
+            if args.include_charges:
+                wandb_dict[f'{partition}_loss_analysis/error_h_int'] = sum(error_h_int) / len(error_h_int)
+            wandb_dict[f'{partition}_overall_metrics/overall_accuracy'] = sum(overall_accuracy) / len(overall_accuracy)
+            wandb_dict[f'{partition}_overall_metrics/overall_recall'] = sum(overall_recall) / len(overall_recall)
+            wandb_dict[f'{partition}_overall_metrics/overall_f1'] = sum(overall_f1) / len(overall_f1)
+            for cls, metric in classwise_accuracy.items():
+                wandb_dict[f'{partition}_classwise_accuracy/ {cls}'] = sum(metric) / len(metric)
+
+        return nll_epoch/n_samples, wandb_dict
+
+    return nll_epoch/n_samples, None
 
 
 def test_controlnet(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_dist, partition='Test'):
