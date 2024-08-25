@@ -456,20 +456,19 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                     if not math.isnan(metric):
                         classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls)).append(metric)
 
-
     if (training_mode in loss_analysis_modes) and loss_analysis:
         wandb_dict = {}
         # loss_analysis
         if (training_mode in loss_analysis_modes) and loss_analysis:
             wandb_dict[f'{partition}_loss_analysis/error_x'] = (sum(error_x) / len(error_x)) if len(error_x) > 0 else float('nan')
-            wandb_dict[f'{partition}_loss_analysis/error_h_cat'] = sum(error_h_cat) / len(error_h_cat)
+            wandb_dict[f'{partition}_loss_analysis/error_h_cat'] = (sum(error_h_cat) / len(error_h_cat)) if len(error_h_cat) > 0 else float('nan')
             if args.include_charges:
-                wandb_dict[f'{partition}_loss_analysis/error_h_int'] = sum(error_h_int) / len(error_h_int)
-            wandb_dict[f'{partition}_overall_metrics/overall_accuracy'] = sum(overall_accuracy) / len(overall_accuracy)
-            wandb_dict[f'{partition}_overall_metrics/overall_recall'] = sum(overall_recall) / len(overall_recall)
-            wandb_dict[f'{partition}_overall_metrics/overall_f1'] = sum(overall_f1) / len(overall_f1)
+                wandb_dict[f'{partition}_loss_analysis/error_h_int'] = (sum(error_h_int) / len(error_h_int)) if len(error_h_int) > 0 else float('nan')
+            wandb_dict[f'{partition}_overall_metrics/overall_accuracy'] = (sum(overall_accuracy) / len(overall_accuracy)) if len(overall_accuracy) > 0 else float('nan')
+            wandb_dict[f'{partition}_overall_metrics/overall_recall'] = (sum(overall_recall) / len(overall_recall)) if len(overall_recall) > 0 else float('nan')
+            wandb_dict[f'{partition}_overall_metrics/overall_f1'] = (sum(overall_f1) / len(overall_f1)) if len(overall_f1) > 0 else float('nan')
             for cls, metric in classwise_accuracy.items():
-                wandb_dict[f'{partition}_classwise_accuracy/ {cls}'] = sum(metric) / len(metric)
+                wandb_dict[f'{partition}_classwise_accuracy/ {cls}'] = (sum(metric) / len(metric)) if len(metric) > 0 else float('nan')
 
         return nll_epoch/n_samples, wandb_dict
 
