@@ -262,7 +262,7 @@ def main():
 
             # Here x is a position tensor, and h is a dictionary with keys
             # 'categorical' and 'integer'.
-            nll, nll_dict = model.recon_loss_analysis(x, h, node_mask, edge_mask, context)
+            nll, nll_dict = model.forward(x, h, node_mask, edge_mask, context, loss_analysis=True)
             # loss_dict: {
             #     'loss_t': loss.squeeze(), 
             #     'rec_error': loss_recon.squeeze(), 

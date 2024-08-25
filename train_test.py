@@ -194,6 +194,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
     nll_epoch = []
     n_iterations = len(loader)
     optim.zero_grad()
+    training_mode = PARAM_REGISTRY.get('training_mode')
+    loss_analysis = PARAM_REGISTRY.get('loss_analysis')
+    loss_analysis_modes = PARAM_REGISTRY.get('loss_analysis_modes')
     
     for i, data in enumerate(loader):
         # if i == 1002:  # vis test
@@ -231,9 +234,13 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         # optim.zero_grad()
 
         # ~!mp
-        # transform batch through flow        
-        nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
-                                                                x, h, node_mask, edge_mask, context)
+        # transform batch through flow
+        if (training_mode in loss_analysis_modes) and loss_analysis:
+            nll, reg_term, mean_abs_z, loss_dict = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
+                                                                    x, h, node_mask, edge_mask, context, loss_analysis)
+        else:
+            nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
+                                                                    x, h, node_mask, edge_mask, context)
         # standard nll from forward KL
         loss = nll + args.ode_regularization * reg_term
 
@@ -326,6 +333,20 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         for k,v in smi_dict.items():
             wandb_dict[f"gpu/{k}-{v.get('total_mem')}MiB"] = v.get('used_mem')
         wandb_dict["Batch NLL"] = nll_item
+        # loss_analysis
+        if (training_mode in loss_analysis_modes) and loss_analysis:
+            recon_loss_dict = loss_dict['recon_loss_dict']
+            print(f'training_test.py {recon_loss_dict['error_x'].shape}')
+            wandb_dict['loss_analysis/error_x'] = recon_loss_dict['error_x'].mean().item()
+            wandb_dict['loss_analysis/error_h_cat'] = recon_loss_dict['error_h_cat'].mean().item()
+            if args.include_charges:
+                wandb_dict['loss_analysis/error_h_int'] = recon_loss_dict['error_h_int'].mean().item()
+            wandb_dict['overall_metrics/overall_accuracy'] = recon_loss_dict['overall_accuracy']
+            wandb_dict['overall_metrics/overall_recall'] = recon_loss_dict['overall_recall']
+            wandb_dict['overall_metrics/overall_f1'] = recon_loss_dict['overall_f1']
+            for cls, metric in recon_loss_dict['classwise_accuracy'].items():
+                wandb_dict[f'classwise_accuracy/{cls}'] = metric
+
         wandb.log(wandb_dict, commit=True)
         
         # cleanup

@@ -1,4 +1,5 @@
 import torch
+from global_registry import PARAM_REGISTRY
 
 
 def sum_except_batch(x):
@@ -11,7 +12,7 @@ def assert_correctly_masked(variable, node_mask):
     
 
 
-def compute_loss_and_nll(args, generative_model, nodes_dist, x, h, node_mask, edge_mask, context):
+def compute_loss_and_nll(args, generative_model, nodes_dist, x, h, node_mask, edge_mask, context, loss_analysis=False):
     bs, n_nodes, n_dims = x.size()
 
 
@@ -23,7 +24,13 @@ def compute_loss_and_nll(args, generative_model, nodes_dist, x, h, node_mask, ed
         # Here x is a position tensor, and h is a dictionary with keys
         # 'categorical' and 'integer'.
         # returns neg_log_pxh / negatve log likelihood
-        nll = generative_model(x, h, node_mask, edge_mask, context)
+        if PARAM_REGISTRY.get('training_mode') in PARAM_REGISTRY.get('loss_analysis_modes'):
+            if loss_analysis:
+                nll, loss_dict = generative_model(x, h, node_mask, edge_mask, context, loss_analysis=loss_analysis)
+            else:
+                nll = generative_model(x, h, node_mask, edge_mask, context)
+        else:
+            nll = generative_model(x, h, node_mask, edge_mask, context)
 
         N = node_mask.squeeze(2).sum(1).long()
 
@@ -40,7 +47,10 @@ def compute_loss_and_nll(args, generative_model, nodes_dist, x, h, node_mask, ed
     else:
         raise ValueError(args.probabilistic_model)
 
-    return nll, reg_term, mean_abs_z
+    if (PARAM_REGISTRY.get('training_mode') == 'VAE') and loss_analysis:
+        return nll, reg_term, mean_abs_z, loss_dict
+    else:
+        return nll, reg_term, mean_abs_z
 
 
 

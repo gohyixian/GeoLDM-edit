@@ -88,6 +88,17 @@ def main():
     if not hasattr(args, 'grad_penalty'):
         args.grad_penalty = False
 
+    # loss analysis
+    if not hasattr(args, 'loss_analysis'):
+        args.loss_analysis = False
+    args.loss_analysis_modes = ['VAE']
+
+    # loass analysis usage
+    atom_encoder = dataset_info['atom_encoder']
+    atom_decoder = dataset_info['atom_decoder']
+    args.atom_encoder = atom_encoder
+    args.atom_decoder = atom_decoder
+
 
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
@@ -120,9 +131,6 @@ def main():
             shuffle=shuffle, training_mode=args.training_mode, drop_last=True)
     del split_data
 
-
-    atom_encoder = dataset_info['atom_encoder']
-    atom_decoder = dataset_info['atom_decoder']
 
     # args, unparsed_args = parser.parse_known_args()
     args.wandb_usr = utils.get_wandb_username(args.wandb_usr)

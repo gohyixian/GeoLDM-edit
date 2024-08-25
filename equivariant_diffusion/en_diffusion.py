@@ -6,6 +6,7 @@ from egnn import models
 from torch.nn import functional as F
 from equivariant_diffusion import utils as diffusion_utils
 from global_registry import PARAM_REGISTRY
+from sklearn.metrics import accuracy_score, recall_score, f1_score
 
 
 # Defining some useful util functions.
@@ -1007,20 +1008,17 @@ class EnHierarchicalVAE(torch.nn.Module):
         return x
 
 
-    def forward(self, x, h, node_mask=None, edge_mask=None, context=None):
+    def forward(self, x, h, node_mask=None, edge_mask=None, context=None, loss_analysis=False):
         """
         Computes the ELBO if training. And if eval then always computes NLL.
         """
 
-        loss, loss_dict = self.compute_loss(x, h, node_mask, edge_mask, context)
+        neg_log_pxh, loss_dict = self.compute_loss(x, h, node_mask, edge_mask, context)
 
-        neg_log_pxh = loss
-
-        return neg_log_pxh
-
-    def recon_loss_analysis(self, x, h, node_mask=None, edge_mask=None, context=None):
-        loss, loss_dict = self.compute_loss(x, h, node_mask, edge_mask, context)
-        return loss, loss_dict
+        if loss_analysis:
+            return neg_log_pxh, loss_dict
+        else:
+            return neg_log_pxh
         # loss_dict: {
         #     'loss_t': loss.squeeze(), 
         #     'rec_error': loss_recon.squeeze(), 
@@ -1036,7 +1034,11 @@ class EnHierarchicalVAE(torch.nn.Module):
         #     'denom': denom,
         #     'n_dims': self.n_dims,
         #     'in_node_nf': self.in_node_nf,
-        #     'num_atoms': xh.shape[1]
+        #     'num_atoms': xh.shape[1],
+        #     'overall_accuracy': overall_accuracy,
+        #     'overall_recall': overall_recall,
+        #     'overall_f1': overall_f1,
+        #     'classwise_accuracy': classwise_accuracy
         # }
 
 
@@ -1098,7 +1100,7 @@ class EnHierarchicalVAE(torch.nn.Module):
         loss_recon = self.compute_reconstruction_error(xh_rec, xh)
         
         # recon loss analysis use
-        recon_loss_dict = self.compute_reconstruction_error_components(xh_rec, xh)
+        recon_loss_dict = self.compute_reconstruction_error_components(xh_rec, xh, node_mask)
         # unpack xh
         xh_unpack_dict = self.unpack_xh(xh, argmax_h_cat=False)
         xh_rec_unpack_dict = self.unpack_xh(xh_rec, argmax_h_cat=False)
@@ -1206,14 +1208,15 @@ class EnHierarchicalVAE(torch.nn.Module):
         return error
 
 
-    def compute_reconstruction_error_components(self, xh_rec, xh):
+    def compute_reconstruction_error_components(self, xh_rec, xh, node_mask):
         bs, n_nodes, dims = xh.shape
+        node_mask = node_mask.view(bs*n_nodes).bool().cpu()
 
         # Error on positions. / coordinates loss
         x_rec = xh_rec[:, :, :self.n_dims]
         x = xh[:, :, :self.n_dims]
         error_x = sum_except_batch((x_rec - x) ** 2)
-        
+
         # Error on classes. / node features (one-hot) loss
         h_cat_rec = xh_rec[:, :, self.n_dims:self.n_dims + self.num_classes]
         h_cat = xh[:, :, self.n_dims:self.n_dims + self.num_classes]
@@ -1222,6 +1225,36 @@ class EnHierarchicalVAE(torch.nn.Module):
 
         # ~!fp16 ~!mp
         error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
+        
+        # accuracy & f1 metrics
+        h_cat_rec_idx = h_cat_rec.argmax(dim=-1).view(-1).cpu()
+        h_cat_idx = h_cat.argmax(dim=-1).view(-1).cpu()
+        
+        print('compute_reconstruction_error_components', node_mask.shape, h_cat_idx.shape, h_cat_rec_idx.shape)
+        assert h_cat_rec_idx.shape[-1] == node_mask.shape[-1], f"h_cat_rec_idx: {h_cat_rec_idx.shape}, node_mask: {node_mask.shape}"
+        assert h_cat_idx.shape[-1] == node_mask.shape[-1], f"h_cat_idx: {h_cat_idx.shape}, node_mask: {node_mask.shape}"
+        
+        h_cat_rec_idx = h_cat_rec_idx[node_mask].numpy()
+        h_cat_idx = h_cat_idx[node_mask].numpy()
+        
+        # Overall metrics
+        overall_accuracy = accuracy_score(h_cat_idx, h_cat_rec_idx)
+        overall_recall = recall_score(h_cat_idx, h_cat_rec_idx, average='macro', zero_division=0)
+        overall_f1 = f1_score(h_cat_idx, h_cat_rec_idx, average='macro', zero_division=0)
+
+        # class-wise acurracy
+        classwise_accuracy = {}
+        for class_idx, class_char in enumerate(PARAM_REGISTRY.get('atom_decoder')):
+            # Create a mask for instances belonging to the current class
+            class_mask = (h_cat_idx == class_idx)
+            true_class = h_cat_idx[class_mask]
+            pred_class = h_cat_rec_idx[class_mask]
+            if true_class.numel() > 0:
+                acc = accuracy_score(true_class, pred_class)
+                classwise_accuracy[class_char] = acc
+            else:
+                classwise_accuracy[class_char] = float('nan')
+
 
         error_h_cat = error_h_cat.reshape(bs, n_nodes, 1)
         error_h_cat = sum_except_batch(error_h_cat)
@@ -1251,7 +1284,11 @@ class EnHierarchicalVAE(torch.nn.Module):
             'denom': denom,
             'n_dims': self.n_dims,
             'in_node_nf': self.in_node_nf,
-            'num_atoms': xh.shape[1]
+            'num_atoms': xh.shape[1],
+            'overall_accuracy': overall_accuracy,
+            'overall_recall': overall_recall,
+            'overall_f1': overall_f1,
+            'classwise_accuracy': classwise_accuracy
         }
 
 
