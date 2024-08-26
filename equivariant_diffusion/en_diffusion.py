@@ -1019,9 +1019,9 @@ class EnHierarchicalVAE(torch.nn.Module):
             print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
 
         elif self.vae_normalize_method == 'linear':
-            fn_points = PARAM_REGISTRY.get('vae_normalize_fn_points')  # [(x_min, y_min), (x_max, y_max)]
-            x_min, y_min = float(fn_points[0][0]), float(fn_points[0][1])
-            x_max, y_max = float(fn_points[1][0]), float(fn_points[1][1])
+            fn_points = PARAM_REGISTRY.get('vae_normalize_fn_points')  # [x_min, y_min, x_max, y_max]
+            x_min, y_min = float(fn_points[0]), float(fn_points[1])
+            x_max, y_max = float(fn_points[2]), float(fn_points[3])
             print(x_min, x_max, y_min, y_max)
             
             self.scale_fn_m = (y_max - y_min) / (x_max - x_min)

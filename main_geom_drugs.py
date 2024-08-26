@@ -135,7 +135,7 @@ def main():
         args.vae_normalize_x = False
     if not hasattr(args, 'vae_normalize_method'):  # supported: "scale" | "linear"
         args.vae_normalize_method = None
-    if not hasattr(args, 'vae_normalize_fn_points'):  # [(x_min, y_min), (x_max, y_max)]
+    if not hasattr(args, 'vae_normalize_fn_points'):  # [x_min, y_min, x_max, y_max]
         args.vae_normalize_fn_points = None
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
