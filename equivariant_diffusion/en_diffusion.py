@@ -1220,7 +1220,12 @@ class EnHierarchicalVAE(torch.nn.Module):
         h_cat = h_cat.reshape(bs * n_nodes, self.num_classes)
 
         # ~!fp16 ~!mp
-        error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
+        if PARAM_REGISTRY.get('reweight_class_loss') == "inv_class_freq":
+            class_weights = PARAM_REGISTRY.get('class_weights').to(h_cat.device, h_cat.dtype)
+            error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), weight=class_weights, reduction='none')
+            print(f"balancing class loss with inv_class_freq={class_weights}")
+        else:
+            error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
 
         error_h_cat = error_h_cat.reshape(bs, n_nodes, 1)
         error_h_cat = sum_except_batch(error_h_cat)

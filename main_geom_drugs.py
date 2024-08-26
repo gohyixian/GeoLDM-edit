@@ -117,6 +117,20 @@ def main():
         args.vis_activations_batch_size = 1
 
 
+    # class-imbalance loss reweighting
+    if not hasattr(args, 'reweight_class_loss'):  # supported: "inv_class_freq"
+        args.reweight_class_loss = None
+    if args.reweight_class_loss == "inv_class_freq":
+        class_freq_dict = dataset_info['atom_types']
+        sorted_keys = sorted(class_freq_dict.keys())
+        frequencies = torch.tensor([class_freq_dict[key] for key in sorted_keys], dtype=args.dtype)
+        inverse_frequencies = 1.0 / frequencies
+        class_weights = inverse_frequencies / inverse_frequencies.sum()  # normalize
+        args.class_weights = class_weights
+        [print(f"{atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
+            inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
