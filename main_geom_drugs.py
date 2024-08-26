@@ -130,7 +130,13 @@ def main():
         [print(f"{atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
             inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
 
-
+    # scaling of coordinates/x
+    if not hasattr(args, 'vae_normalize_x'):
+        args.vae_normalize_x = False
+    if not hasattr(args, 'vae_normalize_method'):  # supported: "scale" | "linear"
+        args.vae_normalize_method = None
+    if not hasattr(args, 'vae_normalize_fn_points'):  # [(x_min, y_min), (x_max, y_max)]
+        args.vae_normalize_fn_points = None
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 

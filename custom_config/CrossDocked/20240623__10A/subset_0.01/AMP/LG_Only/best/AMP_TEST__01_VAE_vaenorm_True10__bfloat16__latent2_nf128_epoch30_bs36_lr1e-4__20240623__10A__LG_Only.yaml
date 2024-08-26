@@ -159,6 +159,7 @@ latent_nf: 2  # 1
 normalize_factors: [1, 4, 10]
 
 vae_normalize_x: true
+vae_normalize_method: scale     # scale | linear
 vae_normalize_factors: [10, 1, 1]
 
 

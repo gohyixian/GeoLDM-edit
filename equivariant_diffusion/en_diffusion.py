@@ -1009,10 +1009,26 @@ class EnHierarchicalVAE(torch.nn.Module):
         self.kl_weight = kl_weight  # 0.01
 
         self.vae_normalize_x = PARAM_REGISTRY.get('vae_normalize_x', False)
-        print(f">> EnHierarchicalVAE self.vae_normalize_x={self.vae_normalize_x}")
-        self.norm_values = norm_values  # (1., 1., 1.)
-        self.norm_biases = norm_biases  # (1., 1., 1.)
-        print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
+        self.vae_normalize_method = PARAM_REGISTRY.get('vae_normalize_method', None)
+        print(f">> EnHierarchicalVAE self.vae_normalize_method={self.vae_normalize_method}") if self.vae_normalize_x else None
+        
+        if self.vae_normalize_method == 'scale':
+            self.norm_values = norm_values  # (1., 1., 1.)
+            self.norm_biases = norm_biases  # (1., 1., 1.)
+            print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
+
+        elif self.vae_normalize_method == 'linear':
+            fn_points = PARAM_REGISTRY.get('vae_normalize_fn_points')  # [(x_min, y_min), (x_max, y_max)]
+            x_min, y_min = fn_points[0][0], fn_points[0][1]
+            x_max, y_max = fn_points[1][0], fn_points[1][1]
+            
+            self.scale_fn_m = (y_max - y_min) / (x_max - x_min)
+            self.scale_fn_c = abs(self.scale_fn_m * x_min)
+            print(f">> EnHierarchicalVAE self.scale_fn_m={self.scale_fn_m} self.scale_fn_c={self.scale_fn_c}")
+
+        else:
+            raise NotImplementedError()
+        
         self.register_buffer('buffer', torch.zeros(1))
 
         # dictionary to store activations
@@ -1035,11 +1051,17 @@ class EnHierarchicalVAE(torch.nn.Module):
 
     # ~!norm
     def normalize_x(self, x):
-        x = x / self.norm_values[0]
+        if self.vae_normalize_method == 'scale':
+            x = x / self.norm_values[0]
+        elif self.vae_normalize_method == 'linear':
+            x = (self.scale_fn_m * x) + self.scale_fn_c  # y=mx+c
         return x
     # ~!norm
     def unnormalize_x(self, x):
-        x = x * self.norm_values[0]
+        if self.vae_normalize_method == 'scale':
+            x = x * self.norm_values[0]
+        elif self.vae_normalize_method == 'linear':
+            x = (x - self.scale_fn_c) / self.scale_fn_m  # x=(y-c)/m
         return x
 
 

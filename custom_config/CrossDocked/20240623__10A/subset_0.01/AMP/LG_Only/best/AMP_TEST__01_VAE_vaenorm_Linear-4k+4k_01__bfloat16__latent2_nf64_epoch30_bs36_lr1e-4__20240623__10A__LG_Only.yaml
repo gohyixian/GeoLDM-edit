@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_True10__bfloat16__latent2_nf64_epoch30_bs36_lr1e-4__20240623__10A__LG_Only
+exp_name: AMP_TEST__01_VAE_vaenorm_Linear-4k+4k_01__bfloat16__latent2_nf64_epoch30_bs36_lr1e-4__20240623__10A__LG_Only
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -159,8 +159,9 @@ latent_nf: 2  # 1
 normalize_factors: [1, 4, 10]
 
 vae_normalize_x: true
-vae_normalize_method: scale     # scale | linear
-vae_normalize_factors: [10, 1, 1]
+vae_normalize_method: linear     # scale | linear
+# vae_normalize_factors: [10, 1, 1]
+vae_normalize_fn_points: [(-4000, 0), (4000, 1)]  # [(x_min, y_min), (x_max, y_max)]
 
 
 
