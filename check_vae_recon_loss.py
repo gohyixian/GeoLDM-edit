@@ -17,6 +17,7 @@ from equivariant_diffusion.utils import assert_mean_zero_with_mask, remove_mean_
 
 import gc
 import torch
+from torch import nn
 import time
 import shutil
 from tqdm import tqdm
@@ -65,6 +66,7 @@ def main():
         args_dict = yaml.safe_load(file)
     args = Config(**args_dict)
 
+    dataset_info = get_dataset_info(dataset_name=args.dataset, remove_h=args.remove_h)
 
     # vae encoder n layers
     if not hasattr(args, 'encoder_n_layers'):
@@ -74,18 +76,7 @@ def main():
     # additional & override settings for sparsity plots
     args.batch_size = 1 # must be 1 for this script
     args.save_samples_dir = f'recon_loss_analysis/{args.exp_name}/{args.training_mode}/'
-    # args.layer_id_counter = 0
-    # args.plot_func_bins = 200
-    # args.save_plot_dir = f'sparsity_check/plots/{args.exp_name}/{args.training_mode}/'
-    # # plot
-    # args.plot_sparsity = False
-    # args.save_tensor = False
-    # args.plot_func = plot_activation_distribution
-    # # save activations for combined plot
-    # args.save_activations = True
-    # args.save_act_func = save_activations
-    # args.save_act_dir = f'sparsity_check/saved_activations/{args.exp_name}/{args.training_mode}/'
-    
+
     # remove activations from previous runs
     if not opt.store_samples:
         if os.path.exists(args.save_samples_dir):
@@ -125,6 +116,58 @@ def main():
         args.vae_data_mode = 'all'
 
 
+    # loss analysis
+    if not hasattr(args, 'loss_analysis'):
+        args.loss_analysis = False
+    args.loss_analysis_modes = ['VAE']
+
+
+    # loss analysis usage
+    atom_encoder = dataset_info['atom_encoder']
+    atom_decoder = dataset_info['atom_decoder']
+    args.atom_encoder = atom_encoder
+    args.atom_decoder = atom_decoder
+
+
+    # intermediate activations analysis usage
+    args.vis_activations_instances = (nn.Linear)
+    args.save_activations_path = 'vis_activations'
+    args.vis_activations_bins = 200
+    if not hasattr(args, 'vis_activations_specific_ylim'):
+        args.vis_activations_specific_ylim = [0, 40]
+    if not hasattr(args, 'vis_activations'):
+        args.vis_activations = False
+    if not hasattr(args, 'vis_activations_batch_samples'):
+        args.vis_activations_batch_samples = 0
+    if not hasattr(args, 'vis_activations_batch_size'):
+        args.vis_activations_batch_size = 1
+
+
+    # class-imbalance loss reweighting
+    if not hasattr(args, 'reweight_class_loss'):  # supported: "inv_class_freq"
+        args.reweight_class_loss = None
+    if args.reweight_class_loss == "inv_class_freq":
+        class_freq_dict = dataset_info['atom_types']
+        sorted_keys = sorted(class_freq_dict.keys())
+        frequencies = torch.tensor([class_freq_dict[key] for key in sorted_keys], dtype=args.dtype)
+        inverse_frequencies = 1.0 / frequencies
+        class_weights = inverse_frequencies / inverse_frequencies.sum()  # normalize
+        args.class_weights = class_weights
+        [print(f"{atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
+            inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
+
+    # scaling of coordinates/x
+    if not hasattr(args, 'vae_normalize_x'):
+        args.vae_normalize_x = False
+    if not hasattr(args, 'vae_normalize_method'):  # supported: "scale" | "linear"
+        args.vae_normalize_method = None
+    if not hasattr(args, 'vae_normalize_fn_points'):  # [x_min, y_min, x_max, y_max]
+        args.vae_normalize_fn_points = None
+    # params global registry for easy access
+    PARAM_REGISTRY.update_from_config(args)
+
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
@@ -142,7 +185,6 @@ def main():
                                                     filter_pocket_size=args.filter_pocket_size)
     # ~!to ~!mp
     # ['positions'], ['one_hot'], ['charges'], ['atonm_mask'], ['edge_mask'] are added here
-    dataset_info = get_dataset_info(dataset_name=args.dataset, remove_h=args.remove_h)
     transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, args.device, args.sequential)
 
     dataloaders = {}
