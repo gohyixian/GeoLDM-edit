@@ -1009,27 +1009,28 @@ class EnHierarchicalVAE(torch.nn.Module):
         self.kl_weight = kl_weight  # 0.01
 
         self.vae_normalize_x = PARAM_REGISTRY.get('vae_normalize_x', False)
-        self.vae_normalize_method = PARAM_REGISTRY.get('vae_normalize_method', None)
-        print(f">> EnHierarchicalVAE self.vae_normalize_method={self.vae_normalize_method}") if self.vae_normalize_x else None
-        
-        if self.vae_normalize_method == 'scale':
-            norm_values = PARAM_REGISTRY.get('vae_normalize_factors')
-            self.norm_values = norm_values  # (1., 1., 1.)
-            self.norm_biases = norm_biases  # (1., 1., 1.)
-            print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
-
-        elif self.vae_normalize_method == 'linear':
-            fn_points = PARAM_REGISTRY.get('vae_normalize_fn_points')  # [x_min, y_min, x_max, y_max]
-            x_min, y_min = float(fn_points[0]), float(fn_points[1])
-            x_max, y_max = float(fn_points[2]), float(fn_points[3])
-            print(x_min, x_max, y_min, y_max)
+        if self.vae_normalize_x:
+            self.vae_normalize_method = PARAM_REGISTRY.get('vae_normalize_method', None)
+            print(f">> EnHierarchicalVAE self.vae_normalize_method={self.vae_normalize_method}") if self.vae_normalize_x else None
             
-            self.scale_fn_m = (y_max - y_min) / (x_max - x_min)
-            self.scale_fn_c = y_min - (self.scale_fn_m * x_min)
-            print(f">> EnHierarchicalVAE self.scale_fn_m={self.scale_fn_m} self.scale_fn_c={self.scale_fn_c}")
+            if self.vae_normalize_method == 'scale':
+                norm_values = PARAM_REGISTRY.get('vae_normalize_factors')
+                self.norm_values = norm_values  # (1., 1., 1.)
+                self.norm_biases = norm_biases  # (1., 1., 1.)
+                print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
 
-        else:
-            raise NotImplementedError()
+            elif self.vae_normalize_method == 'linear':
+                fn_points = PARAM_REGISTRY.get('vae_normalize_fn_points')  # [x_min, y_min, x_max, y_max]
+                x_min, y_min = float(fn_points[0]), float(fn_points[1])
+                x_max, y_max = float(fn_points[2]), float(fn_points[3])
+                print(x_min, x_max, y_min, y_max)
+                
+                self.scale_fn_m = (y_max - y_min) / (x_max - x_min)
+                self.scale_fn_c = y_min - (self.scale_fn_m * x_min)
+                print(f">> EnHierarchicalVAE self.scale_fn_m={self.scale_fn_m} self.scale_fn_c={self.scale_fn_c}")
+
+            else:
+                raise NotImplementedError()
         
         self.register_buffer('buffer', torch.zeros(1))
 
