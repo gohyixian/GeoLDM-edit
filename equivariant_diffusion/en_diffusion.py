@@ -1025,7 +1025,7 @@ class EnHierarchicalVAE(torch.nn.Module):
             print(x_min, x_max, y_min, y_max)
             
             self.scale_fn_m = (y_max - y_min) / (x_max - x_min)
-            self.scale_fn_c = abs(self.scale_fn_m * x_min)
+            self.scale_fn_c = y_min - (self.scale_fn_m * x_min)
             print(f">> EnHierarchicalVAE self.scale_fn_m={self.scale_fn_m} self.scale_fn_c={self.scale_fn_c}")
 
         else:
