@@ -16,6 +16,7 @@ from equivariant_diffusion.utils import assert_mean_zero_with_mask, remove_mean_
     assert_correctly_masked, sample_center_gravity_zero_gaussian_with_mask
 
 import gc
+import math
 import torch
 from torch import nn
 import time
@@ -391,7 +392,8 @@ def main():
             overall_recall.append(nll_dict['recon_loss_dict']['overall_recall'])
             overall_f1.append(nll_dict['recon_loss_dict']['overall_f1'])
             for cls, acc in nll_dict['recon_loss_dict']['classwise_accuracy'].items():
-                classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []) + [acc]
+                if not math.isnan(acc):
+                    classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []) + [acc]
 
             # cleanup
             del x, h, node_mask, edge_mask, one_hot, charges, nll
