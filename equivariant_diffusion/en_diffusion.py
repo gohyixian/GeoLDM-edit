@@ -1013,6 +1013,7 @@ class EnHierarchicalVAE(torch.nn.Module):
         print(f">> EnHierarchicalVAE self.vae_normalize_method={self.vae_normalize_method}") if self.vae_normalize_x else None
         
         if self.vae_normalize_method == 'scale':
+            norm_values = PARAM_REGISTRY.get('vae_normalize_factors')
             self.norm_values = norm_values  # (1., 1., 1.)
             self.norm_biases = norm_biases  # (1., 1., 1.)
             print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
