@@ -227,6 +227,10 @@ def main():
         error_x = []
         error_h = []
         error_charges = []
+        overall_accuracy = []
+        overall_recall = []
+        overall_f1 = []
+        classwise_accuracy = {}
 
         for i, data in tqdm(enumerate(loader)):
             x = data['positions'].to(device, dtype)
@@ -278,7 +282,11 @@ def main():
             #     'denom': denom,
             #     'n_dims': self.n_dims,
             #     'in_node_nf': self.in_node_nf,
-            #     'num_atoms': xh.shape[1]
+            #     'num_atoms': xh.shape[1],
+            #     'overall_accuracy': overall_accuracy,
+            #     'overall_recall': overall_recall,
+            #     'overall_f1': overall_f1,
+            #     'classwise_accuracy': classwise_accuracy
             # }
 
             N = node_mask.squeeze(2).sum(1).long()
@@ -319,6 +327,12 @@ def main():
                 print(f"Error X         : {nll_dict['recon_loss_dict']['error_x'].item()}", file=f)
                 print(f"Error H         : {nll_dict['recon_loss_dict']['error_h_cat'].item()}", file=f)
                 print(f"Error H Charges : {nll_dict['recon_loss_dict']['error_h_int'].item()}", file=f) if args.include_charges else None
+                print(f"Overall Accuracy: {nll_dict['recon_loss_dict']['overall_accuracy']}", file=f)
+                print(f"Overall Recall  : {nll_dict['recon_loss_dict']['overall_recall']}", file=f)
+                print(f"Overall F1      : {nll_dict['recon_loss_dict']['overall_f1']}", file=f)
+                print(f"Classwise Accuracy", file=f)
+                for cls, acc in nll_dict['recon_loss_dict']['classwise_accuracy'].items():
+                    print(f"    {cls} : {acc}", file=f)
                 print(f"\n=================", file=f)
                 print(f"denom      : {nll_dict['recon_loss_dict']['denom']}", file=f)
                 print(f"n_dims     : {nll_dict['recon_loss_dict']['n_dims']}", file=f)
@@ -331,6 +345,11 @@ def main():
             error_h.append(nll_dict['recon_loss_dict']['error_h_cat'].item())
             if args.include_charges:
                 error_charges.append(nll_dict['recon_loss_dict']['error_h_int'].item())
+            overall_accuracy.append(nll_dict['recon_loss_dict']['overall_accuracy'])
+            overall_recall.append(nll_dict['recon_loss_dict']['overall_recall'])
+            overall_f1.append(nll_dict['recon_loss_dict']['overall_f1'])
+            for cls, acc in nll_dict['recon_loss_dict']['classwise_accuracy'].items():
+                classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []) + [acc]
 
             # cleanup
             del x, h, node_mask, edge_mask, one_hot, charges, nll
@@ -343,6 +362,15 @@ def main():
         mean_error_h = sum(error_h) / len(error_h)
         if args.include_charges:
             mean_error_charges = sum(error_charges) / len(error_charges)
+        mean_overall_accuracy = sum(overall_accuracy) / len(overall_accuracy)
+        mean_overall_recall = sum(overall_recall) / len(overall_recall)
+        mean_overall_f1 = sum(overall_f1) / len(overall_f1)
+        mean_classwise_accuracy = {}
+        for cls, acc_list in classwise_accuracy.items():
+            if len(acc_list) > 0:
+                mean_classwise_accuracy[cls] = sum(acc_list) / len(acc_list)
+            else:
+                mean_classwise_accuracy[cls] = float('nan')
         
         # save overall average loss
         with open(os.path.join(args.save_samples_dir, "loss.txt"), "w") as f:
@@ -352,7 +380,12 @@ def main():
             print(f"mean Error X         : {mean_error_x}", file=f)
             print(f"mean Error H         : {mean_error_h}", file=f)
             print(f"mean Error H Charges : {mean_error_charges}", file=f) if args.include_charges else None
-            
+            print(f"mean Overall Accuracy: {mean_overall_accuracy}", file=f)
+            print(f"mean Overall Recall  : {mean_overall_recall}", file=f)
+            print(f"mean Overall F1      : {mean_overall_f1}", file=f)
+            print(f"mean Classwise Accuracy", file=f)
+            for cls, acc in mean_classwise_accuracy.items():
+                print(f"    {cls} : {acc}", file=f)
             
             
 

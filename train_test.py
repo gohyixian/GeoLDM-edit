@@ -406,7 +406,7 @@ def save_and_vis_activations(args, loader, epoch, iter, model_ema, device, dtype
         # ~!mp
         # transform batch through flow
         nll, _, _ = losses.compute_loss_and_nll(args, model_ema, nodes_dist,
-                                                                x, h, node_mask, edge_mask, context)
+                                                x, h, node_mask, edge_mask, context)
 
         base_path_activations = os.path.join(args.save_activations_path, args.exp_name, "saved_activations", \
             f"epoch_{str(epoch).zfill(3)}_iter_{str(iter).zfill(10)}", f"sample_{str(i).zfill(3)}")
