@@ -77,6 +77,7 @@ def main():
     # additional & override settings for sparsity plots
     args.batch_size = 1 # must be 1 for this script
     args.save_samples_dir = f'recon_loss_analysis/{args.exp_name}/{args.training_mode}/'
+    args.save_samples_dir_wrong = f'recon_loss_analysis/{args.exp_name}/{args.training_mode}/classwise_accuracy_mistake/'
 
     # remove activations from previous runs
     if not opt.store_samples:
@@ -342,7 +343,17 @@ def main():
             # Average over batch.
             nll = nll.mean(0)
             
-            save_mol_path = os.path.join(args.save_samples_dir, datetime.now().strftime('%Y%m%d%H%M%S%f') + '_' + str(i).zfill(6))
+            perfect_classwise_accuracy = True
+            for cls, acc in nll_dict['recon_loss_dict']['classwise_accuracy'].items():
+                if not math.isnan(acc):
+                    if acc < 1.0:
+                        perfect_classwise_accuracy = False
+            
+            if perfect_classwise_accuracy:
+                save_mol_path = os.path.join(args.save_samples_dir, datetime.now().strftime('%Y%m%d%H%M%S%f') + '_' + str(i).zfill(6))
+            else:
+                save_mol_path = os.path.join(args.save_samples_dir_wrong, datetime.now().strftime('%Y%m%d%H%M%S%f') + '_' + str(i).zfill(6))
+            
             if not os.path.exists(save_mol_path):
                 os.makedirs(save_mol_path)
             
