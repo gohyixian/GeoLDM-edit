@@ -25,7 +25,7 @@ include_charges: false   # true for qm9
 # only works for ldm, not for VAE
 condition_time: true
 
-vis_activations: true
+vis_activations: false
 vis_activations_batch_samples: 5
 vis_activations_batch_size: 1
 vis_activations_specific_ylim: [0, 40]
