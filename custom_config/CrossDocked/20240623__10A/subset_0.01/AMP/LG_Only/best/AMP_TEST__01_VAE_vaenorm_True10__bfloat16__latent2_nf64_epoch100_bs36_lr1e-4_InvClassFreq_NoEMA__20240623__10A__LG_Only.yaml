@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf64_epoch30_bs36_lr1e-4_InvClassFreq__20240623__10A__LG_Only
+exp_name: AMP_TEST__01_VAE_vaenorm_True10__bfloat16__latent2_nf64_epoch100_bs36_lr1e-4_InvClassFreq_NoEMA__20240623__10A__LG_Only
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -75,7 +75,7 @@ start_epoch: 0
 test_epochs: 1
 
 
-n_epochs: 30  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+n_epochs: 100  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
 batch_size: 36    # 24
 lr: 1.0e-4   # 0.0001
 
@@ -93,7 +93,7 @@ dp: true
 clip_grad: true
 
 # Amount of EMA decay, 0 means off. A reasonable value is 0.999.
-ema_decay: 0.9999
+ema_decay: 0
 
 # add noise to x before encoding, data augmenting
 augment_noise: 0
@@ -158,8 +158,9 @@ latent_nf: 2  # 1
 # normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
 normalize_factors: [1, 4, 10]
 
-vae_normalize_x: false
-vae_normalize_factors: [100, 1, 1]
+vae_normalize_x: true
+vae_normalize_method: scale     # scale | linear
+vae_normalize_factors: [10, 1, 1]
 
 reweight_class_loss: "inv_class_freq"
 

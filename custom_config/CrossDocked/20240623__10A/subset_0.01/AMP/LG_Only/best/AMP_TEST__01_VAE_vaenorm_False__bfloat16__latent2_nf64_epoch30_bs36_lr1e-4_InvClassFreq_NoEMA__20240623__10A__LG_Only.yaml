@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf64_epoch30_bs36_lr1e-4__20240623__10A__LG_Only
+exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf64_epoch30_bs36_lr1e-4_InvClassFreq_NoEMA__20240623__10A__LG_Only
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -25,7 +25,7 @@ include_charges: false   # true for qm9
 # only works for ldm, not for VAE
 condition_time: true
 
-vis_activations: true
+vis_activations: false
 vis_activations_batch_samples: 5
 vis_activations_batch_size: 1
 vis_activations_specific_ylim: [0, 40]
@@ -93,7 +93,7 @@ dp: true
 clip_grad: true
 
 # Amount of EMA decay, 0 means off. A reasonable value is 0.999.
-ema_decay: 0.9999
+ema_decay: 0
 
 # add noise to x before encoding, data augmenting
 augment_noise: 0
@@ -161,6 +161,7 @@ normalize_factors: [1, 4, 10]
 vae_normalize_x: false
 vae_normalize_factors: [100, 1, 1]
 
+reweight_class_loss: "inv_class_freq"
 
 
 
