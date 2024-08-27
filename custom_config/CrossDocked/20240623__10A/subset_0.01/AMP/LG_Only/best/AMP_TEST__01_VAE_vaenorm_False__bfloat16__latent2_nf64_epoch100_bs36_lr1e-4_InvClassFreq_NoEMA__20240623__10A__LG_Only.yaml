@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf128_epoch30_bs36_lr1e-4_NoEMA__20240623__10A__LG_Only
+exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf64_epoch100_bs36_lr1e-4_InvClassFreq_NoEMA__20240623__10A__LG_Only
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -25,7 +25,7 @@ include_charges: false   # true for qm9
 # only works for ldm, not for VAE
 condition_time: true
 
-vis_activations: true
+vis_activations: false
 vis_activations_batch_samples: 5
 vis_activations_batch_size: 1
 vis_activations_specific_ylim: [0, 40]
@@ -75,7 +75,7 @@ start_epoch: 0
 test_epochs: 1
 
 
-n_epochs: 30  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+n_epochs: 100  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
 batch_size: 36    # 24
 lr: 1.0e-4   # 0.0001
 
@@ -161,6 +161,7 @@ normalize_factors: [1, 4, 10]
 vae_normalize_x: false
 vae_normalize_factors: [100, 1, 1]
 
+reweight_class_loss: "inv_class_freq"
 
 
 
@@ -172,7 +173,7 @@ n_layers: 4  # 9 for qm9
 inv_sublayers: 1
 
 # model's internal operating number of features
-nf: 128
+nf: 64
 
 # use tanh in the coord_mlp
 tanh: true
