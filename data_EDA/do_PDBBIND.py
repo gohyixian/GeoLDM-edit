@@ -66,7 +66,9 @@ class PDBBIND:
 
 
 if __name__ == "__main__":
-    path_to_pdbbind = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/refined-set-xyz"
+    # path_to_pdbbind = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/refined-set-xyz"
+    path_to_pdbbind = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/refined-set-xyz'
+    
     files_to_omit = ['.DS_Store']   # mac
     ligand_pocket_pair_folders = sorted([os.path.join(path_to_pdbbind, f) for f in os.listdir(path_to_pdbbind) if f not in files_to_omit])
     
@@ -84,7 +86,8 @@ if __name__ == "__main__":
                 pdbbind_data_obj.process_xyz_gdb9(openfile)
         
         # Store the object to a file using pickle
-        pdbbind_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/PDBBIND_{mode.upper()}_data_object.pkl'
+        # pdbbind_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/PDBBIND_{mode.upper()}_data_object.pkl'
+        pdbbind_data_object_pkl = f"/mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data_EDA/data_object_cache/PDBBIND_{mode.upper()}_data_object.pkl"
         with open(pdbbind_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
             pickle.dump(pdbbind_data_obj, file)
         del pdbbind_data_obj

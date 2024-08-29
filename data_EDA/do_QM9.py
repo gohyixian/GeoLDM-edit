@@ -107,7 +107,8 @@ class QM9:
 
 
 if __name__ == "__main__":
-    path_to_qm9 = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/QM9/QM9_113885_GDB-9_molecules_xyz"
+    # path_to_qm9 = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/QM9/QM9_113885_GDB-9_molecules_xyz"
+    path_to_qm9 = '/mnt/c/Users/PC/Desktop/yixian/data/QM9/QM9_113885_GDB-9_molecules_xyz'
     files_to_omit = ['.DS_Store']   # mac
     files = sorted([os.path.join(path_to_qm9, f) for f in os.listdir(path_to_qm9) if f not in files_to_omit])
     
@@ -118,7 +119,8 @@ if __name__ == "__main__":
             qm9_data_obj.process_xyz_gdb9(openfile)
     
     # Store the object to a file using pickle
-    qm9_data_object_pkl = '/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/QM9_data_object.pkl'
+    # qm9_data_object_pkl = '/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/QM9_data_object.pkl'
+    qm9_data_object_pkl = f"/mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data_EDA/data_object_cache/QM9_data_object.pkl"
     with open(qm9_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(qm9_data_obj, file)
     

@@ -338,7 +338,9 @@ if __name__ == '__main__':
     # LIGAND
     # Store the object to a file using pickle
     distance_by_ca = "ca_dist_" if args.determine_distance_by_ca else ""
-    moad_ligand_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_{distance_by_ca}LIGAND_data_object.pkl'
+    # moad_ligand_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_{distance_by_ca}LIGAND_data_object.pkl'
+    moad_ligand_data_object_pkl = f"/mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_{distance_by_ca}LIGAND_data_object.pkl"
+    
     with open(moad_ligand_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(ligand_data_obj, file)
     del ligand_data_obj
@@ -356,7 +358,9 @@ if __name__ == '__main__':
     # POCKET
     # Store the object to a file using pickle
     ca_only = 'CA_ONLY_' if args.ca_only else ''
-    moad_pocket_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_POCKET_{distance_by_ca}{args.dist_cutoff}A_{ca_only}data_object.pkl'
+    # moad_pocket_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_POCKET_{distance_by_ca}{args.dist_cutoff}A_{ca_only}data_object.pkl'
+    moad_pocket_data_object_pkl = f"/mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data_EDA/data_object_cache/BINDINGMOAD_POCKET_{distance_by_ca}{args.dist_cutoff}A_{ca_only}data_object.pkl"
+    
     with open(moad_pocket_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(pocket_data_obj, file)
     del pocket_data_obj

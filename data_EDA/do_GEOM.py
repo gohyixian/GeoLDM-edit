@@ -64,7 +64,8 @@ class GEOM:
 
 
 if __name__ == "__main__":
-    path_to_GEOM_msgpack = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/GEOM/drugs_crude.msgpack'
+    # path_to_GEOM_msgpack = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/GEOM/drugs_crude.msgpack'
+    path_to_GEOM_msgpack = '/mnt/c/Users/PC/Desktop/yixian/data/GEOM/drugs_crude.msgpack'
     unpacker = msgpack.Unpacker(open(path_to_GEOM_msgpack, "rb"))
     
     geom_data_obj = GEOM()
@@ -75,7 +76,9 @@ if __name__ == "__main__":
     
     
     # Store the object to a file using pickle
-    geom_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/GEOM_C{max_comformers_per_molecule}_data_object.pkl'
+    # geom_data_object_pkl = f'/Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data_EDA/data_object_cache/GEOM_C{max_comformers_per_molecule}_data_object.pkl'
+    geom_data_object_pkl = f"/mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data_EDA/data_object_cache/GEOM_C{max_comformers_per_molecule}_data_object.pkl"
+    
     
     with open(geom_data_object_pkl, 'wb') as file:  # Use 'wb' mode for binary writing
         pickle.dump(geom_data_obj, file)
