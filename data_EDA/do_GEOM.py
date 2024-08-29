@@ -52,7 +52,8 @@ class GEOM:
                     
                     xyz = coords[:, 1:]
                     center_of_coordinates = np.mean(xyz, axis=0)
-                    distances_to_center = np.array([euclidean_distance(atom, center_of_coordinates) for atom in xyz])
+                    # distances_to_center = np.array([euclidean_distance(atom, center_of_coordinates) for atom in xyz])
+                    distances_to_center = euclidean_distance(xyz, center_of_coordinates, axis=1)
                     self.radius_mean.append(float(np.mean(distances_to_center)))
                     self.radius_min.append(float(np.min(distances_to_center)))
                     self.radius_max.append(float(np.max(distances_to_center)))
