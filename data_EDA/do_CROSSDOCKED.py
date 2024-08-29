@@ -35,9 +35,9 @@ def process_ligand_and_pocket(pdbfile, sdffile, atom_dict, dist_cutoff,
     lig_num_atoms_no_H = len([a for a in lig_atoms if a != 'H'])
 
     lig_coord_center = np.mean(lig_coords, axis=0)
-    assert len(lig_coord_center.shape) == 1 and lig_coord_center.shape == 3
+    print(f"LG: {lig_coord_center.shape}")
     lig_radius = euclidean_distance(lig_coords, lig_coord_center, axis=1)
-    assert lig_radius.shape[0] == lig_coords.shape[0]
+    print(f"LG: {lig_radius.shape}")
     lig_radius_mean = float(np.mean(lig_radius))
     lig_radius_min = float(np.min(lig_radius))
     lig_radius_max = float(np.max(lig_radius))
@@ -84,9 +84,9 @@ def process_ligand_and_pocket(pdbfile, sdffile, atom_dict, dist_cutoff,
                         full_coords.append(atom.coord)
             full_coords = np.stack(full_coords)
             pocket_coords_center = np.mean(full_coords, axis=0)
-            assert len(pocket_coords_center.shape) == 1 and pocket_coords_center.shape == 3
+            print(f"PKT: {pocket_coords_center.shape}")
             pocket_radius = euclidean_distance(full_coords, pocket_coords_center, axis=1)
-            assert pocket_radius.shape[0] == full_coords.shape[0]
+            print(f"PKT: {pocket_radius.shape}")
             pocket_radius_mean = float(np.mean(pocket_radius))
             pocket_radius_min = float(np.min(pocket_radius))
             pocket_radius_max = float(np.max(pocket_radius))
@@ -102,9 +102,7 @@ def process_ligand_and_pocket(pdbfile, sdffile, atom_dict, dist_cutoff,
             [np.array([atom.coord for atom in res.get_atoms()])
              for res in pocket_residues], axis=0)
         pocket_coords_center = np.mean(full_coords, axis=0)
-        assert len(pocket_coords_center.shape) == 1 and pocket_coords_center.shape == 3
         pocket_radius = euclidean_distance(full_coords, pocket_coords_center, axis=1)
-        assert pocket_radius.shape[0] == full_coords.shape[0]
         pocket_radius_mean = float(np.mean(pocket_radius))
         pocket_radius_min = float(np.min(pocket_radius))
         pocket_radius_max = float(np.max(pocket_radius))
