@@ -114,7 +114,9 @@ def process_ligand_and_pocket(pdb_struct, ligand_name, ligand_chain, ligand_resi
     lig_num_atoms_no_H = len([a for a in lig_atoms if a.element != 'H'])
     
     lig_coord_center = np.mean(lig_coords, axis=0)
+    print(f"LG: {lig_coord_center.shape}")
     lig_radius = euclidean_distance(lig_coords, lig_coord_center, axis=1)
+    print(f"LG: {lig_radius.shape}")
     lig_radius_mean = float(np.mean(lig_radius))
     lig_radius_min = float(np.min(lig_radius))
     lig_radius_max = float(np.max(lig_radius))
@@ -159,7 +161,9 @@ def process_ligand_and_pocket(pdb_struct, ligand_name, ligand_chain, ligand_resi
     if ca_only:
         pocket_coords = c_alpha
         pocket_coords_center = np.mean(pocket_coords, axis=0)
+        print(f"PKT: {pocket_coords_center.shape}")
         pocket_radius = euclidean_distance(pocket_coords, pocket_coords_center, axis=1)
+        print(f"PKT: {pocket_radius.shape}")
         pocket_radius_mean = float(np.mean(pocket_radius))
         pocket_radius_min = float(np.min(pocket_radius))
         pocket_radius_max = float(np.max(pocket_radius))
@@ -169,7 +173,9 @@ def process_ligand_and_pocket(pdb_struct, ligand_name, ligand_chain, ligand_resi
                         if (a.element.capitalize() in atom_dict or a.element != 'H')]
         pocket_coords = np.array([a.get_coord() for a in pocket_atoms])
         pocket_coords_center = np.mean(pocket_coords, axis=0)
+        print(f"PKT: {pocket_coords_center.shape}")
         pocket_radius = euclidean_distance(pocket_coords, pocket_coords_center, axis=1)
+        print(f"PKT: {pocket_radius.shape}")
         pocket_radius_mean = float(np.mean(pocket_radius))
         pocket_radius_min = float(np.min(pocket_radius))
         pocket_radius_max = float(np.max(pocket_radius))

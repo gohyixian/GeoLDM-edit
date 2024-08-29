@@ -76,8 +76,10 @@ class QM9:
         # molecule's coordinate center
         xyz = np.array(atom_positions)
         center_of_coordinates = np.mean(xyz, axis=0)
+        print(f"Center: {center_of_coordinates.shape}")
         # distances_to_center = np.array([euclidean_distance(atom, center_of_coordinates) for atom in xyz])
         distances_to_center = euclidean_distance(xyz, center_of_coordinates, axis=1)
+        print(f"Radius: {distances_to_center.shape}")
         self.radius_mean.append(float(np.mean(distances_to_center)))
         self.radius_min.append(float(np.min(distances_to_center)))
         self.radius_max.append(float(np.max(distances_to_center)))
