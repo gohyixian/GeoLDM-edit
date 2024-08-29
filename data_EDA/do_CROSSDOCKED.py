@@ -104,6 +104,7 @@ def process_ligand_and_pocket(pdbfile, sdffile, atom_dict, dist_cutoff,
         pocket_radius_mean = float(np.mean(pocket_radius))
         pocket_radius_min = float(np.min(pocket_radius))
         pocket_radius_max = float(np.max(pocket_radius))
+        print(f"!!! pocket_radius_max: {pocket_radius_max}")
         
         for a in full_atoms:
             atomic_num = s2an[str(a)]
