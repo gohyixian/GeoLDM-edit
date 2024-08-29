@@ -30,6 +30,8 @@ vis_activations_batch_samples: 5
 vis_activations_batch_size: 1
 vis_activations_specific_ylim: [0, 40]
 
+random_seed: 42
+
 
 # ========================================================================================================== Dataset
 

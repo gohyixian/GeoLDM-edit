@@ -17,6 +17,8 @@ from equivariant_diffusion import en_diffusion
 from equivariant_diffusion import utils as diffusion_utils
 import torch
 from torch import nn
+import random
+import numpy as np
 import time
 import pickle
 import math
@@ -38,6 +40,10 @@ def main():
         args_dict = yaml.safe_load(file)
     args = Config(**args_dict)
     
+    # set random seed
+    torch.manual_seed(args.random_seed)
+    random.seed(args.random_seed)
+    np.random.seed(args.random_seed)
 
     # # priority check goes here
     # if args.remove_h:
