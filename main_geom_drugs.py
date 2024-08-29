@@ -143,6 +143,12 @@ def main():
         args.vae_normalize_method = None
     if not hasattr(args, 'vae_normalize_fn_points'):  # [x_min, y_min, x_max, y_max]
         args.vae_normalize_fn_points = None
+
+    # data splits
+    if not hasattr(args, 'data_splitted'):
+        args.data_splitted = False
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
@@ -157,7 +163,8 @@ def main():
                                                     permutation_file_path=args.permutation_file_path, 
                                                     dataset_name=args.dataset,
                                                     training_mode=args.training_mode,
-                                                    filter_pocket_size=args.filter_pocket_size)
+                                                    filter_pocket_size=args.filter_pocket_size,
+                                                    data_splitted=args.data_splitted)
     # ~!to ~!mp
     # ['positions'], ['one_hot'], ['charges'], ['atonm_mask'], ['edge_mask'] are added here
     transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, args.device, args.sequential)

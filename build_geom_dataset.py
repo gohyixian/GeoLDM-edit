@@ -67,9 +67,157 @@ def extract_conformers(args):
 
 
 
+
+def process_splitted_pair_data(all_data, filter_size=None, filter_pocket_size=None):
+    ligand_data_train, pocket_data_train = all_data['ligand_train'], all_data['pocket_train']
+    ligand_data_test, pocket_data_test = all_data['ligand_test'], all_data['pocket_test']
+    ligand_data_val, pocket_data_val = all_data['ligand_val'], all_data['pocket_val']
+    
+    # ligand
+    ligand_mol_id_train = ligand_data_train[:, 0].astype(int)
+    ligands_train = ligand_data_train[:, 1:]
+    ligand_split_indices_train = np.nonzero(ligand_mol_id_train[:-1] - ligand_mol_id_train[1:])[0] + 1
+    ligand_data_list_train = np.split(ligands_train, ligand_split_indices_train)
+    
+    ligand_mol_id_test = ligand_data_test[:, 0].astype(int)
+    ligands_test = ligand_data_test[:, 1:]
+    ligand_split_indices_test = np.nonzero(ligand_mol_id_test[:-1] - ligand_mol_id_test[1:])[0] + 1
+    ligand_data_list_test = np.split(ligands_test, ligand_split_indices_test)
+    
+    ligand_mol_id_val = ligand_data_val[:, 0].astype(int)
+    ligands_val = ligand_data_val[:, 1:]
+    ligand_split_indices_val = np.nonzero(ligand_mol_id_val[:-1] - ligand_mol_id_val[1:])[0] + 1
+    ligand_data_list_val = np.split(ligands_val, ligand_split_indices_val)
+
+    # pocket
+    pocket_mol_id_train = pocket_data_train[:, 0].astype(int)
+    pockets_train = pocket_data_train[:, 1:]
+    pocket_split_indices_train = np.nonzero(pocket_mol_id_train[:-1] - pocket_mol_id_train[1:])[0] + 1
+    pocket_data_list_train = np.split(pockets_train, pocket_split_indices_train)
+    
+    pocket_mol_id_test = pocket_data_test[:, 0].astype(int)
+    pockets_test = pocket_data_test[:, 1:]
+    pocket_split_indices_test = np.nonzero(pocket_mol_id_test[:-1] - pocket_mol_id_test[1:])[0] + 1
+    pocket_data_list_test = np.split(pockets_test, pocket_split_indices_test)
+
+    pocket_mol_id_val = pocket_data_val[:, 0].astype(int)
+    pockets_val = pocket_data_val[:, 1:]
+    pocket_split_indices_val = np.nonzero(pocket_mol_id_val[:-1] - pocket_mol_id_val[1:])[0] + 1
+    pocket_data_list_val = np.split(pockets_val, pocket_split_indices_val)
+
+    # Keep only molecules <= filter_size
+    if filter_size is not None and filter_pocket_size is not None:
+        
+        assert len(list(ligand_data_list_train)) == len(list(pocket_data_list_train))
+        assert len(list(ligand_data_list_test)) == len(list(pocket_data_list_test))
+        assert len(list(ligand_data_list_val)) == len(list(pocket_data_list_val))
+        
+        tmp_ligand_data_list, tmp_pocket_data_list = [], []
+        for i in range(len(list(ligand_data_list_train))):
+            if (ligand_data_list_train[i].shape[0] <= filter_size) and (pocket_data_list_train[i].shape[0] <= filter_pocket_size):
+                tmp_ligand_data_list.append(ligand_data_list_train[i])
+                tmp_pocket_data_list.append(pocket_data_list_train[i])
+        
+        ligand_data_list_train = tmp_ligand_data_list
+        pocket_data_list_train = tmp_pocket_data_list
+        assert len(ligand_data_list_train) > 0, '[train split] No molecules left after filter.'
+
+        tmp_ligand_data_list, tmp_pocket_data_list = [], []
+        for i in range(len(list(ligand_data_list_test))):
+            if (ligand_data_list_test[i].shape[0] <= filter_size) and (pocket_data_list_test[i].shape[0] <= filter_pocket_size):
+                tmp_ligand_data_list.append(ligand_data_list_test[i])
+                tmp_pocket_data_list.append(pocket_data_list_test[i])
+        
+        ligand_data_list_test = tmp_ligand_data_list
+        pocket_data_list_test = tmp_pocket_data_list
+        assert len(ligand_data_list_test) > 0, '[test split] No molecules left after filter.'
+
+        tmp_ligand_data_list, tmp_pocket_data_list = [], []
+        for i in range(len(list(ligand_data_list_val))):
+            if (ligand_data_list_val[i].shape[0] <= filter_size) and (pocket_data_list_val[i].shape[0] <= filter_pocket_size):
+                tmp_ligand_data_list.append(ligand_data_list_val[i])
+                tmp_pocket_data_list.append(pocket_data_list_val[i])
+        
+        ligand_data_list_val = tmp_ligand_data_list
+        pocket_data_list_val = tmp_pocket_data_list
+        assert len(ligand_data_list_val) > 0, '[val split] No molecules left after filter.'
+
+    assert len(list(ligand_data_list_train)) == len(list(pocket_data_list_train)), '[train split] Invalid Ligand-Pocket pairs'
+    assert len(list(ligand_data_list_test)) == len(list(pocket_data_list_test)), '[test split] Invalid Ligand-Pocket pairs'
+    assert len(list(ligand_data_list_val)) == len(list(pocket_data_list_val)), '[val split] Invalid Ligand-Pocket pairs'
+    
+    return ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, \
+        pocket_data_list_train, pocket_data_list_test, pocket_data_list_val
+
+
+
+
+def process_unsplitted_pair_data(all_data, filter_size=None, filter_pocket_size=None, permutation_file_path=None,
+                            conformation_file=None, base_path=None):
+    ligand_data, pocket_data = all_data['ligand'], all_data['pocket']
+    
+    # ligand
+    ligand_mol_id = ligand_data[:, 0].astype(int)
+    ligands = ligand_data[:, 1:]
+    ligand_split_indices = np.nonzero(ligand_mol_id[:-1] - ligand_mol_id[1:])[0] + 1
+    ligand_data_list = np.split(ligands, ligand_split_indices)
+    
+    # pocket
+    pocket_mol_id = pocket_data[:, 0].astype(int)
+    pockets = pocket_data[:, 1:]
+    pocket_split_indices = np.nonzero(pocket_mol_id[:-1] - pocket_mol_id[1:])[0] + 1
+    pocket_data_list = np.split(pockets, pocket_split_indices)
+    
+    # Keep only molecules <= filter_size
+    if filter_size is not None and filter_pocket_size is not None:
+        
+        assert len(list(ligand_data_list)) == len(list(pocket_data_list))
+        
+        tmp_ligand_data_list, tmp_pocket_data_list = [], []
+        for i in range(len(list(ligand_data_list))):
+            if (ligand_data_list[i].shape[0] <= filter_size) and (pocket_data_list[i].shape[0] <= filter_pocket_size):
+                tmp_ligand_data_list.append(ligand_data_list[i])
+                tmp_pocket_data_list.append(pocket_data_list[i])
+        
+        ligand_data_list = tmp_ligand_data_list
+        pocket_data_list = tmp_pocket_data_list
+        assert len(ligand_data_list) > 0, 'No molecules left after filter.'
+    
+    # permutation
+    if permutation_file_path is not None:
+        print(">> Loading permutation file from:", permutation_file_path)
+        perm = np.load(permutation_file_path)
+    else:
+        file_name = conformation_file.split(os.path.sep)[-1][:-4]
+        if filter_size is not None:
+            file_name += f"_LG{filter_size}"
+        if filter_pocket_size is not None:
+            file_name += f"_PKT{filter_pocket_size}"
+        default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
+        # CAREFUL! Only for first time run:
+        assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
+        perm = np.random.permutation(len(ligand_data_list)).astype('int32')
+        print('Warning, currently taking a random permutation for '
+            'train/val/test partitions, this needs to be fixed for'
+            'reproducibility.')
+        assert not os.path.exists(default_permutation_file_path)
+        np.save(default_permutation_file_path, perm)
+    
+    assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
+    assert len(list(ligand_data_list)) == len(list(perm)), 'Invalid permutation file! Did you change [filter_size] and/or [filter_pocket_size]?'
+    
+    ligand_data_list = [ligand_data_list[i] for i in perm]
+    pocket_data_list = [pocket_data_list[i] for i in perm]
+
+    return ligand_data_list, pocket_data_list
+
+
+
+
 def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
                     filter_size=None, permutation_file_path=None, 
-                    dataset_name=None, training_mode=None, filter_pocket_size=None):
+                    dataset_name=None, training_mode=None, filter_pocket_size=None,
+                    data_splitted=False):
     from pathlib import Path
     path = Path(conformation_file)
     base_path = path.parent.absolute()
@@ -117,215 +265,149 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
     
     elif training_mode == 'VAE':
         # load and combine Ligand+Pocket data
-        ligand_data, pocket_data = all_data['ligand'], all_data['pocket']
-        
-        # ligand
-        ligand_mol_id = ligand_data[:, 0].astype(int)
-        ligands = ligand_data[:, 1:]
-        ligand_split_indices = np.nonzero(ligand_mol_id[:-1] - ligand_mol_id[1:])[0] + 1
-        ligand_data_list = np.split(ligands, ligand_split_indices)
-        
-        # pocket
-        pocket_mol_id = pocket_data[:, 0].astype(int)
-        pockets = pocket_data[:, 1:]
-        pocket_split_indices = np.nonzero(pocket_mol_id[:-1] - pocket_mol_id[1:])[0] + 1
-        pocket_data_list = np.split(pockets, pocket_split_indices)
-        
-        # Keep only molecules <= filter_size
-        if filter_size is not None and filter_pocket_size is not None:
+        if not data_splitted:
+            ligand_data_list, pocket_data_list = process_unsplitted_pair_data(
+                                                     all_data, 
+                                                     filter_size, 
+                                                     filter_pocket_size, 
+                                                     permutation_file_path, 
+                                                     conformation_file, 
+                                                     base_path
+                                                 )
             
-            assert len(list(ligand_data_list)) == len(list(pocket_data_list))
-            
-            tmp_ligand_data_list, tmp_pocket_data_list = [], []
+            # combine both ligand+pocket together manually with [lg, pkt, lg, pkt, ..] ordering to ensure VAE sees same amount of both ligand and pockets
+            all_data = []
+            vae_data_mode = PARAM_REGISTRY.get('vae_data_mode')
+            print(f">> load_split_data: [VAE] loading with data mode: {vae_data_mode}")
             for i in range(len(list(ligand_data_list))):
-                if (ligand_data_list[i].shape[0] <= filter_size) and (pocket_data_list[i].shape[0] <= filter_pocket_size):
-                    tmp_ligand_data_list.append(ligand_data_list[i])
-                    tmp_pocket_data_list.append(pocket_data_list[i])
-            
-            ligand_data_list = tmp_ligand_data_list
-            pocket_data_list = tmp_pocket_data_list
-            assert len(ligand_data_list) > 0, 'No molecules left after filter.'
-        
-        # permutation
-        if permutation_file_path is not None:
-            print(">> Loading permutation file from:", permutation_file_path)
-            perm = np.load(permutation_file_path)
+                if vae_data_mode == 'ligand':
+                    all_data.append(ligand_data_list[i])
+                elif vae_data_mode == 'pocket':
+                    all_data.append(pocket_data_list[i])
+                elif vae_data_mode == 'all':
+                    all_data.append(ligand_data_list[i])
+                    all_data.append(pocket_data_list[i])
+                else:
+                    raise NotImplementedError()
+
+            # split
+            num_mol = len(all_data)
+            val_index = int(num_mol * val_proportion)
+            test_index = val_index + int(num_mol * test_proportion)
+            print(f">> Data Splits: len(data_list):{len(all_data)},  [val_index, test_index]:{[val_index, test_index]}")
+            val_data, test_data, train_data = all_data[:val_index], all_data[val_index:test_index], all_data[test_index:]
+       
         else:
-            file_name = conformation_file.split(os.path.sep)[-1][:-4]
-            if filter_size is not None:
-                file_name += f"_LG{filter_size}"
-            if filter_pocket_size is not None:
-                file_name += f"_PKT{filter_pocket_size}"
-            default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
-            # CAREFUL! Only for first time run:
-            assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
-            perm = np.random.permutation(len(ligand_data_list)).astype('int32')
-            print('Warning, currently taking a random permutation for '
-                'train/val/test partitions, this needs to be fixed for'
-                'reproducibility.')
-            assert not os.path.exists(default_permutation_file_path)
-            np.save(default_permutation_file_path, perm)
-        
-        assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
-        assert len(list(ligand_data_list)) == len(list(perm)), 'Invalid permutation file! Did you change [filter_size] and/or [filter_pocket_size]?'
-        
-        ligand_data_list = [ligand_data_list[i] for i in perm]
-        pocket_data_list = [pocket_data_list[i] for i in perm]
-        
-        # combine both ligand+pocket together manually with [lg, pkt, lg, pkt, ..] ordering to ensure VAE sees same amount of both ligand and pockets
-        all_data = []
-        vae_data_mode = PARAM_REGISTRY.get('vae_data_mode')
-        print(f">> load_split_data: [VAE] loading with data mode: {vae_data_mode}")
-        for i in range(len(list(ligand_data_list))):
-            if vae_data_mode == 'ligand':
-                all_data.append(ligand_data_list[i])
-            elif vae_data_mode == 'pocket':
-                all_data.append(pocket_data_list[i])
-            elif vae_data_mode == 'all':
-                all_data.append(ligand_data_list[i])
-                all_data.append(pocket_data_list[i])
-            else:
-                raise NotImplementedError()
+            ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, \
+                pocket_data_list_train, pocket_data_list_test, pocket_data_list_val \
+                    = process_splitted_pair_data(all_data, filter_size, filter_pocket_size)
+            
+            # combine both ligand+pocket together manually with [lg, pkt, lg, pkt, ..] ordering to ensure VAE sees same amount of both ligand and pockets
+            all_data_train = []
+            all_data_test = []
+            all_data_val = []
+            vae_data_mode = PARAM_REGISTRY.get('vae_data_mode')
+            print(f">> load_split_data: [VAE] loading with data mode: {vae_data_mode}")
+            for i in range(len(list(ligand_data_list_train))):
+                if vae_data_mode == 'ligand':
+                    all_data_train.append(ligand_data_list_train[i])
+                elif vae_data_mode == 'pocket':
+                    all_data_train.append(pocket_data_list_train[i])
+                elif vae_data_mode == 'all':
+                    all_data_train.append(ligand_data_list_train[i])
+                    all_data_train.append(pocket_data_list_train[i])
+                else:
+                    raise NotImplementedError()
 
-        # split
-        num_mol = len(all_data)
-        val_index = int(num_mol * val_proportion)
-        test_index = val_index + int(num_mol * test_proportion)
-        print(f">> Data Splits: len(data_list):{len(all_data)},  [val_index, test_index]:{[val_index, test_index]}")
-        val_data, test_data, train_data = all_data[:val_index], all_data[val_index:test_index], all_data[test_index:]
+            for i in range(len(list(ligand_data_list_test))):
+                if vae_data_mode == 'ligand':
+                    all_data_test.append(ligand_data_list_test[i])
+                elif vae_data_mode == 'pocket':
+                    all_data_test.append(pocket_data_list_test[i])
+                elif vae_data_mode == 'all':
+                    all_data_test.append(ligand_data_list_test[i])
+                    all_data_test.append(pocket_data_list_test[i])
+                else:
+                    raise NotImplementedError()
 
+            for i in range(len(list(ligand_data_list_val))):
+                if vae_data_mode == 'ligand':
+                    all_data_val.append(ligand_data_list_val[i])
+                elif vae_data_mode == 'pocket':
+                    all_data_val.append(pocket_data_list_val[i])
+                elif vae_data_mode == 'all':
+                    all_data_val.append(ligand_data_list_val[i])
+                    all_data_val.append(pocket_data_list_val[i])
+                else:
+                    raise NotImplementedError()
+
+            print(f">> Data Splits (train | test | val):  {len(all_data_train)} : {len(all_data_test)} : {len(all_data_val)}")
+            val_data, test_data, train_data = all_data_val, all_data_test, all_data_train
+       
     elif training_mode == 'LDM':
-        # load ligand data only
-        ligand_data = all_data['ligand']
-        pocket_data = all_data['pocket']
-        
-        # ligand
-        ligand_mol_id = ligand_data[:, 0].astype(int)
-        ligands = ligand_data[:, 1:]
-        ligand_split_indices = np.nonzero(ligand_mol_id[:-1] - ligand_mol_id[1:])[0] + 1
-        ligand_data_list = np.split(ligands, ligand_split_indices)
-        
-        # pocket
-        pocket_mol_id = pocket_data[:, 0].astype(int)
-        pockets = pocket_data[:, 1:]
-        pocket_split_indices = np.nonzero(pocket_mol_id[:-1] - pocket_mol_id[1:])[0] + 1
-        pocket_data_list = np.split(pockets, pocket_split_indices)
-        
-        # Keep only molecules <= filter_size
-        if filter_size is not None and filter_pocket_size is not None:
+        if not data_splitted:
+            all_data, _ = process_unsplitted_pair_data(
+                              all_data, 
+                              filter_size, 
+                              filter_pocket_size, 
+                              permutation_file_path, 
+                              conformation_file, 
+                              base_path
+                          )
             
-            assert len(list(ligand_data_list)) == len(list(pocket_data_list))
-            
-            tmp_ligand_data_list = []
-            for i in range(len(list(ligand_data_list))):
-                if (ligand_data_list[i].shape[0] <= filter_size) and (pocket_data_list[i].shape[0] <= filter_pocket_size):
-                    # ligand only
-                    tmp_ligand_data_list.append(ligand_data_list[i])
-            
-            ligand_data_list = tmp_ligand_data_list
-            assert len(ligand_data_list) > 0, 'No molecules left after filter.'
+            # split
+            num_mol = len(all_data)
+            val_index = int(num_mol * val_proportion)
+            test_index = val_index + int(num_mol * test_proportion)
+            print(f">> Data Splits: len(data_list):{len(all_data)},  [val_index, test_index]:{[val_index, test_index]}")
+            val_data, test_data, train_data = all_data[:val_index], all_data[val_index:test_index], all_data[test_index:]
 
-        # permutation
-        if permutation_file_path is not None:
-            print(">> Loading permutation file from:", permutation_file_path)
-            perm = np.load(permutation_file_path)
         else:
-            file_name = conformation_file.split(os.path.sep)[-1][:-4]
-            if filter_size is not None:
-                file_name += f"_LG{filter_size}"
-            if filter_pocket_size is not None:
-                file_name += f"_PKT{filter_pocket_size}"
-            default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
-            # CAREFUL! Only for first time run:
-            perm = np.random.permutation(len(ligand_data_list)).astype('int32')
-            print('Warning, currently taking a random permutation for '
-                'train/val/test partitions, this needs to be fixed for'
-                'reproducibility.')
-            assert not os.path.exists(default_permutation_file_path)
-            np.save(default_permutation_file_path, perm)
+            ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, _, _, _ = \
+                    process_splitted_pair_data(all_data, filter_size, filter_pocket_size)
 
-        assert len(list(ligand_data_list)) == len(list(perm)), 'Invalid permutation file! Did you change [filter_size] and/or [filter_pocket_size]?'
-
-        all_data = [ligand_data_list[i] for i in perm]
-
-        # split
-        num_mol = len(all_data)
-        val_index = int(num_mol * val_proportion)
-        test_index = val_index + int(num_mol * test_proportion)
-        print(f">> Data Splits: len(data_list):{len(all_data)},  [val_index, test_index]:{[val_index, test_index]}")
-        val_data, test_data, train_data = all_data[:val_index], all_data[val_index:test_index], all_data[test_index:]
+            print(f">> Data Splits (train | test | val):  {len(ligand_data_list_train)} : {len(ligand_data_list_test)} : {len(ligand_data_list_val)}")
+            val_data, test_data, train_data = ligand_data_list_val, ligand_data_list_test, ligand_data_list_train
 
     elif training_mode == 'ControlNet':
-        # load and combine Ligand+Pocket data
-        ligand_data, pocket_data = all_data['ligand'], all_data['pocket']
-        
-        # ligand
-        ligand_mol_id = ligand_data[:, 0].astype(int)
-        ligands = ligand_data[:, 1:]
-        ligand_split_indices = np.nonzero(ligand_mol_id[:-1] - ligand_mol_id[1:])[0] + 1
-        ligand_data_list = np.split(ligands, ligand_split_indices)
-        
-        # pocket
-        pocket_mol_id = pocket_data[:, 0].astype(int)
-        pockets = pocket_data[:, 1:]
-        pocket_split_indices = np.nonzero(pocket_mol_id[:-1] - pocket_mol_id[1:])[0] + 1
-        pocket_data_list = np.split(pockets, pocket_split_indices)
-        
-        # Keep only molecules <= filter_size
-        if filter_size is not None and filter_pocket_size is not None:
-            
-            assert len(list(ligand_data_list)) == len(list(pocket_data_list))
-            
-            tmp_ligand_data_list, tmp_pocket_data_list = [], []
-            for i in range(len(list(ligand_data_list))):
-                if (ligand_data_list[i].shape[0] <= filter_size) and (pocket_data_list[i].shape[0] <= filter_pocket_size):
-                    tmp_ligand_data_list.append(ligand_data_list[i])
-                    tmp_pocket_data_list.append(pocket_data_list[i])
-            
-            ligand_data_list = tmp_ligand_data_list
-            pocket_data_list = tmp_pocket_data_list
-            assert len(ligand_data_list) > 0, 'No molecules left after filter.'
-        
-        # permutation
-        if permutation_file_path is not None:
-            print(">> Loading permutation file from:", permutation_file_path)
-            perm = np.load(permutation_file_path)
-        else:
-            file_name = conformation_file.split(os.path.sep)[-1][:-4]
-            if filter_size is not None:
-                file_name += f"_LG{filter_size}"
-            if filter_pocket_size is not None:
-                file_name += f"_PKT{filter_pocket_size}"
-            default_permutation_file_path = os.path.join(base_path, f'{file_name}_permutation.npy')
-            # CAREFUL! Only for first time run:
-            assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
-            perm = np.random.permutation(len(ligand_data_list)).astype('int32')
-            print('Warning, currently taking a random permutation for '
-                'train/val/test partitions, this needs to be fixed for'
-                'reproducibility.')
-            assert not os.path.exists(default_permutation_file_path)
-            np.save(default_permutation_file_path, perm)
-        
-        assert len(list(ligand_data_list)) == len(list(pocket_data_list)), 'Invalid Ligand-Pocket pairs'
-        assert len(list(ligand_data_list)) == len(list(perm)), 'Invalid permutation file! Did you change [filter_size] and/or [filter_pocket_size]?'
-        
-        ligand_data_list = [ligand_data_list[i] for i in perm]
-        pocket_data_list = [pocket_data_list[i] for i in perm]
+        if not data_splitted:
+            ligand_data_list, pocket_data_list = process_unsplitted_pair_data(
+                                                     all_data, 
+                                                     filter_size, 
+                                                     filter_pocket_size, 
+                                                     permutation_file_path, 
+                                                     conformation_file, 
+                                                     base_path
+                                                 )
 
-        # split
-        num_mol = len(ligand_data_list)
-        val_index = int(num_mol * val_proportion)
-        test_index = val_index + int(num_mol * test_proportion)
-        print(f">> Data Splits: len(data_list):{len(all_data)},  [val_index, test_index]:{[val_index, test_index]}")
-        ligand_val_data, ligand_test_data, ligand_train_data = ligand_data_list[:val_index], ligand_data_list[val_index:test_index], ligand_data_list[test_index:]
-        pocket_val_data, pocket_test_data, pocket_train_data = pocket_data_list[:val_index], pocket_data_list[val_index:test_index], pocket_data_list[test_index:]
-        
-        train_data, val_data, test_data = dict(), dict(), dict()
-        train_data['ligand'], train_data['pocket'] = ligand_train_data, pocket_train_data
-        test_data['ligand'],  test_data['pocket']  = ligand_test_data,  pocket_test_data
-        val_data['ligand'],   val_data['pocket']   = ligand_val_data,   pocket_val_data
+            # split
+            num_mol = len(ligand_data_list)
+            val_index = int(num_mol * val_proportion)
+            test_index = val_index + int(num_mol * test_proportion)
+            print(f">> Data Splits: len(data_list):{len(all_data)},  [val_index, test_index]:{[val_index, test_index]}")
+            ligand_val_data, ligand_test_data, ligand_train_data = ligand_data_list[:val_index], ligand_data_list[val_index:test_index], ligand_data_list[test_index:]
+            pocket_val_data, pocket_test_data, pocket_train_data = pocket_data_list[:val_index], pocket_data_list[val_index:test_index], pocket_data_list[test_index:]
+            
+            train_data, val_data, test_data = dict(), dict(), dict()
+            train_data['ligand'], train_data['pocket'] = ligand_train_data, pocket_train_data
+            test_data['ligand'],  test_data['pocket']  = ligand_test_data,  pocket_test_data
+            val_data['ligand'],   val_data['pocket']   = ligand_val_data,   pocket_val_data
+
+        else:
+            ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, \
+                pocket_data_list_train, pocket_data_list_test, pocket_data_list_val \
+                    = process_splitted_pair_data(all_data, filter_size, filter_pocket_size)
+
+            print(f">> Data Splits (train | test | val):  {len(ligand_data_list_train)} : {len(ligand_data_list_test)} : {len(ligand_data_list_val)}")
+            
+            train_data, val_data, test_data = dict(), dict(), dict()
+            train_data['ligand'], train_data['pocket'] = ligand_data_list_train, pocket_data_list_train
+            test_data['ligand'],  test_data['pocket']  = ligand_data_list_test,  pocket_data_list_test
+            val_data['ligand'],   val_data['pocket']   = ligand_data_list_val,   pocket_data_list_val
 
     return train_data, val_data, test_data
+
+
 
 
 class GeomDrugsDataset(Dataset):

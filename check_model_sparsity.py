@@ -131,6 +131,11 @@ def main():
         args.vae_data_mode = 'all'
 
 
+    # data splits
+    if not hasattr(args, 'data_splitted'):
+        args.data_splitted = False
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
@@ -145,7 +150,8 @@ def main():
                                                     permutation_file_path=args.permutation_file_path, 
                                                     dataset_name=args.dataset,
                                                     training_mode=args.training_mode,
-                                                    filter_pocket_size=args.filter_pocket_size)
+                                                    filter_pocket_size=args.filter_pocket_size,
+                                                    data_splitted=args.data_splitted)
     # ~!to ~!mp
     # ['positions'], ['one_hot'], ['charges'], ['atonm_mask'], ['edge_mask'] are added here
     dataset_info = get_dataset_info(dataset_name=args.dataset, remove_h=args.remove_h)

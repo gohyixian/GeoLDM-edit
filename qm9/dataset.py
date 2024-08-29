@@ -52,7 +52,8 @@ def retrieve_dataloaders(cfg):
                                                         test_proportion=0.1,
                                                         filter_size=cfg.filter_molecule_size,
                                                         permutation_file_path=permutation_file_path,
-                                                        dataset_name=cfg.dataset)
+                                                        dataset_name=cfg.dataset,
+                                                        data_splitted=cfg.data_splitted)
         transform = build_geom_dataset.GeomDrugsTransform(dataset_info,
                                                           cfg.include_charges,
                                                           cfg.device,

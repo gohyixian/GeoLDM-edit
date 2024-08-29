@@ -39,7 +39,9 @@ dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET
 
 # geom directory  ~!geom
 # data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz
-data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01.npz
+# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01.npz
+data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811.npz
+data_splitted: true
 
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
