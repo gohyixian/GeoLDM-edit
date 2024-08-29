@@ -97,8 +97,9 @@ def process_ligand_and_pocket(pdbfile, sdffile, atom_dict, dist_cutoff,
         full_coords = np.concatenate(
             [np.array([atom.coord for atom in res.get_atoms()])
              for res in pocket_residues], axis=0)
-
+        print(f"!!!!!!   full_coords.shape: {full_coords.shape}")
         pocket_coords_center = np.mean(full_coords)
+        print(f"!!!!!!   pocket_coords_center.shape: {pocket_coords_center.shape}")
         pocket_radius = euclidean_distance(full_coords, pocket_coords_center, axis=0)
         pocket_radius_mean = float(np.mean(pocket_radius))
         pocket_radius_min = float(np.min(pocket_radius))

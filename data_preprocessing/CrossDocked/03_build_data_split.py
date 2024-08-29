@@ -210,8 +210,8 @@ for field in counts_tbl.field_names:
     counts_tbl.align[field] = 'r'
 
 with open(os.path.join(save_plot_path, 'atom_type_distribution.txt'), 'w') as f:
-    print(f"Percentage of each atom class in entire split\n{percentage_tbl}\n\n\n", file=f)
-    print(f"Frequency of each atom class in entire split\n{counts_tbl}\n\n\n", file=f)
+    print(f"Percentage of each atom class in each split\n{percentage_tbl}\n\n\n", file=f)
+    print(f"Frequency of each atom class in each split\n{counts_tbl}\n\n\n", file=f)
     print(f"Logs\n=====", file=f)
     print(f"len(data_pairs): {len(ligand_data_list)}", file=f)
     print(f"len(all_idx)   : {len(train_idx + test_idx + val_idx)}", file=f)

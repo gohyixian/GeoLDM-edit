@@ -1,4 +1,4 @@
-Percentage of each atom class in entire split
+Percentage of each atom class in each split
 +--------------+---------+-------+-------+-------+---------+---------+---------+---------+
 |              | H       | C     | N     | O     | F       | P       | S       | Cl      |
 +--------------+---------+-------+-------+-------+---------+---------+---------+---------+
@@ -12,7 +12,7 @@ Percentage of each atom class in entire split
 
 
 
-Frequency of each atom class in entire split
+Frequency of each atom class in each split
 +--------------+-----------------+-------+--------+-------+-------+-----+-----+------+-----+
 |              | Total Num Atoms |     H |      C |     N |     O |   F |   P |    S |  Cl |
 +--------------+-----------------+-------+--------+-------+-------+-----+-----+------+-----+
