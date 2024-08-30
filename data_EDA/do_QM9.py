@@ -107,8 +107,8 @@ class QM9:
 
 
 if __name__ == "__main__":
-    # path_to_qm9 = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/QM9/QM9_113885_GDB-9_molecules_xyz"
-    path_to_qm9 = '/mnt/c/Users/PC/Desktop/yixian/data/QM9/QM9_113885_GDB-9_molecules_xyz'
+    # path_to_qm9 = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/QM9/QM9_133885_GDB-9_molecules_xyz"
+    path_to_qm9 = '/mnt/c/Users/PC/Desktop/yixian/data/QM9/QM9_133885_GDB-9_molecules_xyz'
     files_to_omit = ['.DS_Store']   # mac
     files = sorted([os.path.join(path_to_qm9, f) for f in os.listdir(path_to_qm9) if f not in files_to_omit])
     
