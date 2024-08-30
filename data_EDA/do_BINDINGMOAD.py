@@ -176,6 +176,7 @@ def process_ligand_and_pocket(pdb_struct, ligand_name, ligand_chain, ligand_resi
         print(f"PKT: {pocket_coords_center.shape}")
         pocket_radius = euclidean_distance(pocket_coords, pocket_coords_center, axis=1)
         print(f"PKT: {pocket_radius.shape}")
+        print(f"{pocket_radius}")
         pocket_radius_mean = float(np.mean(pocket_radius))
         pocket_radius_min = float(np.min(pocket_radius))
         pocket_radius_max = float(np.max(pocket_radius))
