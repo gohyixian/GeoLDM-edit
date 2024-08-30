@@ -5,7 +5,10 @@ from tqdm import tqdm
 pth = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/CASF-2016/coreset'
 
 folders = sorted(os.listdir(pth))
-folders.remove('.DS_Store')
+try:
+    folders.remove('.DS_Store')
+except:
+    pass
 
 filename = 'pocket'
 extension = '.pdb'
