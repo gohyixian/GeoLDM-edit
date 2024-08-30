@@ -1,7 +1,8 @@
 import os
 from tqdm import tqdm
 
-pth = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/CASF-2016/coreset'
+# pth = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/CASF-2016/coreset'
+pth = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/CASF-2016/coreset'
 
 folders = sorted(os.listdir(pth))
 folders.remove('.DS_Store')

@@ -10,11 +10,18 @@ import os
 import shutil
 from tqdm import tqdm
 
-full_set = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/v2020-other-PL'
-refined_set = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/refined-set'
-core_set = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/CASF-2016/coreset'
+# full_set = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/v2020-other-PL'
+full_set = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/v2020-other-PL'
+
+# refined_set = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/refined-set'
+refined_set = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/refined-set'
+
+# core_set = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/CASF-2016/coreset'
+core_set = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/CASF-2016/coreset'
+
 # to be created
-combined_set = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/00-combined-full-refined-and-core-set'
+# combined_set = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/00-combined-full-refined-and-core-set'
+combined_set = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/00-combined-full-refined-and-core-set'
 
 ligand = 'ligand'      # possible ones: ligand.mols, ligand_opt.mol2
 ligand_ext = '.mol2'

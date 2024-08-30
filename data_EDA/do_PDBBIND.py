@@ -67,7 +67,8 @@ class PDBBIND:
 
 if __name__ == "__main__":
     # path_to_pdbbind = "/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/refined-set-xyz"
-    path_to_pdbbind = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/refined-set-xyz'
+    # path_to_pdbbind = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/refined-set-xyz'
+    path_to_pdbbind = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/01-combined-full-refined-and-core-set-xyz'
     
     files_to_omit = ['.DS_Store']   # mac
     ligand_pocket_pair_folders = sorted([os.path.join(path_to_pdbbind, f) for f in os.listdir(path_to_pdbbind) if f not in files_to_omit])

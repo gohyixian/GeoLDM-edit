@@ -35,8 +35,12 @@ import os
 import subprocess
 from tqdm import tqdm
 
-input_dir = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/00-combined-full-refined-and-core-set'
-output_dir = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/01-combined-full-refined-and-core-set-xyz'
+# input_dir = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/00-combined-full-refined-and-core-set'
+input_dir = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/00-combined-full-refined-and-core-set'
+
+# output_dir = '/Users/gohyixian/Documents/Documents/3.2_FYP_1/data/PDBBind2020/01-combined-full-refined-and-core-set-xyz'
+output_dir = '/mnt/c/Users/PC/Desktop/yixian/data/PDBBind2020/01-combined-full-refined-and-core-set-xyz'
+
 allowed_files = ['mol2', 'pdb']
 out_ext = 'xyz'
 to_remove = ['.DS_store'] # mac
