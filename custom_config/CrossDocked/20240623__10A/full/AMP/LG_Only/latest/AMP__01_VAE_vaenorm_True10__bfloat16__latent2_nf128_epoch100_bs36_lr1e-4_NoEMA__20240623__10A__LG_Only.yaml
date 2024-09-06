@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_True10__bfloat16__latent2_nf128_epoch100_bs36_lr1e-4_InvClassFreq_NoEMA__20240623__10A__LG_Only
+exp_name: AMP__01_VAE_vaenorm_True10__bfloat16__latent2_nf128_epoch100_bs36_lr1e-4_NoEMA__20240623__10A__LG_Only
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -40,14 +40,14 @@ dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET
 # geom directory  ~!geom
 # data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz
 # data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01.npz
-data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811.npz
+data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_split_811.npz
 data_splitted: true
 
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
 # Please set the path to the DATASET_permutation.npy file after it is generated.
 # permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_LG100_PKT600_permutation.npy
-permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_LG100_PKT600_permutation.npy
+permutation_file_path: null
 
 # what data to load for VAE training: ligand | pocket | all
 vae_data_mode: ligand
@@ -165,8 +165,6 @@ normalize_factors: [1, 4, 10]
 vae_normalize_x: true
 vae_normalize_method: scale     # scale | linear
 vae_normalize_factors: [10, 1, 1]
-
-reweight_class_loss: "inv_class_freq"
 
 
 
