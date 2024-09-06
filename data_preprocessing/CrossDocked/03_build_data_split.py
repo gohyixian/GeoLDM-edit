@@ -24,11 +24,13 @@ from utils import stratified_sampling_by_atom_distribution, euclidean_distance, 
 
 
 
-# conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H.npz'
-# conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz'
-conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01.npz'
-save_splits_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811.npz'
-save_plot_path = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811'
+# conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01.npz'
+# save_splits_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811.npz'
+# save_plot_path = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811'
+
+conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz'
+save_splits_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_split_811.npz'
+save_plot_path = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_split_811'
 
 SPLIT_BASED_ON = 'ligand'  # ligand | pocket
 TRAIN_TEST_VAL = [0.8, 0.1, 0.1]
