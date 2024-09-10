@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_True10__bfloat16__latent2_nf128_epoch100_bs2_lr1e-4_NoEMA__20240623__10A__PKT_Only
+exp_name: AMP_TEST__01_VAE_vaenorm_True10__bfloat16__latent2_nf128_epoch100_bs2_lr1e-5_NoEMA__20240623__10A__PKT_Only
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -81,7 +81,7 @@ test_epochs: 1
 
 n_epochs: 100  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
 batch_size: 2    # 24
-lr: 1.0e-4   # 0.0001
+lr: 1.0e-5   # 0.0001
 
 # weight of KL term in ELBO, default 0.01
 kl_weight: 0.01
