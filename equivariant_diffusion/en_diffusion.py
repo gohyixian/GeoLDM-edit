@@ -1238,6 +1238,9 @@ class EnHierarchicalVAE(torch.nn.Module):
         x = xh[:, :, :self.n_dims]
         error_x = sum_except_batch((x_rec - x) ** 2)
         
+        if PARAM_REGISTRY.get('error_x_weight', None) is not None:
+            error_x = error_x * float(PARAM_REGISTRY.get('error_x_weight'))
+        
         # Error on classes. / node features (one-hot) loss
         h_cat_rec = xh_rec[:, :, self.n_dims:self.n_dims + self.num_classes]
         h_cat = xh[:, :, self.n_dims:self.n_dims + self.num_classes]

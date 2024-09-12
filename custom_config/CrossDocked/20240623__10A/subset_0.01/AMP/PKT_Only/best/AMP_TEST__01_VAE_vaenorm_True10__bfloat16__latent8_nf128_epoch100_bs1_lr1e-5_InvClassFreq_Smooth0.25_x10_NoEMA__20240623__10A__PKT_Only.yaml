@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs1_lr1e-5_InvClassFreq_Smooth0.75_NoEMA__20240623__10A__PKT_Only
+exp_name: AMP_TEST__01_VAE_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs1_lr1e-5_InvClassFreq_Smooth0.25_x10_NoEMA__20240623__10A__PKT_Only
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -167,7 +167,9 @@ vae_normalize_method: scale     # scale | linear
 vae_normalize_factors: [10, 1, 1]
 
 reweight_class_loss: "inv_class_freq"
-smoothing_factor: 0.75     # [0.1 - 1.0) 1.0 is essentially disabling
+smoothing_factor: 0.25     # [0.1 - 1.0) 1.0 is essentially disabling
+
+error_x_weight: 10    # error_x custom weighting
 
 
 # ========================================================================================================== Network Architecture

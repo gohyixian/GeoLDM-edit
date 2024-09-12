@@ -144,6 +144,10 @@ def main():
             inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
 
 
+    # coordinates loss weighting
+    if not hasattr(args, 'error_x_weight'):
+        args.error_x_weight = None
+
     # scaling of coordinates/x
     if not hasattr(args, 'vae_normalize_x'):
         args.vae_normalize_x = False
@@ -151,6 +155,7 @@ def main():
         args.vae_normalize_method = None
     if not hasattr(args, 'vae_normalize_fn_points'):  # [x_min, y_min, x_max, y_max]
         args.vae_normalize_fn_points = None
+
 
     # data splits
     if not hasattr(args, 'data_splitted'):
