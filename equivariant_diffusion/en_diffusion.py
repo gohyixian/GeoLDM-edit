@@ -1256,6 +1256,9 @@ class EnHierarchicalVAE(torch.nn.Module):
         else:
             error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
 
+        if PARAM_REGISTRY.get('error_h_weight', None) is not None:
+            error_h_cat = error_h_cat * float(PARAM_REGISTRY.get('error_h_weight'))
+
         error_h_cat = error_h_cat.reshape(bs, n_nodes, 1)
         error_h_cat = sum_except_batch(error_h_cat)
         # error_h_cat = sum_except_batch((h_cat_rec - h_cat) ** 2)

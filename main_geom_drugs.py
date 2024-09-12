@@ -147,6 +147,9 @@ def main():
     # coordinates loss weighting
     if not hasattr(args, 'error_x_weight'):
         args.error_x_weight = None
+    # atom types loss weighting
+    if not hasattr(args, 'error_h_weight'):
+        args.error_h_weight = None
 
     # scaling of coordinates/x
     if not hasattr(args, 'vae_normalize_x'):
