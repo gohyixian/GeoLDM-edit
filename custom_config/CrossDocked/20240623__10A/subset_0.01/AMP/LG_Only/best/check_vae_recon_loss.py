@@ -352,7 +352,7 @@ def main():
                     if acc < 1.0:
                         perfect_classwise_accuracy = False
             
-            error_x_per_atom = nll_dict['recon_loss_dict']['error_x'].item() / nll_dict['recon_loss_dict']['num_atoms'].item()
+            error_x_per_atom = nll_dict['recon_loss_dict']['error_x'].item() / nll_dict['recon_loss_dict']['num_atoms']
             
             if perfect_classwise_accuracy:
                 save_mol_path = os.path.join(args.save_samples_dir, datetime.now().strftime('%Y%m%d%H%M%S%f') + '_' + str(i).zfill(6))
