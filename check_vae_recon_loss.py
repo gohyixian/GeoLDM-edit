@@ -271,6 +271,7 @@ def main():
         NLL = []
         error = []
         error_x = []
+        error_x_per_atom_list = []
         error_h = []
         error_charges = []
         overall_accuracy = []
@@ -351,6 +352,8 @@ def main():
                     if acc < 1.0:
                         perfect_classwise_accuracy = False
             
+            error_x_per_atom = nll_dict['recon_loss_dict']['error_x'].item() / nll_dict['recon_loss_dict']['num_atoms'].item()
+            
             if perfect_classwise_accuracy:
                 save_mol_path = os.path.join(args.save_samples_dir, datetime.now().strftime('%Y%m%d%H%M%S%f') + '_' + str(i).zfill(6))
             else:
@@ -376,11 +379,13 @@ def main():
                           id_from=0, 
                           name='REC', 
                           node_mask=node_mask)
+                        
             # save losses
             with open(os.path.join(save_mol_path, "loss.txt"), "w") as f:
                 print(f"NLL             : {nll.item()}", file=f)
                 print(f"Error           : {nll_dict['recon_loss_dict']['error'].item()}", file=f)
                 print(f"Error X         : {nll_dict['recon_loss_dict']['error_x'].item()}", file=f)
+                print(f"Error X per atom: {error_x_per_atom}", file=f)
                 print(f"Error H         : {nll_dict['recon_loss_dict']['error_h_cat'].item()}", file=f)
                 print(f"Error H Charges : {nll_dict['recon_loss_dict']['error_h_int'].item()}", file=f) if args.include_charges else None
                 print(f"Overall Accuracy: {nll_dict['recon_loss_dict']['overall_accuracy']}", file=f)
@@ -398,6 +403,7 @@ def main():
             NLL.append(nll.item())
             error.append(nll_dict['recon_loss_dict']['error'].item())
             error_x.append(nll_dict['recon_loss_dict']['error_x'].item())
+            error_x_per_atom_list.append(error_x_per_atom)
             error_h.append(nll_dict['recon_loss_dict']['error_h_cat'].item())
             if args.include_charges:
                 error_charges.append(nll_dict['recon_loss_dict']['error_h_int'].item())
@@ -416,6 +422,7 @@ def main():
         mean_NLL = sum(NLL) / len(NLL)
         mean_error = sum(error) / len(error)
         mean_error_x = sum(error_x) / len(error_x)
+        mean_error_x_per_atom = sum(error_x_per_atom_list) / len(error_x_per_atom_list)
         mean_error_h = sum(error_h) / len(error_h)
         if args.include_charges:
             mean_error_charges = sum(error_charges) / len(error_charges)
@@ -435,6 +442,7 @@ def main():
             print(f"mean NLL             : {mean_NLL}", file=f)
             print(f"mean Error           : {mean_error}", file=f)
             print(f"mean Error X         : {mean_error_x}", file=f)
+            print(f"mean Error X per atom: {mean_error_x_per_atom}", file=f)
             print(f"mean Error H         : {mean_error_h}", file=f)
             print(f"mean Error H Charges : {mean_error_charges}", file=f) if args.include_charges else None
             print(f"mean Overall Accuracy: {mean_overall_accuracy}", file=f)
