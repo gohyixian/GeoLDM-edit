@@ -48,3 +48,5 @@ sparsity_check/saved_activations/*
 recon_loss_analysis/*
 
 vis_activations/*
+
+outputs_selected/*
