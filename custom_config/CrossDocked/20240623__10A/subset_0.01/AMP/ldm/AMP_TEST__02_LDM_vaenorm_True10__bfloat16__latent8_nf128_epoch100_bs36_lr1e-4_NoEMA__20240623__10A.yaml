@@ -1,19 +1,22 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__01_VAE_vaenorm_False__bfloat16__latent2_nf32_epoch10_bs2_lr1e-4__20240623__10A
+exp_name: AMP_TEST__02_LDM_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs36_lr1e-4_NoEMA__20240623__10A
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
-train_diffusion: false
+train_diffusion: true
 
 # training mode: VAE | LDM | ControlNet
-training_mode: VAE
+training_mode: LDM
+loss_analysis: true
 
 # Specify first stage model path
-ae_path: null
+ae_path: outputs_selected/vae_ligands/AMP__01_VAE_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs36_lr1e-4_InvClassFreq_Smooth0.25_x10_h5_NoEMA__20240623__10A__LG_Only
+ae_ckpt: generative_model_4_iter_10560.npy   # set null to load automatically selected best
+ldm_ckpt: null   # set null to load automatically selected best
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
-trainable_ae_encoder: true
-trainable_ae_decoder: true
+trainable_ae_encoder: false
+trainable_ae_decoder: false
 
 # can contain multiple: homo | onehot | lumo | num_atoms | etc
 conditioning: []
@@ -24,22 +27,31 @@ include_charges: false   # true for qm9
 # only works for ldm, not for VAE
 condition_time: true
 
+vis_activations: false
+vis_activations_batch_samples: 5
+vis_activations_batch_size: 1
+vis_activations_specific_ylim: [0, 40]
 
+random_seed: 42
 
 
 # ========================================================================================================== Dataset
 
-dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET
+dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND
 
 # geom directory  ~!geom
-# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz
-data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01.npz
+# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_split_811.npz
+data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811.npz
+data_splitted: true
 
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
 # Please set the path to the DATASET_permutation.npy file after it is generated.
 # permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_LG100_PKT600_permutation.npy
-permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_LG100_PKT600_permutation.npy
+permutation_file_path: null
+
+# what data to load for VAE training: ligand | pocket | all
+vae_data_mode: ligand
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
@@ -68,8 +80,8 @@ start_epoch: 0
 test_epochs: 1
 
 
-n_epochs: 10  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 2    # 24
+n_epochs: 100  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 36    # 24
 lr: 1.0e-4   # 0.0001
 
 # weight of KL term in ELBO, default 0.01
@@ -86,13 +98,13 @@ dp: true
 clip_grad: true
 
 # Amount of EMA decay, 0 means off. A reasonable value is 0.999.
-ema_decay: 0.9999
+ema_decay: 0
 
 # add noise to x before encoding, data augmenting
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 20
+n_stability_samples: 50
 
 
 # disables CUDA training
@@ -146,15 +158,20 @@ diffusion_noise_precision: 1.0e-05 # ~!fp16
 diffusion_loss_type: l2
 
 # number of latent features, default 4
-latent_nf: 2  # 1
+latent_nf: 8  # 1
 
 # normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
 normalize_factors: [1, 4, 10]
 
-vae_normalize_x: false
-vae_normalize_factors: [100, 1, 1]
+vae_normalize_x: true
+vae_normalize_method: scale     # scale | linear
+vae_normalize_factors: [10, 1, 1]
 
+reweight_class_loss: null  # "inv_class_freq"
+smoothing_factor: 1.0      # [0.1 - 1.0) 1.0 is essentially disabling
 
+error_x_weight: 1    # error_x custom weighting
+error_h_weight: 1
 
 
 # ========================================================================================================== Network Architecture
@@ -165,7 +182,7 @@ n_layers: 4  # 9 for qm9
 inv_sublayers: 1
 
 # model's internal operating number of features
-nf: 32
+nf: 128
 
 # use tanh in the coord_mlp
 tanh: true
@@ -193,6 +210,7 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
+visualize_sample_chain: true
 visualize_every_batch: 1000
 n_report_steps: 50
 

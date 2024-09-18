@@ -322,13 +322,14 @@ def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, mo
                                             prop_dist, epoch=epoch)
             print(f'Sampling took {time.time() - start:.2f} seconds')
 
-            # vis.visualize(f"outputs/{args.exp_name}/epoch_{epoch}_{i}", dataset_info=dataset_info, wandb=wandb)
-            # vis.visualize_chain(f"outputs/{args.exp_name}/epoch_{epoch}_{i}/chain/", dataset_info, wandb=wandb)
-            # if len(args.conditioning) > 0:
-            #     vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
-            #                         wandb=wandb, mode='conditional')
+            if args.visualize_sample_chain:
+                vis.visualize(f"outputs/{args.exp_name}/epoch_{epoch}_{i}", dataset_info=dataset_info, wandb=wandb)
+                vis.visualize_chain(f"outputs/{args.exp_name}/epoch_{epoch}_{i}/chain/", dataset_info, wandb=wandb)
+                if len(args.conditioning) > 0:
+                    vis.visualize_chain("outputs/%s/epoch_%d/conditional/" % (args.exp_name, epoch), dataset_info,
+                                        wandb=wandb, mode='conditional')
 
-        # VAE visualise activations
+        # visualise model activations
         if args.vis_activations and (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (i == 0):
 
             # handle for saving intermediary activations

@@ -57,7 +57,7 @@ def sample_chain(args, device, flow, n_tries, dataset_info, prop_dist=None):
     if args.dataset == 'qm9' or args.dataset == 'qm9_second_half' or args.dataset == 'qm9_first_half':
         n_nodes = 19
     elif args.dataset == 'geom' or 'ligand' in args.dataset.lower():
-        n_nodes = 44
+        n_nodes = 44  # applies to both Crossdocked & BindingMOAD, refer EDA
     else:
         raise NotImplementedError()
 

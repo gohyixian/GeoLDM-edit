@@ -165,6 +165,11 @@ def main():
         args.data_splitted = False
 
 
+    # visualise sample chain
+    if not hasattr(args, 'visualize_sample_chain'):
+        args.visualize_sample_chain = False
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
