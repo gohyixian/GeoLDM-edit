@@ -168,6 +168,8 @@ def main():
     # visualise sample chain
     if not hasattr(args, 'visualize_sample_chain'):
         args.visualize_sample_chain = False
+    if not hasattr(args, 'visualize_sample_chain_epochs'):
+        args.visualize_sample_chain_epochs = 1
 
 
     # params global registry for easy access

@@ -312,7 +312,7 @@ def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, mo
         torch.cuda.empty_cache()
         gc.collect()
         
-        if (epoch % args.test_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
+        if (epoch % args.visualize_sample_chain_epochs == 0) and (i % args.visualize_every_batch == 0) and not (epoch == 0 and i == 0) and args.train_diffusion:
             start = time.time()
             if len(args.conditioning) > 0:
                 save_and_sample_conditional(args, device, model_ema, prop_dist, dataset_info, epoch=epoch)
