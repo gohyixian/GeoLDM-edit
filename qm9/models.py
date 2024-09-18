@@ -145,7 +145,6 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
     first_stage_model.to(device)
 
     if args.ae_path is not None:   # null
-        print(f">> Loading VAE weights from {args.ae_path}")
         if hasattr(args, 'ae_ckpt'):
             if args.ae_ckpt is not None:
                 fn = str(args.ae_ckpt)
@@ -153,6 +152,8 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
                 fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
         else:
             fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
+
+        print(f">> Loading VAE weights from {join(args.ae_path, fn)}")
         flow_state_dict = torch.load(join(args.ae_path, fn),
                                         map_location=device)
         first_stage_model.load_state_dict(flow_state_dict)
@@ -290,9 +291,10 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
                         fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
                 else:
                     fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
+
+                print(f">> Loading LDM weights from {join(args.ldm_path, fn)}")
                 flow_state_dict = torch.load(join(args.ldm_path, fn), map_location=device)
                 vdm.load_state_dict(flow_state_dict)
-                print(f">> Loading LDM weights from {join(args.ldm_path, fn)}")
             else:
                 raise ValueError(args.ldm_path)
         else:
