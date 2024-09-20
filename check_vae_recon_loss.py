@@ -348,11 +348,11 @@ def main():
             
             perfect_classwise_accuracy = True
             for cls, acc in nll_dict['recon_loss_dict']['classwise_accuracy'].items():
-                if not math.isnan(acc):
+                if not math.isnan(acc.mean().item()):
                     if acc < 1.0:
                         perfect_classwise_accuracy = False
             
-            error_x_per_atom = nll_dict['recon_loss_dict']['error_x'].item() / nll_dict['recon_loss_dict']['num_atoms']
+            error_x_per_atom = nll_dict['recon_loss_dict']['error_x'].mean().item() / nll_dict['recon_loss_dict']['num_atoms'].mean().item()
             
             if perfect_classwise_accuracy:
                 save_mol_path = os.path.join(args.save_samples_dir, datetime.now().strftime('%Y%m%d%H%M%S%f') + '_' + str(i).zfill(6))
@@ -383,36 +383,36 @@ def main():
             # save losses
             with open(os.path.join(save_mol_path, "loss.txt"), "w") as f:
                 print(f"NLL             : {nll.item()}", file=f)
-                print(f"Error           : {nll_dict['recon_loss_dict']['error'].item()}", file=f)
-                print(f"Error X         : {nll_dict['recon_loss_dict']['error_x'].item()}", file=f)
+                print(f"Error           : {nll_dict['recon_loss_dict']['error'].mean().item()}", file=f)
+                print(f"Error X         : {nll_dict['recon_loss_dict']['error_x'].mean().item()}", file=f)
                 print(f"Error X per atom: {error_x_per_atom}", file=f)
-                print(f"Error H         : {nll_dict['recon_loss_dict']['error_h_cat'].item()}", file=f)
-                print(f"Error H Charges : {nll_dict['recon_loss_dict']['error_h_int'].item()}", file=f) if args.include_charges else None
-                print(f"Overall Accuracy: {nll_dict['recon_loss_dict']['overall_accuracy']}", file=f)
-                print(f"Overall Recall  : {nll_dict['recon_loss_dict']['overall_recall']}", file=f)
-                print(f"Overall F1      : {nll_dict['recon_loss_dict']['overall_f1']}", file=f)
+                print(f"Error H         : {nll_dict['recon_loss_dict']['error_h_cat'].mean().item()}", file=f)
+                print(f"Error H Charges : {nll_dict['recon_loss_dict']['error_h_int'].mean().item()}", file=f) if args.include_charges else None
+                print(f"Overall Accuracy: {nll_dict['recon_loss_dict']['overall_accuracy'].mean().item()}", file=f)
+                print(f"Overall Recall  : {nll_dict['recon_loss_dict']['overall_recall'].mean().item()}", file=f)
+                print(f"Overall F1      : {nll_dict['recon_loss_dict']['overall_f1'].mean().item()}", file=f)
                 print(f"Classwise Accuracy", file=f)
                 for cls, acc in nll_dict['recon_loss_dict']['classwise_accuracy'].items():
-                    print(f"    {cls} : {acc}", file=f)
+                    print(f"    {cls} : {acc.mean().item()}", file=f)
                 print(f"\n=================", file=f)
-                print(f"denom      : {nll_dict['recon_loss_dict']['denom']}", file=f)
-                print(f"n_dims     : {nll_dict['recon_loss_dict']['n_dims']}", file=f)
-                print(f"in_node_nf : {nll_dict['recon_loss_dict']['in_node_nf']}", file=f)
-                print(f"num_atoms  : {nll_dict['recon_loss_dict']['num_atoms']}", file=f)
+                print(f"denom      : {nll_dict['recon_loss_dict']['denom'].mean().item()}", file=f)
+                print(f"n_dims     : {nll_dict['recon_loss_dict']['n_dims'].mean().item()}", file=f)
+                print(f"in_node_nf : {nll_dict['recon_loss_dict']['in_node_nf'].mean().item()}", file=f)
+                print(f"num_atoms  : {nll_dict['recon_loss_dict']['num_atoms'].mean().item()}", file=f)
             
             NLL.append(nll.item())
-            error.append(nll_dict['recon_loss_dict']['error'].item())
-            error_x.append(nll_dict['recon_loss_dict']['error_x'].item())
+            error.append(nll_dict['recon_loss_dict']['error'].mean().item())
+            error_x.append(nll_dict['recon_loss_dict']['error_x'].mean().item())
             error_x_per_atom_list.append(error_x_per_atom)
-            error_h.append(nll_dict['recon_loss_dict']['error_h_cat'].item())
+            error_h.append(nll_dict['recon_loss_dict']['error_h_cat'].mean().item())
             if args.include_charges:
-                error_charges.append(nll_dict['recon_loss_dict']['error_h_int'].item())
-            overall_accuracy.append(nll_dict['recon_loss_dict']['overall_accuracy'])
-            overall_recall.append(nll_dict['recon_loss_dict']['overall_recall'])
-            overall_f1.append(nll_dict['recon_loss_dict']['overall_f1'])
+                error_charges.append(nll_dict['recon_loss_dict']['error_h_int'].mean().item())
+            overall_accuracy.append(nll_dict['recon_loss_dict']['overall_accuracy'].mean().item())
+            overall_recall.append(nll_dict['recon_loss_dict']['overall_recall'].mean().item())
+            overall_f1.append(nll_dict['recon_loss_dict']['overall_f1'].mean().item())
             for cls, acc in nll_dict['recon_loss_dict']['classwise_accuracy'].items():
-                if not math.isnan(acc):
-                    classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []) + [acc]
+                if not math.isnan(acc.mean().item()):
+                    classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []) + [acc.mean().item()]
 
             # cleanup
             del x, h, node_mask, edge_mask, one_hot, charges, nll
