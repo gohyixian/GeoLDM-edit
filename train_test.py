@@ -201,8 +201,6 @@ def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, mo
     loss_analysis_modes = PARAM_REGISTRY.get('loss_analysis_modes')
     
     for i, data in enumerate(loader):
-        if i > 100: # ~!tmp
-            break
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
         edge_mask = data['edge_mask'].to(device, dtype)
@@ -509,8 +507,6 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
         n_iterations = len(loader)
 
         for i, data in enumerate(loader):
-            if i > 100: # ~!tmp
-                break
             x = data['positions'].to(device, dtype)
             batch_size = x.size(0)
             node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
@@ -563,9 +559,9 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 error_x.append(recon_loss_dict['error_x'].mean().item())
                 error_h_cat.append(recon_loss_dict['error_h_cat'].mean().item())
                 error_h_int.append(recon_loss_dict['error_h_int'].mean().item()) if args.include_charges else None
-                overall_accuracy.append(recon_loss_dict['overall_accuracy']).mean().item()
-                overall_recall.append(recon_loss_dict['overall_recall']).mean().item()
-                overall_f1.append(recon_loss_dict['overall_f1']).mean().item()
+                overall_accuracy.append(recon_loss_dict['overall_accuracy'].mean().item())
+                overall_recall.append(recon_loss_dict['overall_recall'].mean().item())
+                overall_f1.append(recon_loss_dict['overall_f1'].mean().item())
                 for cls, metric in recon_loss_dict['classwise_accuracy'].items():
                     if not math.isnan(metric.mean().item()):
                         classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []) + [metric.mean().item()]

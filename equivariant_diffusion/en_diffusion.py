@@ -1361,7 +1361,7 @@ class EnHierarchicalVAE(torch.nn.Module):
             'overall_f1': overall_f1,
             'classwise_accuracy': classwise_accuracy
         }
-        return_dict = diffusion_utils.convert_floats_to_tensors(return_dict, device=xh_rec.device)
+        return_dict = diffusion_utils.convert_numbers_to_tensors(return_dict, device=xh_rec.device)
         return return_dict
 
 
