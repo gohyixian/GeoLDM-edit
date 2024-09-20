@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP_TEST__02_LDM_vaenorm_True10__bfloat16__latent8_nf128_epoch50_bs36_lr1e-4_EMA-0.99__20240623__10A
+exp_name: AMP_TEST__02_LDM_vaenorm_True10__bfloat16__latent8_nf128_epoch200_bs36_lr1e-4_EMA-0.75__20240623__10A
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -80,7 +80,7 @@ start_epoch: 0
 test_epochs: 1
 
 
-n_epochs: 50  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+n_epochs: 200  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
 batch_size: 36    # 24
 lr: 1.0e-4   # 0.0001
 
@@ -98,7 +98,7 @@ dp: true
 clip_grad: true
 
 # Amount of EMA decay, 0 means off. A reasonable value is 0.999.
-ema_decay: 0.99
+ema_decay: 0.75
 
 # add noise to x before encoding, data augmenting
 augment_noise: 0
