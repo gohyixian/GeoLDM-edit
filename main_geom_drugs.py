@@ -274,13 +274,27 @@ def main():
     gradnorm_queue.add(3000)  # Add large value that will be flushed.
 
 
-    
+
     if args.resume is not None:
-        flow_state_dict = torch.load(join(args.resume, 'flow.npy'))
-        dequantizer_state_dict = torch.load(join(args.resume, 'dequantizer.npy'))
-        optim_state_dict = torch.load(join(args.resume, 'optim.npy'))
-        model.load_state_dict(flow_state_dict)
-        optim.load_state_dict(optim_state_dict)
+        if args.resume_model_ckpt is not None:
+            model_state_dict = join(args.resume, args.resume_model_ckpt)
+        else:
+            if args.ema_decay > 0:
+                model_state_dict = join(args.resume, 'generative_model_ema.npy')
+            else:
+                model_state_dict = join(args.resume, 'generative_model.npy')
+
+        if args.resume_optim_ckpt is not None:
+            optim_state_dict = join(args.resume, args.resume_optim_ckpt)
+        else:
+            optim_state_dict = join(args.resume, 'optim.npy')
+
+        print(f">> Loading {args.training_mode} weights from {model_state_dict}")
+        print(f">> Loading Optimizer State Dict from {optim_state_dict}")
+        model.load_state_dict(torch.load(model_state_dict))
+        optim.load_state_dict(torch.load(optim_state_dict))
+        # dequantizer_state_dict = torch.load(join(args.resume, 'dequantizer.npy'))
+
 
     # Initialize dataparallel if enabled and possible.
     if args.dp and torch.cuda.device_count() > 1 and args.cuda:
