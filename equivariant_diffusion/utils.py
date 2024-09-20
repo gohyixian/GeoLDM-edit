@@ -139,3 +139,13 @@ def sample_gaussian_with_mask(size, device, node_mask):
     x = torch.randn(size, device=device)
     x_masked = x * node_mask
     return x_masked
+
+
+
+def convert_floats_to_tensors(d):
+    """Recursively convert Python floats to torch.float32 tensors for DataParallel"""
+    if isinstance(d, dict):
+        return {k: convert_floats_to_tensors(v) for k, v in d.items()}
+    elif isinstance(d, float):  # Check if the value is a Python float
+        return torch.tensor(d, dtype=torch.float32)  # Convert to torch float tensor
+    return d  # Return the value as is if it's not a Python float

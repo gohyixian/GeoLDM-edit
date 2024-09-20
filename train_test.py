@@ -353,11 +353,11 @@ def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, mo
             wandb_dict['Train/error_h_cat'] = recon_loss_dict['error_h_cat'].mean().item()
             if args.include_charges:
                 wandb_dict['Train/error_h_int'] = recon_loss_dict['error_h_int'].mean().item()
-            wandb_dict['Train/overall_accuracy'] = recon_loss_dict['overall_accuracy']
-            wandb_dict['Train/overall_recall'] = recon_loss_dict['overall_recall']
-            wandb_dict['Train/overall_f1'] = recon_loss_dict['overall_f1']
+            wandb_dict['Train/overall_accuracy'] = recon_loss_dict['overall_accuracy'].mean().item()
+            wandb_dict['Train/overall_recall'] = recon_loss_dict['overall_recall'].mean().item()
+            wandb_dict['Train/overall_f1'] = recon_loss_dict['overall_f1'].mean().item()
             for cls, metric in recon_loss_dict['classwise_accuracy'].items():
-                wandb_dict[f'Train_classwise_accuracy/ {cls}'] = metric
+                wandb_dict[f'Train_classwise_accuracy/ {cls}'] = metric.mean().item()
 
         wandb.log(wandb_dict, commit=True)
         
@@ -559,12 +559,12 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 error_x.append(recon_loss_dict['error_x'].mean().item())
                 error_h_cat.append(recon_loss_dict['error_h_cat'].mean().item())
                 error_h_int.append(recon_loss_dict['error_h_int'].mean().item()) if args.include_charges else None
-                overall_accuracy.append(recon_loss_dict['overall_accuracy'])
-                overall_recall.append(recon_loss_dict['overall_recall'])
-                overall_f1.append(recon_loss_dict['overall_f1'])
+                overall_accuracy.append(recon_loss_dict['overall_accuracy']).mean().item()
+                overall_recall.append(recon_loss_dict['overall_recall']).mean().item()
+                overall_f1.append(recon_loss_dict['overall_f1']).mean().item()
                 for cls, metric in recon_loss_dict['classwise_accuracy'].items():
-                    if not math.isnan(metric):
-                        classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []) + [metric]
+                    if not math.isnan(metric.mean().item()):
+                        classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), []) + [metric.mean().item()]
                     else:
                         classwise_accuracy[str(cls)] = classwise_accuracy.get(str(cls), [])
 

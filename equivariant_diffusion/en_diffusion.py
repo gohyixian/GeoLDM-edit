@@ -1347,7 +1347,7 @@ class EnHierarchicalVAE(torch.nn.Module):
         else: 
             denom = 0
 
-        return {
+        return_dict = {
             'error': error,
             'error_x': error_x, 
             'error_h_cat': error_h_cat, 
@@ -1361,6 +1361,8 @@ class EnHierarchicalVAE(torch.nn.Module):
             'overall_f1': overall_f1,
             'classwise_accuracy': classwise_accuracy
         }
+        return_dict = diffusion_utils.convert_floats_to_tensors(return_dict)
+        return return_dict
 
 
     def unpack_xh(self, xh, argmax_h_cat=False):
