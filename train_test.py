@@ -201,6 +201,8 @@ def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, mo
     loss_analysis_modes = PARAM_REGISTRY.get('loss_analysis_modes')
     
     for i, data in enumerate(loader):
+        if i > 100: # ~!tmp
+            break
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
         edge_mask = data['edge_mask'].to(device, dtype)
@@ -507,6 +509,8 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
         n_iterations = len(loader)
 
         for i, data in enumerate(loader):
+            if i > 100: # ~!tmp
+                break
             x = data['positions'].to(device, dtype)
             batch_size = x.size(0)
             node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
