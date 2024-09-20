@@ -219,17 +219,17 @@ def main():
     # resume
     if args.resume is not None:
         exp_name = args.exp_name + '_resume'
-        start_epoch = args.start_epoch
-        resume = args.resume
-        wandb_usr = args.wandb_usr
-
-        with open(join(args.resume, 'args.pickle'), 'rb') as f:
-            args = pickle.load(f)
-        args.resume = resume
-        args.break_train_epoch = False
         args.exp_name = exp_name
-        args.start_epoch = start_epoch
-        args.wandb_usr = wandb_usr
+        # start_epoch = args.start_epoch
+        # resume = args.resume
+        # wandb_usr = args.wandb_usr
+
+        # with open(join(args.resume, 'args.pickle'), 'rb') as f:
+        #     args = pickle.load(f)
+        # args.resume = resume
+        # args.break_train_epoch = False
+        # args.start_epoch = start_epoch
+        # args.wandb_usr = wandb_usr
 
     utils.create_folders(args)
 
