@@ -1,4 +1,5 @@
 import torch
+import matplotlib.pyplot as plt
 
 dataset_info = {
     'atom_encoder': {'H': 0, 'C': 1, 'N': 2, 'O': 3, 'F': 4, 'P': 5, 'S': 6, 'Cl': 7},
@@ -19,19 +20,47 @@ inverse_frequencies = 1.0 / frequencies
 class_weights = inverse_frequencies / inverse_frequencies.sum()  # normalize
 
 # Define a smoothing factor (temperature scaling)
-smoothing_factor = 0.75  # This value controls the degree of smoothing. Adjust as needed.
+smoothing_factors = [0.75, 0.50, 0.25]  # This value controls the degree of smoothing. Adjust as needed.
 
-# Apply smoothing by scaling the inverse frequencies
-smoothed_inverse_frequencies = torch.pow(inverse_frequencies, smoothing_factor)
+# Prepare to plot
+plt.figure(figsize=(10, 6))
 
-# Recalculate the normalized class weights
-smoothed_class_weights = smoothed_inverse_frequencies / smoothed_inverse_frequencies.sum()
-
-print(f"Smoothing Factor: {smoothing_factor}")
-print(f"======================")
+# Original weights
+classes = []
+weights = []
 for k,idx in sorted_atom_encoder.items():
-    print(f"{k:>2}  {dataset_info['atom_types'][idx]:>8}  {inverse_frequencies[idx]:.5e}  {class_weights[idx]:.5e}  {smoothed_class_weights[idx]:.5e}")
+    classes.append(k)
+    weights.append(class_weights[idx])
+plt.plot(classes, weights, marker='o', label=f'Original Class Weights (for reference)')
 
+
+for smoothing_factor in smoothing_factors:
+    # Apply smoothing by scaling the inverse frequencies
+    smoothed_inverse_frequencies = torch.pow(inverse_frequencies, smoothing_factor)
+
+    # Recalculate the normalized class weights
+    smoothed_class_weights = smoothed_inverse_frequencies / smoothed_inverse_frequencies.sum()
+
+    classes = []
+    weights = []
+    print(f"Smoothing Factor: {smoothing_factor}")
+    print(f"======================")
+    for k,idx in sorted_atom_encoder.items():
+        print(f"{k:>2}  {dataset_info['atom_types'][idx]:>8}  {inverse_frequencies[idx]:.5e}  {class_weights[idx]:.5e}  {smoothed_class_weights[idx]:.5e}")
+        classes.append(k)
+        weights.append(smoothed_class_weights[idx])
+
+    plt.plot(classes, weights, marker='o', label=f'Class Weights with Smoothing Factor: {smoothing_factor}')
+
+# Customize the plot
+plt.xlabel('Atom Type (From left to right, in descending order of frequency)')
+plt.ylabel('Smoothed Class Weights')
+plt.title('Smoothed Class Weights by Smoothing Factor')
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.savefig('test_smooth.png')
+plt.show()
 
 # (geoldm) (base) 🎃 gohyixian test % python test_smooth.py
 # Smoothing Factor: 0.75
