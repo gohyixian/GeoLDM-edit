@@ -1236,7 +1236,16 @@ class EnHierarchicalVAE(torch.nn.Module):
         # Error on positions. / coordinates loss
         x_rec = xh_rec[:, :, :self.n_dims]
         x = xh[:, :, :self.n_dims]
-        error_x = sum_except_batch((x_rec - x) ** 2)
+        if PARAM_REGISTRY.get('reweight_coords_loss') == "inv_class_freq":
+            h_cat = xh[:, :, self.n_dims:self.n_dims + self.num_classes]
+            class_weights = PARAM_REGISTRY.get('class_weights').to(h_cat.device, h_cat.dtype)   # sum to 1
+            class_weights = class_weights * (bs * n_nodes)                                      # scale back
+
+            atom_classes = h_cat.argmax(dim=2)                      # (batch_size, num_atoms)
+            l2_loss_per_atom = torch.sum((x_rec - x) ** 2, dim=-1)  # (batch_size, num_atoms)
+            error_x = sum_except_batch(l2_loss_per_atom * class_weights[atom_classes])
+        else:
+            error_x = sum_except_batch((x_rec - x) ** 2)
         
         if PARAM_REGISTRY.get('error_x_weight', None) is not None:
             error_x = error_x * float(PARAM_REGISTRY.get('error_x_weight'))

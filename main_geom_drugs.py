@@ -126,7 +126,9 @@ def main():
     # class-imbalance loss reweighting
     if not hasattr(args, 'reweight_class_loss'):  # supported: "inv_class_freq"
         args.reweight_class_loss = None
-    if not hasattr(args, 'smoothing_factor'):  # supported: "inv_class_freq"
+    if not hasattr(args, 'reweight_coords_loss'):  # supported: "inv_class_freq"
+        args.reweight_coords_loss = None
+    if not hasattr(args, 'smoothing_factor'):  # smoothing: (0. - 1.]
         args.smoothing_factor = None
     if args.reweight_class_loss == "inv_class_freq":
         class_freq_dict = dataset_info['atom_types']
