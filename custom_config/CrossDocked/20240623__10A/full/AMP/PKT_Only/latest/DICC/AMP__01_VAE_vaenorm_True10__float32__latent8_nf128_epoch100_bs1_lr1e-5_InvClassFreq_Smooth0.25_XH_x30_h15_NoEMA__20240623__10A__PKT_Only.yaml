@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP__01_VAE_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs1_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h30_NoEMA__20240623__10A__PKT_Only
+exp_name: AMP__01_VAE_vaenorm_True10__float32__latent8_nf128_epoch100_bs1_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -118,7 +118,7 @@ verbose: false
 dtype: torch.float32
 
 # enable mixed precision training (fp32, fp16)
-mixed_precision_training: true
+mixed_precision_training: false
 mixed_precision_autocast_dtype: torch.bfloat16
 
 # use model checkpointing during training to reduce GPU memory usage
@@ -171,7 +171,7 @@ reweight_coords_loss: "inv_class_freq"
 smoothing_factor: 0.25     # [0.1 - 1.0) 1.0 is essentially disabling
 
 error_x_weight: 30    # error_x custom weighting
-error_h_weight: 30
+error_h_weight: 15
 
 # ========================================================================================================== Network Architecture
 # number of layers of EquivariantBlock to use in LDM and VAE's Decoder
