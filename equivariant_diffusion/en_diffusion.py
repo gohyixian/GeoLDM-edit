@@ -1543,7 +1543,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
 
         return log_p_xh_given_z
     
-    def forward(self, x, h, node_mask=None, edge_mask=None, context=None):
+    def forward(self, x, h, node_mask=None, edge_mask=None, context=None, loss_analysis=False):
         """
         Computes the loss (type l2 or NLL) if training. And if eval then always computes NLL.
         """
@@ -1592,6 +1592,10 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             
             xh_rec = torch.cat([x_recon, h_recon], dim=2)
             loss_recon = self.vae.compute_reconstruction_error(xh_rec, xh)
+            
+            if loss_analysis:
+                # recon loss analysis use
+                recon_loss_dict = self.vae.compute_reconstruction_error_components(xh_rec, xh, node_mask)
 
         else:
             loss_recon = 0
@@ -1613,6 +1617,9 @@ class EnLatentDiffusion(EnVariationalDiffusion):
             # Less variance in the estimator, costs two forward passes.
             loss_ld, loss_dict = self.compute_loss(z_x, z_h, node_mask, edge_mask, context, t0_always=True)
         
+        if loss_analysis:
+            loss_dict['recon_loss_dict'] = recon_loss_dict
+        
         # The _constants_ depending on sigma_0 from the
         # cross entropy term E_q(z0 | x) [log p(x | z0)].
         neg_log_constants = -self.log_constants_p_h_given_z0(
@@ -1623,7 +1630,10 @@ class EnLatentDiffusion(EnVariationalDiffusion):
 
         neg_log_pxh = loss_ld + loss_recon + neg_log_constants
 
-        return neg_log_pxh   # negatve log likelihood
+        if loss_analysis:
+            return neg_log_pxh, loss_dict   # negatve log likelihood
+        else:
+            return neg_log_pxh
     
     
     
