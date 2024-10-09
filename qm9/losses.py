@@ -47,7 +47,8 @@ def compute_loss_and_nll(args, generative_model, nodes_dist, x, h, node_mask, ed
     else:
         raise ValueError(args.probabilistic_model)
 
-    if (PARAM_REGISTRY.get('training_mode') == 'VAE') and loss_analysis:
+    # if (PARAM_REGISTRY.get('training_mode') == 'VAE') and loss_analysis:
+    if (PARAM_REGISTRY.get('training_mode') in PARAM_REGISTRY.get('loss_analysis_modes')) and loss_analysis:
         return nll, reg_term, mean_abs_z, loss_dict
     else:
         return nll, reg_term, mean_abs_z
