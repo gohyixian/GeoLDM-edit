@@ -99,7 +99,8 @@ def main():
     # loss analysis
     if not hasattr(args, 'loss_analysis'):
         args.loss_analysis = False
-    args.loss_analysis_modes = ['VAE']
+    # args.loss_analysis_modes = ['VAE']
+    args.loss_analysis_modes = ['VAE', 'LDM']
 
 
     # loss analysis usage
