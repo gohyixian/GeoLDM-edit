@@ -220,7 +220,10 @@ n_report_steps: 50
 
 # ========================================================================================================== Saving & Resuming
 # str
-resume: null
+resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A
+resume_model_ckpt: generative_model_77_iter_164736.npy
+resume_optim_ckpt: optim_77_iter_164736.npy
+
 save_model: true
 
 
