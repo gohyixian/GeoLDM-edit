@@ -1,3 +1,22 @@
+import numpy as np
+from rdkit import Chem
+
+
+# ------------------------------------------------------------------------------
+# Bond parameters
+# ------------------------------------------------------------------------------
+
+stdv = {'H': 5, 'C': 1, 'N': 1, 'O': 2, 'F': 3}
+
+# margin1, margin2, margin3 = 3, 2, 1
+margin1, margin2, margin3 = 10, 5, 3
+
+allowed_bonds = {'H': 1, 'C': 4, 'N': 3, 'O': 2, 'F': 1, 'B': 3, 'Al': 3,
+                 'Si': 4, 'P': [3, 5],
+                 'S': 4, 'Cl': 1, 'As': 3, 'Br': 1, 'I': 1, 'Hg': [1, 2],
+                 'Bi': [3, 5]}
+
+
 # Bond lengths from:
 # http://www.wiredchemist.com/chemistry/data/bond_energies_lengths.html
 # And:
@@ -43,12 +62,33 @@ bonds2 = {'C': {'C': 134, 'N': 129, 'O': 120, 'S': 160},
           'N': {'C': 129, 'N': 125, 'O': 121},
           'O': {'C': 120, 'N': 121, 'O': 121, 'P': 150},
           'P': {'O': 150, 'S': 186},
-          'S': {'P': 186}}
+          'S': {'P': 186, 'C': 160}}
 
 # triple bonds
 bonds3 = {'C': {'C': 120, 'N': 116, 'O': 113},
           'N': {'C': 116, 'N': 110},
           'O': {'C': 113}}
+
+bond_dict = [None, Chem.rdchem.BondType.SINGLE, Chem.rdchem.BondType.DOUBLE,
+             Chem.rdchem.BondType.TRIPLE, Chem.rdchem.BondType.AROMATIC]
+
+# https://en.wikipedia.org/wiki/Covalent_radius#Radii_for_multiple_bonds
+# (2022/08/14)
+covalent_radii = {'H': 32, 'C': 60, 'N': 54, 'O': 53, 'F': 53, 'B': 73,
+                  'Al': 111, 'Si': 102, 'P': 94, 'S': 94, 'Cl': 93, 'As': 106,
+                  'Br': 109, 'I': 125, 'Hg': 133, 'Bi': 135}
+
+# ------------------------------------------------------------------------------
+# Backbone geometry
+# Taken from: Bhagavan, N. V., and C. E. Ha.
+# "Chapter 4-Three-dimensional structure of proteins and disorders of protein misfolding."
+# Essentials of Medical Biochemistry (2015): 31-51.
+# https://www.sciencedirect.com/science/article/pii/B978012416687500004X
+# ------------------------------------------------------------------------------
+N_CA_DIST = 1.47
+CA_C_DIST = 1.53
+N_CA_C_ANGLE = 110 * np.pi / 180
+
 
 
 def print_table(bonds_dict):
@@ -77,9 +117,6 @@ def print_table(bonds_dict):
         print()
 
 
-# print_table(bonds3)
-
-
 def check_consistency_bond_dictionaries():
     for bonds_dict in [bonds1, bonds2, bonds3]:
         for atom1 in bonds1:
@@ -92,15 +129,6 @@ def check_consistency_bond_dictionaries():
 
                 assert bond == bond_check, (
                     f'{bond} != {bond_check} for {atom1}, {atom2}')
-
-
-stdv = {'H': 5, 'C': 1, 'N': 1, 'O': 2, 'F': 3}
-margin1, margin2, margin3 = 10, 5, 3
-
-allowed_bonds = {'H': 1, 'C': 4, 'N': 3, 'O': 2, 'F': 1, 'B': 3, 'Al': 3,
-                 'Si': 4, 'P': [3, 5],
-                 'S': 4, 'Cl': 1, 'As': 3, 'Br': 1, 'I': 1, 'Hg': [1, 2],
-                 'Bi': [3, 5]}
 
 
 def get_bond_order(atom1, atom2, distance, check_exists=False):
