@@ -21,6 +21,7 @@ from qm9.analyze import analyze_stability_for_molecules, analyze_node_distributi
 from qm9.utils import prepare_context, compute_mean_mad
 from qm9 import visualizer as qm9_visualizer
 import qm9.losses as losses
+from global_registry import PARAM_REGISTRY, Config
 
 try:
     from qm9 import rdkit_functions
@@ -57,7 +58,7 @@ def analyze_and_save(args, eval_args, device, generative_model,
         if save_to_xyz:
             id_from = i * batch_size
             qm9_visualizer.save_xyz_file(
-                join(eval_args.model_pat.save_path, eval_args.model_path, 'analyzed_molecules'),
+                join(eval_args.save_path, os.path.basename(eval_args.model_path), 'analyzed_molecules/'),
                 one_hot, charges, x, dataset_info, id_from, name='molecule',
                 node_mask=node_mask)
 
@@ -68,6 +69,8 @@ def analyze_and_save(args, eval_args, device, generative_model,
     return stability_dict, rdkit_metrics
 
 
+
+# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_ligands/AMP__01_VAE_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs36_lr1e-4_InvClassFreq_Smooth0.25_x10_h5_NoEMA__20240623__10A__LG_Only --load_last --batch_size_gen 2 --n_samples 10
 
 def main():
     parser = argparse.ArgumentParser()
@@ -94,6 +97,8 @@ def main():
 
     with open(join(eval_args.model_path, 'args.pickle'), 'rb') as f:
         args = pickle.load(f)
+    
+    dataset_info = get_dataset_info(dataset_name=args.dataset, remove_h=args.remove_h)
 
     # CAREFUL with this -->
     if not hasattr(args, 'normalization_factor'):
@@ -117,17 +122,13 @@ def main():
 
 
     # dtype settings
-    module_name, dtype_name = args.dtype.split('.')
-    dtype = getattr(torch, dtype_name)
-    args.dtype = dtype
+    dtype = args.dtype
     torch.set_default_dtype(dtype)
 
 
     # mp autocast dtype
     if args.mixed_precision_training == True:
-        _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
-        mp_dtype = getattr(torch, mp_dtype_name)
-        args.mixed_precision_autocast_dtype = mp_dtype
+        pass
     else:
         args.mixed_precision_autocast_dtype = dtype
 
@@ -179,8 +180,8 @@ def main():
         inverse_frequencies = 1.0 / frequencies
         class_weights = inverse_frequencies / inverse_frequencies.sum()  # normalize
         args.class_weights = class_weights
-        [print(f"{atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
-            inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
+        # [print(f"{atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
+            # inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
 
     # scaling of coordinates/x
     if not hasattr(args, 'vae_normalize_x'):
@@ -194,6 +195,9 @@ def main():
     if not hasattr(args, 'data_splitted'):
         args.data_splitted = False
 
+    # params global registry for easy access
+    PARAM_REGISTRY.update_from_config(args)
+
     # ================================================================================ #
     # ================================================================================ #
 
@@ -201,15 +205,21 @@ def main():
     print(args)
 
     # Retrieve QM9 dataloaders
-    dataloaders, charge_scale = dataset.retrieve_dataloaders(args)
+    # dataloaders, charge_scale = dataset.retrieve_dataloaders(args)
 
     dataset_info = get_dataset_info(args.dataset, args.remove_h)
 
     # Load model
-    generative_model, nodes_dist, prop_dist = get_latent_diffusion(args, device, dataset_info, dataloaders['train'])
-    if prop_dist is not None:
-        property_norms = compute_mean_mad(dataloaders, args.conditioning, args.dataset)
-        prop_dist.set_normalizer(property_norms)
+    # generative_model, nodes_dist, prop_dist = get_latent_diffusion(args, device, dataset_info, dataloaders['train'])
+    # if prop_dist is not None:
+    #     property_norms = compute_mean_mad(dataloaders, args.conditioning, args.dataset)
+    #     prop_dist.set_normalizer(property_norms)
+    # Load model
+    if args.train_diffusion:
+        raise NotImplementedError()
+    else:
+        assert len(args.conditioning) == 0, "Conditioning not supported"
+        generative_model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info, None)   # prop_dist = None
     generative_model.to(device)
 
     if eval_args.load_last:
@@ -218,7 +228,7 @@ def main():
         else:
             pattern_str = r'generative_model_(\d+)_iter_(\d+)\.npy'
             
-        filtered_files = [f for f in os.listdir(args.ae_path) if re.compile(pattern_str).match(f)]
+        filtered_files = [f for f in os.listdir(eval_args.model_path) if re.compile(pattern_str).match(f)]
         filtered_files.sort(key=lambda x: (
             int(re.search(pattern_str, x).group(1)),
             int(re.search(pattern_str, x).group(2))

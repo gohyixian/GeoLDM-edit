@@ -1428,7 +1428,7 @@ class EnHierarchicalVAE(torch.nn.Module):
         return {
             'x': z_x,
             'categorical': z_h,
-            'int': z_int
+            'integer': z_int
         }
 
     @torch.no_grad()
