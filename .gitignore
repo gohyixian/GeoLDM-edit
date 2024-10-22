@@ -51,3 +51,8 @@ vis_activations/*
 
 outputs_selected/*
 outputs_selected*.zip
+
+eval_vae/*
+eval_ldm/*
+eval_controlnet/*
+

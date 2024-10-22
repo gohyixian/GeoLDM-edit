@@ -1411,6 +1411,46 @@ class EnHierarchicalVAE(torch.nn.Module):
         z = torch.cat([z_x, z_h], dim=2)
         return z
 
+    def custom_sample_combined_position_feature_noise(self, n_samples, n_nodes, node_mask):
+        """
+        Samples mean-centered normal noise for z_x, and standard normal noise for z_h,
+        and optional z_int for charges
+        """
+        z = self.sample_combined_position_feature_noise(n_samples, n_nodes, node_mask)
+        
+        z_x = z[:, :, :self.n_dims].to(node_mask.device)
+        z_h = z[:, :, self.n_dims:].to(node_mask.device)
+        z_int = utils.sample_gaussian_with_mask(
+                    size=(n_samples, n_nodes, 1), device=node_mask.device,
+                    node_mask=node_mask).to(node_mask.device) \
+                if self.include_charges else \
+                    torch.zeros(0).to(node_mask.device)
+        return {
+            'x': z_x,
+            'categorical': z_h,
+            'int': z_int
+        }
+
+    @torch.no_grad()
+    def sample(self, n_samples, n_nodes, node_mask, edge_mask, context, fix_noise=False):
+        """
+        Draw samples from the VAE model. Only the decoder will be utilised.
+        """
+
+        if fix_noise:
+            # Noise is broadcasted over the batch axis, useful for visualizations.
+            z = self.custom_sample_combined_position_feature_noise(1, n_nodes, node_mask)
+        else:
+            z = self.custom_sample_combined_position_feature_noise(n_samples, n_nodes, node_mask)
+
+        diffusion_utils.assert_mean_zero_with_mask(z['x'], node_mask)
+
+        z_xh = torch.cat([z['x'], z['categorical'], z['integer']], dim=2)
+        diffusion_utils.assert_correctly_masked(z_xh, node_mask)
+        x, h = self.decode(z_xh, node_mask, edge_mask, context)
+
+        return x, h
+
     @torch.no_grad()
     def reconstruct(self, x, h, node_mask=None, edge_mask=None, context=None):
         pass
