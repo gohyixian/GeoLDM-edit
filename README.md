@@ -13,8 +13,16 @@ Official code release for the paper "Geometric Latent Diffusion Models for 3D Mo
 
 Install the required packages from `requirements.txt`. A simplified version of the requirements can be found [here](https://github.com/ehoogeboom/e3_diffusion_for_molecules/blob/main/requirements.txt).
 
+**Additional Libraries**: Please install the below additional libraries via conda-forge.
+
+<code>conda conda install -c conda-forge rdkit biopython openbabel</code>
+
+</br>
+
 **Note**: If you want to set up a rdkit environment, it may be easiest to install conda and run:
 ``conda create -c conda-forge -n my-rdkit-env rdkit`` and then install the other required packages. But the code should still run without rdkit installed though.
+
+
 
 
 ## Train the GeoLDM
