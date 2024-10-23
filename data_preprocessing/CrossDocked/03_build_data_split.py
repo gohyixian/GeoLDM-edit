@@ -91,7 +91,7 @@ for mol in data_list:
 
 molecule_data_np = np.array(molecule_data)
 
-# remove count, keep represence
+# remove count, keep presence
 if MODE == 'presence':
     molecule_data_np = molecule_data_np.astype(np.bool).astype(np.int32)
 
