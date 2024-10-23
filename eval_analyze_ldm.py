@@ -255,13 +255,6 @@ def main():
         batch_size=eval_args.batch_size_gen, save_to_xyz=eval_args.save_to_xyz)
     print(metrics_dict)
 
-    if rdkit_metrics is not None:
-        rdkit_metrics = rdkit_metrics[0]
-        print("Validity %.4f, Uniqueness: %.4f, Novelty: %.4f" % (rdkit_metrics[0], rdkit_metrics[1], rdkit_metrics[2]))
-    else:
-        print("Install rdkit roolkit to obtain Validity, Uniqueness, Novelty")
-
-
     with open(join(eval_args.save_path, os.path.basename(eval_args.model_path), 'eval_log.txt'), 'w') as f:
         print(f"Molecule Stability : {metrics_dict['mol_stable']}\n",
               f"Atom Stability     : {metrics_dict['atm_stable']}\n",

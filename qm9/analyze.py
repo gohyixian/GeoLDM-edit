@@ -382,7 +382,7 @@ def analyze_stability_for_molecules(molecule_list, dataset_info):
     
     # Other metrics referenced from DiffSBDD
     # convert into rdmols
-    rdmols = [build_molecule(pos.tolist(), atom_type.tolist(), dataset_info) \
+    rdmols = [build_molecule(pos, atom_type, dataset_info) \
               for (pos, atom_type) in processed_list]
     # won't be computing novelty & uniqueness with 
     # this, no need for dataset SMILES list.
@@ -401,9 +401,9 @@ def analyze_stability_for_molecules(molecule_list, dataset_info):
         molecule_properties.evaluate_mean(connected_mols)
 
     metrics_dict = {
-        'validity': rdkit_metrics[0] if use_rdkit else None,
-        'uniqueness': rdkit_metrics[1] if use_rdkit else None,
-        'novelty': rdkit_metrics[2] if use_rdkit else None,
+        'validity': rdkit_metrics[0][0] if use_rdkit else None,
+        'uniqueness': rdkit_metrics[0][1] if use_rdkit else None,
+        'novelty': rdkit_metrics[0][2] if use_rdkit else None,
         'mol_stable': fraction_mol_stable,
         'atm_stable': fraction_atm_stable,
         'connectivity': connectivity,
