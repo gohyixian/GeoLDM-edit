@@ -5,6 +5,7 @@ try:
 except ModuleNotFoundError:
     use_rdkit = False
 import torch
+import numpy as np
 
 # code borrowed from DiffSBDD
 # https://github.com/arneschneuing/DiffSBDD/tree/main/analysis
@@ -69,8 +70,20 @@ def compute_molecule_metrics(one_hot, x, dataset_info):
             ligand_metrics.compute_connectivity(valid_mols)
     
     # other basic metrics
-    qed, sa, logp, lipinski, diversity = \
-        molecule_properties.evaluate_mean(connected_mols)
+    # qed, sa, logp, lipinski, diversity = \
+    #     molecule_properties.evaluate_mean(connected_mols)
+
+    if len(connected_mols) < 1:
+        qed, sa, logp, lipinski = 0.0, 0.0, 0.0, 0.0
+    else:
+        for mol in connected_mols:
+            Chem.SanitizeMol(mol)
+            assert mol is not None, "only evaluate valid molecules"
+
+        qed = np.mean([molecule_properties.calculate_qed(mol) for mol in connected_mols])
+        sa = np.mean([molecule_properties.calculate_sa(mol) for mol in connected_mols])
+        logp = np.mean([molecule_properties.calculate_logp(mol) for mol in connected_mols])
+        lipinski = np.mean([molecule_properties.calculate_lipinski(mol) for mol in connected_mols])
 
     metrics_dict = {
         'validity': rdkit_metrics[0][0] if use_rdkit else None,
@@ -82,8 +95,7 @@ def compute_molecule_metrics(one_hot, x, dataset_info):
         'QED': qed,
         'SA': sa,
         'logP': logp,
-        'lipinski': lipinski,
-        'diversity': diversity
+        'lipinski': lipinski
     }
     
     return metrics_dict
