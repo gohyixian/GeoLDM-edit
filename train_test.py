@@ -723,12 +723,31 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
         molecules['node_mask'].append(node_mask.detach().cpu())
 
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}
-    validity_dict, rdkit_tuple = analyze_stability_for_molecules(molecules, dataset_info)
+    # validity_dict, rdkit_tuple = analyze_stability_for_molecules(molecules, dataset_info)
+    # wandb.log(validity_dict)
+    # if rdkit_tuple is not None:
+    #     wandb.log({'Validity': rdkit_tuple[0][0], 'Uniqueness': rdkit_tuple[0][1], 'Novelty': rdkit_tuple[0][2]})
+    # return validity_dict
+    metrics_dict = analyze_stability_for_molecules(molecules, dataset_info)
 
-    wandb.log(validity_dict)
-    if rdkit_tuple is not None:
-        wandb.log({'Validity': rdkit_tuple[0][0], 'Uniqueness': rdkit_tuple[0][1], 'Novelty': rdkit_tuple[0][2]})
-    return validity_dict
+    wandb.log(metrics_dict)
+    if metrics_dict is not None:
+        wandb.log(
+            {
+                'metrics/Validity': metrics_dict['validity'],
+                'metrics/Uniqueness': metrics_dict['uniqueness'],
+                'metrics/Novelty': metrics_dict['novelty'],
+                'metrics/Mol_Stability': metrics_dict['mol_stable'],
+                'metrics/Atom_Stability': metrics_dict['atm_stable'],
+                'metrics/Connectivity': metrics_dict['connectivity'],
+                'metrics/QED': metrics_dict['QED'],
+                'metrics/SA': metrics_dict['SA'],
+                'metrics/LogP': metrics_dict['logP'],
+                'metrics/Lipinski': metrics_dict['lipinski'],
+                'metrics/Diversity': metrics_dict['diversity']
+            }
+        )
+    return metrics_dict
 
 
 
@@ -758,13 +777,31 @@ def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, d
         batch_id += batch_size
 
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}
-    validity_dict, rdkit_tuple = analyze_stability_for_molecules(molecules, dataset_info)
+    # validity_dict, rdkit_tuple = analyze_stability_for_molecules(molecules, dataset_info)
+    # wandb.log(validity_dict)
+    # if rdkit_tuple is not None:
+    #     wandb.log({'Validity': rdkit_tuple[0][0], 'Uniqueness': rdkit_tuple[0][1], 'Novelty': rdkit_tuple[0][2]})
+    # return validity_dict
+    metrics_dict = analyze_stability_for_molecules(molecules, dataset_info)
 
-    wandb.log(validity_dict)
-    if rdkit_tuple is not None:
-        wandb.log({'Validity': rdkit_tuple[0][0], 'Uniqueness': rdkit_tuple[0][1], 'Novelty': rdkit_tuple[0][2]})
-    return validity_dict
-
+    wandb.log(metrics_dict)
+    if metrics_dict is not None:
+        wandb.log(
+            {
+                'metrics/Validity': metrics_dict['validity'],
+                'metrics/Uniqueness': metrics_dict['uniqueness'],
+                'metrics/Novelty': metrics_dict['novelty'],
+                'metrics/Mol_Stability': metrics_dict['mol_stable'],
+                'metrics/Atom_Stability': metrics_dict['atm_stable'],
+                'metrics/Connectivity': metrics_dict['connectivity'],
+                'metrics/QED': metrics_dict['QED'],
+                'metrics/SA': metrics_dict['SA'],
+                'metrics/LogP': metrics_dict['logP'],
+                'metrics/Lipinski': metrics_dict['lipinski'],
+                'metrics/Diversity': metrics_dict['diversity']
+            }
+        )
+    return metrics_dict
 
 
 def save_and_sample_conditional(args, device, model, prop_dist, dataset_info, epoch=0, id_from=0):

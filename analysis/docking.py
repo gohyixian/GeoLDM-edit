@@ -10,7 +10,7 @@ from rdkit import Chem
 from tqdm import tqdm
 
 try:
-    import utils
+    from analysis import utils
 except ModuleNotFoundError as e:
     print(e)
 

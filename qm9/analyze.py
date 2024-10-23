@@ -13,6 +13,11 @@ import numpy as np
 import scipy.stats as sp_stats
 from qm9 import bond_analyze
 
+# code borrowed from DiffSBDD
+# https://github.com/arneschneuing/DiffSBDD/tree/main/analysis
+from analysis.metrics import BasicMolecularMetrics as DiffSBDD_MolecularMetrics
+from analysis.metrics import MoleculeProperties
+from analysis.molecule_builder import build_molecule
 
 # 'atom_decoder': ['H', 'B', 'C', 'N', 'O', 'F', 'Al', 'Si', 'P', 'S', 'Cl', 'As', 'Br', 'I', 'Hg', 'Bi'],
 
@@ -364,21 +369,53 @@ def analyze_stability_for_molecules(molecule_list, dataset_info):
         nr_stable_bonds += int(validity_results[1])
         n_atoms += int(validity_results[2])
 
-    # Validity
+    # Stability
     fraction_mol_stable = molecule_stable / float(n_samples)
     fraction_atm_stable = nr_stable_bonds / float(n_atoms)
-    validity_dict = {
-        'mol_stable': fraction_mol_stable,
-        'atm_stable': fraction_atm_stable,
-    }
-
+    
     if use_rdkit:
+        # validity, uniquness, novelty
         metrics = BasicMolecularMetrics(dataset_info)
         rdkit_metrics = metrics.evaluate(processed_list)
-        #print("Unique molecules:", rdkit_metrics[1])
-        return validity_dict, rdkit_metrics
     else:
-        return validity_dict, None
+        rdkit_metrics = None
+    
+    # Other metrics referenced from DiffSBDD
+    # convert into rdmols
+    rdmols = [build_molecule(pos.tolist(), atom_type.tolist(), dataset_info) \
+              for (pos, atom_type) in processed_list]
+    # won't be computing novelty & uniqueness with 
+    # this, no need for dataset SMILES list.
+    ligand_metrics = DiffSBDD_MolecularMetrics(dataset_info, dataset_smiles_list=None)
+    molecule_properties = MoleculeProperties()
+    
+    # filter valid molecules
+    valid_mols, _ = ligand_metrics.compute_validity(rdmols)
+    
+    # compute connectivity
+    connected_mols, connectivity, _ = \
+            ligand_metrics.compute_connectivity(valid_mols)
+    
+    # other basic metrics
+    qed, sa, logp, lipinski, diversity = \
+        molecule_properties.evaluate_mean(connected_mols)
+
+    metrics_dict = {
+        'validity': rdkit_metrics[0] if use_rdkit else None,
+        'uniqueness': rdkit_metrics[1] if use_rdkit else None,
+        'novelty': rdkit_metrics[2] if use_rdkit else None,
+        'mol_stable': fraction_mol_stable,
+        'atm_stable': fraction_atm_stable,
+        'connectivity': connectivity,
+        'QED': qed,
+        'SA': sa,
+        'logP': logp,
+        'lipinski': lipinski,
+        'diversity': diversity
+    }
+    
+    return metrics_dict
+
 
 
 def analyze_node_distribution(mol_list, save_path):

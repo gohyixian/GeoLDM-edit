@@ -63,10 +63,16 @@ def analyze_and_save(args, eval_args, device, generative_model,
                 node_mask=node_mask)
 
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}
-    stability_dict, rdkit_metrics = analyze_stability_for_molecules(
-        molecules, dataset_info)
+    print(f"one_hot: {molecules['one_hot'].shape}")
+    print(f"x: {molecules['x'].shape}")
+    print(f"node_mask: {molecules['node_mask'].shape}")
+    # one_hot: torch.Size([10, 106, 8])
+    # x: torch.Size([10, 106, 3])
+    # node_mask: torch.Size([10, 106, 1])
+    
+    metrics_dict = analyze_stability_for_molecules(molecules, dataset_info)
 
-    return stability_dict, rdkit_metrics
+    return metrics_dict
 
 
 
@@ -243,11 +249,11 @@ def main():
     generative_model.load_state_dict(flow_state_dict)
 
     # Analyze stability, validity, uniqueness and novelty
-    stability_dict, rdkit_metrics = analyze_and_save(
+    metrics_dict = analyze_and_save(
         args, eval_args, device, generative_model, nodes_dist,
         prop_dist, dataset_info, n_samples=eval_args.n_samples,
         batch_size=eval_args.batch_size_gen, save_to_xyz=eval_args.save_to_xyz)
-    print(stability_dict)
+    print(metrics_dict)
 
     if rdkit_metrics is not None:
         rdkit_metrics = rdkit_metrics[0]
@@ -256,13 +262,19 @@ def main():
         print("Install rdkit roolkit to obtain Validity, Uniqueness, Novelty")
 
 
-
-    with open(join(eval_args.model_path, 'eval_log.txt'), 'w') as f:
-        print(f"Molecule Stability:\n{stability_dict['mol_stable']}\n\n",
-              f"Atom Stability:\n{stability_dict['atm_stable']}\n\n",
-              f"Validity: {rdkit_metrics[0]} \nUniqueness: {rdkit_metrics[1]} \nNovelty: {rdkit_metrics[2]}",
+    with open(join(eval_args.save_path, os.path.basename(eval_args.model_path), 'eval_log.txt'), 'w') as f:
+        print(f"Molecule Stability : {metrics_dict['mol_stable']}\n",
+              f"Atom Stability     : {metrics_dict['atm_stable']}\n",
+              f"Validity           : {metrics_dict['validity']}\n",
+              f"Uniqueness         : {metrics_dict['uniqueness']}\n",
+              f"Novelty            : {metrics_dict['novelty']}\n",
+              f"Connectivity       : {metrics_dict['connectivity']}\n",
+              f"QED                : {metrics_dict['QED']}\n",
+              f"SA                 : {metrics_dict['SA']}\n",
+              f"LogP               : {metrics_dict['logP']}\n",
+              f"Lipinski           : {metrics_dict['lipinski']}\n",
+              f"Diversity          : {metrics_dict['diversity']}\n",
               file=f)
-
 
 if __name__ == "__main__":
     main()
