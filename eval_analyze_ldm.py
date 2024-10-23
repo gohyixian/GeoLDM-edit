@@ -17,7 +17,7 @@ import pickle
 from configs.datasets_config import get_dataset_info
 from os.path import join
 from qm9.sampling import sample
-from qm9.analyze import analyze_stability_for_molecules, analyze_node_distribution
+from qm9.analyze import compute_molecule_metrics, analyze_node_distribution
 from qm9.utils import prepare_context, compute_mean_mad
 from qm9 import visualizer as qm9_visualizer
 import qm9.losses as losses
@@ -70,7 +70,7 @@ def analyze_and_save(args, eval_args, device, generative_model,
     # x: torch.Size([10, 106, 3])
     # node_mask: torch.Size([10, 106, 1])
     
-    metrics_dict = analyze_stability_for_molecules(molecules, dataset_info)
+    metrics_dict = compute_molecule_metrics(molecules, dataset_info)
 
     return metrics_dict
 
@@ -256,18 +256,19 @@ def main():
     print(metrics_dict)
 
     with open(join(eval_args.save_path, os.path.basename(eval_args.model_path), 'eval_log.txt'), 'w') as f:
-        print(f"Molecule Stability : {metrics_dict['mol_stable']}\n",
-              f"Atom Stability     : {metrics_dict['atm_stable']}\n",
-              f"Validity           : {metrics_dict['validity']}\n",
-              f"Uniqueness         : {metrics_dict['uniqueness']}\n",
-              f"Novelty            : {metrics_dict['novelty']}\n",
-              f"Connectivity       : {metrics_dict['connectivity']}\n",
-              f"QED                : {metrics_dict['QED']}\n",
-              f"SA                 : {metrics_dict['SA']}\n",
-              f"LogP               : {metrics_dict['logP']}\n",
-              f"Lipinski           : {metrics_dict['lipinski']}\n",
-              f"Diversity          : {metrics_dict['diversity']}\n",
-              file=f)
+        text = \
+            f"Molecule Stability : {metrics_dict['mol_stable']}\n" + \
+            f"Atom Stability     : {metrics_dict['atm_stable']}\n\n" + \
+            f"Validity           : {metrics_dict['validity']}\n" + \
+            f"Uniqueness         : {metrics_dict['uniqueness']}\n" + \
+            f"Novelty            : {metrics_dict['novelty']}\n" + \
+            f"Diversity          : {metrics_dict['diversity']}\n\n" + \
+            f"Connectivity       : {metrics_dict['connectivity']}\n" + \
+            f"QED                : {metrics_dict['QED']}\n" + \
+            f"SA                 : {metrics_dict['SA']}\n" + \
+            f"LogP               : {metrics_dict['logP']}\n" + \
+            f"Lipinski           : {metrics_dict['lipinski']}\n"
+        print(text, file=f)
 
 if __name__ == "__main__":
     main()

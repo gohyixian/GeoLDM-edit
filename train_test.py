@@ -3,7 +3,7 @@ from equivariant_diffusion.utils import assert_mean_zero_with_mask, remove_mean_
     assert_correctly_masked, sample_center_gravity_zero_gaussian_with_mask
 import numpy as np
 import qm9.visualizer as vis
-from qm9.analyze import analyze_stability_for_molecules
+from qm9.analyze import compute_molecule_metrics
 from qm9.sampling import sample_chain, sample, sample_sweep_conditional, sample_controlnet
 import utils
 import qm9.utils as qm9utils
@@ -201,6 +201,8 @@ def train_epoch(args, loader, loader_vis_activations, epoch, model, model_dp, mo
     loss_analysis_modes = PARAM_REGISTRY.get('loss_analysis_modes')
     
     for i, data in enumerate(loader):
+        if i > 20:  # here
+            break
         x = data['positions'].to(device, dtype)
         node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
         edge_mask = data['edge_mask'].to(device, dtype)
@@ -507,6 +509,8 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
         n_iterations = len(loader)
 
         for i, data in enumerate(loader):
+            if i > 20: # here
+                break
             x = data['positions'].to(device, dtype)
             batch_size = x.size(0)
             node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
@@ -723,12 +727,12 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
         molecules['node_mask'].append(node_mask.detach().cpu())
 
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}
-    # validity_dict, rdkit_tuple = analyze_stability_for_molecules(molecules, dataset_info)
+    # validity_dict, rdkit_tuple = compute_molecule_metrics(molecules, dataset_info)
     # wandb.log(validity_dict)
     # if rdkit_tuple is not None:
     #     wandb.log({'Validity': rdkit_tuple[0][0], 'Uniqueness': rdkit_tuple[0][1], 'Novelty': rdkit_tuple[0][2]})
     # return validity_dict
-    metrics_dict = analyze_stability_for_molecules(molecules, dataset_info)
+    metrics_dict = compute_molecule_metrics(molecules, dataset_info)
 
     wandb.log(metrics_dict)
     if metrics_dict is not None:
@@ -777,12 +781,12 @@ def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, d
         batch_id += batch_size
 
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}
-    # validity_dict, rdkit_tuple = analyze_stability_for_molecules(molecules, dataset_info)
+    # validity_dict, rdkit_tuple = compute_molecule_metrics(molecules, dataset_info)
     # wandb.log(validity_dict)
     # if rdkit_tuple is not None:
     #     wandb.log({'Validity': rdkit_tuple[0][0], 'Uniqueness': rdkit_tuple[0][1], 'Novelty': rdkit_tuple[0][2]})
     # return validity_dict
-    metrics_dict = analyze_stability_for_molecules(molecules, dataset_info)
+    metrics_dict = compute_molecule_metrics(molecules, dataset_info)
 
     wandb.log(metrics_dict)
     if metrics_dict is not None:

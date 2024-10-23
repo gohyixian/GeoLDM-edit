@@ -335,7 +335,7 @@ def main_check_stability(remove_h: bool, batch_size=32):
         test_validity_for(test_loader)
 
 
-def analyze_stability_for_molecules(molecule_list, dataset_info):
+def compute_molecule_metrics(molecule_list, dataset_info):
     one_hot = molecule_list['one_hot']
     x = molecule_list['x']
     node_mask = molecule_list['node_mask']
