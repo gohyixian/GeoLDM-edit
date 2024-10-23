@@ -132,7 +132,9 @@ def main():
 
 
     # intermediate activations analysis usage
-    args.vis_activations_instances = (nn.Linear)
+    # args.vis_activations_instances = (nn.Linear)
+    args.vis_activations_instances = (nn.Module)
+    
     args.save_activations_path = 'vis_activations'
     args.vis_activations_bins = 200
     if not hasattr(args, 'vis_activations_specific_ylim'):
