@@ -76,7 +76,7 @@ def analyze_and_save(args, eval_args, device, generative_model,
 
 
 
-# python eval_analyze_ldm.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_resume --load_last --batch_size_gen 2 --n_samples 10
+# python eval_analyze_ldm.py --load_last --batch_size_gen 20 --n_samples 200 --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_resume
 
 def main():
     parser = argparse.ArgumentParser()
