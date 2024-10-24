@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch1000_bs80_lr1e-4_EMA-0.75__20240623__10A
+exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -7,7 +7,7 @@ train_diffusion: true
 
 # training mode: VAE | LDM | ControlNet
 training_mode: LDM
-loss_analysis: true
+loss_analysis: false
 
 # Specify first stage model path
 ae_path: outputs_selected/vae_ligands/AMP__01_VAE_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs36_lr1e-4_InvClassFreq_Smooth0.25_x10_h5_NoEMA__20240623__10A__LG_Only
@@ -77,11 +77,11 @@ remove_h: false
 
 # ========================================================================================================== Training Params
 start_epoch: 0
-test_epochs: 1
+test_epochs: 2
 
 
-n_epochs: 1000  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 80    # 24
+n_epochs: 200  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 64    # 24
 lr: 1.0e-4   # 0.0001
 
 # weight of KL term in ELBO, default 0.01
@@ -98,13 +98,13 @@ dp: true
 clip_grad: true
 
 # Amount of EMA decay, 0 means off. A reasonable value is 0.999.
-ema_decay: 0.75
+ema_decay: 0
 
 # add noise to x before encoding, data augmenting
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 500
+n_stability_samples: 50
 
 
 # disables CUDA training
@@ -220,7 +220,9 @@ n_report_steps: 50
 
 # ========================================================================================================== Saving & Resuming
 # str
-resume: null
+# resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_resume_resume
+# resume_model_ckpt: generative_model_ema_75_iter_160512.npy
+# resume_optim_ckpt: optim_75_iter_160512.npy
 save_model: true
 
 
