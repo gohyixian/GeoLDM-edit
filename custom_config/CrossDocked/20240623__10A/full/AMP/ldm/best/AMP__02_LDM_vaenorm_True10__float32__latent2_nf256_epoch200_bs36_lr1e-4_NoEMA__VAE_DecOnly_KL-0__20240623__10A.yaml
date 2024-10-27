@@ -81,7 +81,7 @@ remove_h: false
 
 # ========================================================================================================== Training Params
 start_epoch: 0
-test_epochs: 2
+test_epochs: 4
 
 
 n_epochs: 200  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
@@ -215,7 +215,7 @@ aggregation_method: sum
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
 visualize_sample_chain: true
-visualize_every_batch: 10000
+visualize_every_batch: 20000
 visualize_sample_chain_epochs: 2   # for 1% testing dataset, others set to 1
 n_report_steps: 50
 
@@ -230,9 +230,12 @@ n_report_steps: 50
 # resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_resume
 # resume_model_ckpt: generative_model_77_iter_164736.npy
 # resume_optim_ckpt: optim_77_iter_164736.npy
-resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_resume_resume
-resume_model_ckpt: generative_model_78_iter_166848.npy
-resume_optim_ckpt: optim_78_iter_166848.npy
+# resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_resume_resume
+# resume_model_ckpt: generative_model_78_iter_166848.npy
+# resume_optim_ckpt: optim_78_iter_166848.npy
+resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_resume_resume_resume
+resume_model_ckpt: generative_model_106_iter_225984.npy
+resume_optim_ckpt: optim_106_iter_225984.npy
 
 save_model: true
 
