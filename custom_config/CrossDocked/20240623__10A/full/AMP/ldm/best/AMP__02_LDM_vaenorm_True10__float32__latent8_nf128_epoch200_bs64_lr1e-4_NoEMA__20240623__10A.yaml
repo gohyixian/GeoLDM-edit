@@ -224,7 +224,7 @@ n_report_steps: 50
 # resume_model_ckpt: generative_model_ema_75_iter_160512.npy
 # resume_optim_ckpt: optim_75_iter_160512.npy
 save_model: true
-
+resume: null
 
 
 
