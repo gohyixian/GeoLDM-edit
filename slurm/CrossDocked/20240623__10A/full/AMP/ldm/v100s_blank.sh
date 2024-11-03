@@ -1,9 +1,9 @@
 #! /bin/bash -l
 
 #SBATCH --partition=gpu-v100s
-#SBATCH --ntasks=48
+#SBATCH --ntasks=32
 #SBATCH --nodes=1
-#SBATCH --mem=100G
+#SBATCH --mem=90G
 #SBATCH --gpus=1
 #SBATCH --job-name=AMP__01_VAE_vaenorm_True__bfloat16__latent4_nf64_epoch100_bs36_lr1e-5__20240623__10A__PKT_Only
 #SBATCH --output=slurm_out/AMP__01_VAE_vaenorm_True__bfloat16__latent4_nf64_epoch100_bs36_lr1e-5__20240623__10A__PKT_Only.out

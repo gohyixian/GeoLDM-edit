@@ -1,9 +1,9 @@
 #! /bin/bash -l
 
 #SBATCH --partition=gpu-v100s
-#SBATCH --ntasks=48
+#SBATCH --ntasks=32
 #SBATCH --nodes=1
-#SBATCH --mem=100G
+#SBATCH --mem=90G
 #SBATCH --gpus=1
 #SBATCH --job-name=AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A
 #SBATCH --output=slurm_out/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A.out
@@ -13,7 +13,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 117593
+# 117865
 # module load cuda/12.1       # gpu-a100
 # module load miniconda/24.1.2
 # conda activate geoldm-a100
