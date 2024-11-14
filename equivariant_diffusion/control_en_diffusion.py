@@ -14,26 +14,20 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
     The E(n) Latent Diffusion Module.
     """
     def __init__(self, **kwargs):
-        ligand_vae                  = kwargs.get('ligand_vae')
-        pocket_vae                  = kwargs.get('pocket_vae')
-        dynamics                    = kwargs.get('dynamics')
-        trainable_ligand_ae_encoder = kwargs.get('trainable_ligand_ae_encoder')
-        trainable_ligand_ae_decoder = kwargs.get('trainable_ligand_ae_decoder')
-        trainable_pocket_ae_encoder = kwargs.get('trainable_pocket_ae_encoder')
-        trainable_ldm               = kwargs.pop('trainable_ldm')           # pop away, not required in Enlatentdiffusion.__init__()
-        trainable_controlnet        = kwargs.pop('trainable_controlnet')
-        trainable_fusion_blocks     = kwargs.pop('trainable_fusion_blocks')
+        ligand_vae                  = kwargs.pop('ligand_vae', None)
+        pocket_vae                  = kwargs.pop('pocket_vae', None)
+        dynamics                    = kwargs.get('dynamics')  # leave for egacy parent classes
+        trainable_ligand_ae_encoder = kwargs.pop('trainable_ligand_ae_encoder', False)
+        trainable_ligand_ae_decoder = kwargs.pop('trainable_ligand_ae_decoder', False)
+        trainable_pocket_ae_encoder = kwargs.pop('trainable_pocket_ae_encoder', False)
+        trainable_ldm               = kwargs.pop('trainable_ldm', False)           # pop away, not required in Enlatentdiffusion.__init__()
+        trainable_controlnet        = kwargs.pop('trainable_controlnet', False)
+        trainable_fusion_blocks     = kwargs.pop('trainable_fusion_blocks', False)
         
         # override legacy property issues with dummy values
         kwargs['vae'] = ligand_vae
         kwargs['trainable_ae_encoder'] = trainable_ligand_ae_encoder
         kwargs['trainable_ae_decoder'] = trainable_ligand_ae_decoder
-
-        ligand_vae = kwargs.pop('ligand_vae', None)
-        pocket_vae = kwargs.pop('pocket_vae', None)
-        trainable_ligand_ae_encoder = kwargs.pop('trainable_ligand_ae_encoder', False)
-        trainable_ligand_ae_decoder = kwargs.pop('trainable_ligand_ae_decoder', False)
-        trainable_pocket_ae_encoder = kwargs.pop('trainable_pocket_ae_encoder', False)
 
         super().__init__(**kwargs)
         

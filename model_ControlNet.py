@@ -6,14 +6,13 @@ Model Training Mode      : ControlNet
 ================================
 
 
-
 ControlEnLatentDiffusion(
   (gamma): PredefinedNoiseSchedule()
   (dynamics): ControlNet_Module_Wrapper(
     (controlnet_arch_wrapper): ControlNet_Arch_Wrapper(
       (diffusion_net): EGNN(
-        (embedding): Linear(in_features=3, out_features=128, bias=True)
-        (embedding_out): Linear(in_features=128, out_features=3, bias=True)
+        (embedding): Linear(in_features=9, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=9, bias=True)
         (e_block_0): EquivariantBlock(
           (gcl_0): GCL(
             (edge_mlp): Sequential(
@@ -127,15 +126,9 @@ ControlEnLatentDiffusion(
           )
         )
       )
-
-
-
-
-
-
       (control_net): EGNN(
-        (embedding): Linear(in_features=3, out_features=128, bias=True)
-        (embedding_out): Linear(in_features=128, out_features=3, bias=True)
+        (embedding): Linear(in_features=9, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=9, bias=True)
         (e_block_0): EquivariantBlock(
           (gcl_0): GCL(
             (edge_mlp): Sequential(
@@ -249,12 +242,6 @@ ControlEnLatentDiffusion(
           )
         )
       )
-
-
-
-
-
-
       (fusion_net): EGNN_Fusion(
         (fusion_e_block_0): FusionBlock(
           (gcl_0): GCL(
@@ -370,16 +357,10 @@ ControlEnLatentDiffusion(
         )
       )
     )
-
-
-
-
-
-
     (diffusion_network): EGNN_dynamics_QM9(
       (egnn): EGNN(
-        (embedding): Linear(in_features=3, out_features=128, bias=True)
-        (embedding_out): Linear(in_features=128, out_features=3, bias=True)
+        (embedding): Linear(in_features=9, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=9, bias=True)
         (e_block_0): EquivariantBlock(
           (gcl_0): GCL(
             (edge_mlp): Sequential(
@@ -494,16 +475,10 @@ ControlEnLatentDiffusion(
         )
       )
     )
-
-
-
-
-
-
     (control_network): EGNN_dynamics_QM9(
       (egnn): EGNN(
-        (embedding): Linear(in_features=3, out_features=128, bias=True)
-        (embedding_out): Linear(in_features=128, out_features=3, bias=True)
+        (embedding): Linear(in_features=9, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=9, bias=True)
         (e_block_0): EquivariantBlock(
           (gcl_0): GCL(
             (edge_mlp): Sequential(
@@ -618,13 +593,6 @@ ControlEnLatentDiffusion(
         )
       )
     )
-
-
-
-
-
-
-
     (fusion_network): EGNN_dynamics_fusion(
       (egnn_fusion): EGNN_Fusion(
         (fusion_e_block_0): FusionBlock(
@@ -742,16 +710,10 @@ ControlEnLatentDiffusion(
       )
     )
   )
-
-
-
-
-
-
   (vae): EnHierarchicalVAE(
     (encoder): EGNN_encoder_QM9(
       (egnn): EGNN(
-        (embedding): Linear(in_features=27, out_features=128, bias=True)
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
         (embedding_out): Linear(in_features=128, out_features=128, bias=True)
         (e_block_0): EquivariantBlock(
           (gcl_0): GCL(
@@ -785,18 +747,331 @@ ControlEnLatentDiffusion(
       (final_mlp): Sequential(
         (0): Linear(in_features=128, out_features=128, bias=True)
         (1): SiLU()
-        (2): Linear(in_features=128, out_features=5, bias=True)
+        (2): Linear(in_features=128, out_features=17, bias=True)
       )
     )
-
-
-
-
-
     (decoder): EGNN_decoder_QM9(
       (egnn): EGNN(
-        (embedding): Linear(in_features=2, out_features=128, bias=True)
-        (embedding_out): Linear(in_features=128, out_features=27, bias=True)
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=8, bias=True)
+        (e_block_0): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+        (e_block_1): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+        (e_block_2): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+        (e_block_3): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+      )
+    )
+  )
+  (ligand_vae): EnHierarchicalVAE(
+    (encoder): EGNN_encoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=128, bias=True)
+        (e_block_0): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+      )
+      (final_mlp): Sequential(
+        (0): Linear(in_features=128, out_features=128, bias=True)
+        (1): SiLU()
+        (2): Linear(in_features=128, out_features=17, bias=True)
+      )
+    )
+    (decoder): EGNN_decoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=8, bias=True)
+        (e_block_0): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+        (e_block_1): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+        (e_block_2): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+        (e_block_3): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+      )
+    )
+  )
+  (pocket_vae): EnHierarchicalVAE(
+    (encoder): EGNN_encoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=128, bias=True)
+        (e_block_0): EquivariantBlock(
+          (gcl_0): GCL(
+            (edge_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+            )
+            (node_mlp): Sequential(
+              (0): Linear(in_features=256, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+            )
+            (att_mlp): Sequential(
+              (0): Linear(in_features=128, out_features=1, bias=True)
+              (1): Sigmoid()
+            )
+          )
+          (gcl_equiv): EquivariantUpdate(
+            (coord_mlp): Sequential(
+              (0): Linear(in_features=258, out_features=128, bias=True)
+              (1): SiLU()
+              (2): Linear(in_features=128, out_features=128, bias=True)
+              (3): SiLU()
+              (4): Linear(in_features=128, out_features=1, bias=False)
+            )
+          )
+        )
+      )
+      (final_mlp): Sequential(
+        (0): Linear(in_features=128, out_features=128, bias=True)
+        (1): SiLU()
+        (2): Linear(in_features=128, out_features=17, bias=True)
+      )
+    )
+    (decoder): EGNN_decoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=8, bias=True)
         (e_block_0): EquivariantBlock(
           (gcl_0): GCL(
             (edge_mlp): Sequential(
