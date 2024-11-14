@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: AMP__03_CONTROL_latent8_nf128_ds500_fusBalancedSum__ConFus_epoch200_bs2_lr1e-4_NoEMA__20240623__10A
+exp_name: AMP__03_CONTROL_latent8_nf128_ds1000_fusBalancedSum__ConFus_epoch200_bs2_lr1e-4_NoEMA__20240623__10A
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -17,7 +17,7 @@ pocket_ae_path: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32
 pocket_ae_ckpt: generative_model_11_iter_228192.npy   # set null to load automatically selected best
 
 # Specify LDM weights path, set to null for random initialisation
-ldm_path: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_2x_resume
+ldm_path: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_2x_resume
 ldm_ckpt: generative_model_196_iter_234036.npy   # set null to load automatically selected best
 
 # Zero out all weights of fusion blocks instead of randomly instantiated
@@ -171,7 +171,7 @@ model: egnn_dynamics
 probabilistic_model: diffusion
 
 # Training complexity is O(1) (unaffected), but sampling complexity is O(steps), default 500
-diffusion_steps: 500
+diffusion_steps: 1000
 
 # learned, cosine, polynomial_<power>
 diffusion_noise_schedule: polynomial_2       # polynomial power 2
@@ -269,7 +269,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: false
+no_wandb: true
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true

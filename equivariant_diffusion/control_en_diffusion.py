@@ -29,6 +29,12 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         kwargs['trainable_ae_encoder'] = trainable_ligand_ae_encoder
         kwargs['trainable_ae_decoder'] = trainable_ligand_ae_decoder
 
+        ligand_vae = kwargs.pop('ligand_vae', None)
+        pocket_vae = kwargs.pop('pocket_vae', None)
+        trainable_ligand_ae_encoder = kwargs.pop('trainable_ligand_ae_encoder', False)
+        trainable_ligand_ae_decoder = kwargs.pop('trainable_ligand_ae_decoder', False)
+        trainable_pocket_ae_encoder = kwargs.pop('trainable_pocket_ae_encoder', False)
+
         super().__init__(**kwargs)
         
         assert isinstance(ligand_vae, EnHierarchicalVAE), f"required Ligand VAE class of EnHierarchicalVAE but {ligand_vae.__class__.__name__} given"
