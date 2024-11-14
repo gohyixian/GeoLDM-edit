@@ -20,14 +20,17 @@ from tqdm import tqdm
 
 
 
-def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
+def train_epoch_controlnet(args, loader, loader_vis_activations, epoch, model, model_dp, model_ema, ema, device, dtype, property_norms, optim,
                            nodes_dist, gradnorm_queue, dataset_info, prop_dist):
     model_dp.train()
     model.train()
     nll_epoch = []
     n_iterations = len(loader)
     optim.zero_grad()
-
+    training_mode = PARAM_REGISTRY.get('training_mode')
+    loss_analysis = PARAM_REGISTRY.get('loss_analysis')
+    loss_analysis_modes = PARAM_REGISTRY.get('loss_analysis_modes')
+    
     for i, data in enumerate(loader):
         lg_x = data['ligand']['positions'].to(device, dtype)
         lg_node_mask = data['ligand']['atom_mask'].to(device, dtype).unsqueeze(2)
@@ -165,6 +168,9 @@ def train_epoch_controlnet(args, loader, epoch, model, model_dp, model_ema, ema,
         del joint_edge_mask, loss, nll, reg_term, mean_abs_z, grad_norm
         torch.cuda.empty_cache()
         gc.collect()
+        
+        # FUTURE_PLACEHOLDER: visualise samples
+        # FUTURE_PLACEHOLDER: visualise activations
 
         smi_dict = utils.get_nvidia_smi_usage(smi_txt)
         wandb_dict = {}
@@ -589,6 +595,9 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
 
 def test_controlnet(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_dist, partition='Test'):
     eval_model.eval()
+    training_mode = PARAM_REGISTRY.get('training_mode')
+    loss_analysis = PARAM_REGISTRY.get('loss_analysis')
+    loss_analysis_modes = PARAM_REGISTRY.get('loss_analysis_modes')
     
     # ~!mp
     with torch.no_grad():

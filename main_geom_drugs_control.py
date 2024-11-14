@@ -16,6 +16,9 @@ from equivariant_diffusion import en_diffusion, control_en_diffusion
 
 from equivariant_diffusion import utils as diffusion_utils
 import torch
+from torch import nn
+import random
+import numpy as np
 import time
 import pickle
 import math
@@ -26,9 +29,9 @@ import train_test
 from global_registry import PARAM_REGISTRY, Config
 
 
-CONTROLNET = 'ControlNet'
-LDM = "LDM"
-VAE = "VAE"
+CONTROLNET = "ControlNet"
+LDM        = "LDM"
+VAE        = "VAE"
 
 
 def main():
@@ -40,6 +43,10 @@ def main():
         args_dict = yaml.safe_load(file)
     args = Config(**args_dict)
 
+    # set random seed
+    torch.manual_seed(args.random_seed)
+    random.seed(args.random_seed)
+    np.random.seed(args.random_seed)
 
     # # priority check goes here
     # if args.remove_h:
@@ -57,10 +64,123 @@ def main():
 
 
     # dtype settings
-    module_name, dtype_name = args.dtype.split('.')
+    _, dtype_name = args.dtype.split('.')
     dtype = getattr(torch, dtype_name)
     args.dtype = dtype
     torch.set_default_dtype(dtype)
+
+
+    # mp autocast dtype
+    if args.mixed_precision_training == True:
+        _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
+        mp_dtype = getattr(torch, mp_dtype_name)
+        args.mixed_precision_autocast_dtype = mp_dtype
+    else:
+        args.mixed_precision_autocast_dtype = dtype
+
+
+    # gradient accumulation
+    if not hasattr(args, 'grad_accumulation_steps'):
+        args.grad_accumulation_steps = 1  # call optim every step
+
+
+    # vae data mode
+    if not hasattr(args, 'vae_data_mode'):
+        args.vae_data_mode = 'all'
+
+
+    # vae encoder n layers
+    if not hasattr(args, 'encoder_n_layers'):
+        args.encoder_n_layers = 1
+
+
+    # grad prenalty
+    if not hasattr(args, 'grad_penalty'):
+        args.grad_penalty = False
+
+
+    # loss analysis
+    if not hasattr(args, 'loss_analysis'):
+        args.loss_analysis = False
+    # args.loss_analysis_modes = ['VAE']
+    args.loss_analysis_modes = ['VAE', 'LDM']
+
+
+    # loss analysis usage
+    atom_encoder = dataset_info['atom_encoder']
+    atom_decoder = dataset_info['atom_decoder']
+    args.atom_encoder = atom_encoder
+    args.atom_decoder = atom_decoder
+
+
+    # intermediate activations analysis usage
+    args.vis_activations_instances = (nn.Linear)
+    args.save_activations_path = 'vis_activations'
+    args.vis_activations_bins = 200
+    if not hasattr(args, 'vis_activations_specific_ylim'):
+        args.vis_activations_specific_ylim = [0, 40]
+    if not hasattr(args, 'vis_activations'):
+        args.vis_activations = False
+    if not hasattr(args, 'vis_activations_batch_samples'):
+        args.vis_activations_batch_samples = 0
+    if not hasattr(args, 'vis_activations_batch_size'):
+        args.vis_activations_batch_size = 1
+
+
+    # class-imbalance loss reweighting
+    if not hasattr(args, 'reweight_class_loss'):  # supported: "inv_class_freq"
+        args.reweight_class_loss = None
+    if not hasattr(args, 'reweight_coords_loss'):  # supported: "inv_class_freq"
+        args.reweight_coords_loss = None
+    if not hasattr(args, 'smoothing_factor'):  # smoothing: (0. - 1.]
+        args.smoothing_factor = None
+    if args.reweight_class_loss == "inv_class_freq":
+        class_freq_dict = dataset_info['atom_types']
+        sorted_keys = sorted(class_freq_dict.keys())
+        frequencies = torch.tensor([class_freq_dict[key] for key in sorted_keys], dtype=args.dtype)
+        inverse_frequencies = 1.0 / frequencies
+
+        if args.smoothing_factor is not None:
+            smoothing_factor = float(args.smoothing_factor)
+            inverse_frequencies = torch.pow(inverse_frequencies, smoothing_factor)
+
+        class_weights = inverse_frequencies / inverse_frequencies.sum()  # normalize
+        args.class_weights = class_weights
+        [print(f"{atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
+            inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
+
+
+    # coordinates loss weighting
+    if not hasattr(args, 'error_x_weight'):
+        args.error_x_weight = None
+    # atom types loss weighting
+    if not hasattr(args, 'error_h_weight'):
+        args.error_h_weight = None
+
+    # scaling of coordinates/x
+    if not hasattr(args, 'vae_normalize_x'):
+        args.vae_normalize_x = False
+    if not hasattr(args, 'vae_normalize_method'):  # supported: "scale" | "linear"
+        args.vae_normalize_method = None
+    if not hasattr(args, 'vae_normalize_fn_points'):  # [x_min, y_min, x_max, y_max]
+        args.vae_normalize_fn_points = None
+
+
+    # data splits
+    if not hasattr(args, 'data_splitted'):
+        args.data_splitted = False
+
+
+    # visualise sample chain
+    if not hasattr(args, 'visualize_sample_chain'):
+        args.visualize_sample_chain = False
+    if not hasattr(args, 'visualize_sample_chain_epochs'):
+        args.visualize_sample_chain_epochs = 1
+
+
+    # time noisy: t/2 for main network, adopted from [https://arxiv.org/abs/2405.06659]
+    if not hasattr(args, 'time_noisy'):
+        args.time_noisy = False
 
 
     # params global registry for easy access
@@ -77,7 +197,8 @@ def main():
                                                     permutation_file_path=args.permutation_file_path, 
                                                     dataset_name=args.dataset,
                                                     training_mode=args.training_mode,
-                                                    filter_pocket_size=args.filter_pocket_size)
+                                                    filter_pocket_size=args.filter_pocket_size,
+                                                    data_splitted=args.data_splitted)
     # ~!to ~!mp
     # ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are added here
     transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, args.device, args.sequential)
@@ -92,17 +213,20 @@ def main():
         dataloaders[key] = build_geom_dataset.GeomDrugsDataLoader(
             sequential=args.sequential, dataset=dataset, batch_size=args.batch_size,
             shuffle=shuffle, training_mode=args.training_mode, drop_last=True)
+        
+        if args.vis_activations and key == 'val':
+            dataloaders['vis_activations'] = build_geom_dataset.GeomDrugsDataLoader(
+            sequential=args.sequential, dataset=dataset, batch_size=args.vis_activations_batch_size,
+            shuffle=False, training_mode=args.training_mode, drop_last=True)
+
     del split_data
 
     # additional data extracted for stability and quickvina tests on controlnet
     if args.training_mode == CONTROLNET:
-        split = args.n_stability_eval_split
+        split = args.n_stability_eval_split   # train, test, val
         # Ligands' & Pockets' ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are already available
         controlnet_eval_datalist = [deepcopy(dataloaders[split].dataset[idx]) for idx in range(args.n_stability_samples)]
 
-
-    atom_encoder = dataset_info['atom_encoder']
-    atom_decoder = dataset_info['atom_decoder']
 
     # args, unparsed_args = parser.parse_known_args()
     args.wandb_usr = utils.get_wandb_username(args.wandb_usr)
@@ -111,17 +235,17 @@ def main():
     # resume
     if args.resume is not None:
         exp_name = args.exp_name + '_resume'
-        start_epoch = args.start_epoch
-        resume = args.resume
-        wandb_usr = args.wandb_usr
-
-        with open(join(args.resume, 'args.pickle'), 'rb') as f:
-            args = pickle.load(f)
-        args.resume = resume
-        args.break_train_epoch = False
         args.exp_name = exp_name
-        args.start_epoch = start_epoch
-        args.wandb_usr = wandb_usr
+        # start_epoch = args.start_epoch
+        # resume = args.resume
+        # wandb_usr = args.wandb_usr
+
+        # with open(join(args.resume, 'args.pickle'), 'rb') as f:
+        #     args = pickle.load(f)
+        # args.resume = resume
+        # args.break_train_epoch = False
+        # args.start_epoch = start_epoch
+        # args.wandb_usr = wandb_usr
 
     utils.create_folders(args)
 
@@ -168,13 +292,29 @@ def main():
 
     gradnorm_queue = utils.Queue()
     gradnorm_queue.add(3000)  # Add large value that will be flushed.
-    
+
+
+
     if args.resume is not None:
-        flow_state_dict = torch.load(join(args.resume, 'flow.npy'))
-        dequantizer_state_dict = torch.load(join(args.resume, 'dequantizer.npy'))
-        optim_state_dict = torch.load(join(args.resume, 'optim.npy'))
-        model.load_state_dict(flow_state_dict)
-        optim.load_state_dict(optim_state_dict)
+        if args.resume_model_ckpt is not None:
+            model_state_dict = join(args.resume, args.resume_model_ckpt)
+        else:
+            if args.ema_decay > 0:
+                model_state_dict = join(args.resume, 'generative_model_ema.npy')
+            else:
+                model_state_dict = join(args.resume, 'generative_model.npy')
+
+        if args.resume_optim_ckpt is not None:
+            optim_state_dict = join(args.resume, args.resume_optim_ckpt)
+        else:
+            optim_state_dict = join(args.resume, 'optim.npy')
+
+        print(f">> Loading {args.training_mode} weights from {model_state_dict}")
+        print(f">> Loading Optimizer State Dict from {optim_state_dict}")
+        model.load_state_dict(torch.load(model_state_dict))
+        optim.load_state_dict(torch.load(optim_state_dict))
+        # dequantizer_state_dict = torch.load(join(args.resume, 'dequantizer.npy'))
+
 
     # Initialize dataparallel if enabled and possible.
     if args.dp and torch.cuda.device_count() > 1 and args.cuda:
@@ -205,7 +345,8 @@ def main():
     mem = mem_params + mem_bufs # in bytes
     mem_mb, mem_gb = mem/(1024**2), mem/(1024**3)
     print(f"Model running on device  : {args.device}")
-    # print(f"Mixed precision training : {args.mixed_precision_training}")
+    print(f"Mixed precision training : {args.mixed_precision_training}")
+    print(f"Mixed precision autocast dtype : {args.mixed_precision_autocast_dtype}") if args.mixed_precision_training else None
     print(f"Model running on dtype   : {args.dtype}")
     print(f"Model Size               : {mem_gb} GB  /  {mem_mb} MB  /  {mem} Bytes")
     print(f"Training Dataset Name    : {args.dataset}")
@@ -222,13 +363,13 @@ def main():
     for epoch in range(args.start_epoch, args.n_epochs):
         start_epoch = time.time()
         if args.training_mode == CONTROLNET:
-            n_iters = train_test.train_epoch_controlnet(args, dataloaders['train'], epoch, model, model_dp, model_ema, ema, device, dtype,
+            n_iters = train_test.train_epoch_controlnet(args, dataloaders['train'], None, epoch, model, model_dp, model_ema, ema, device, dtype,
                                                         property_norms, optim, nodes_dist, gradnorm_queue, dataset_info,
                                                         prop_dist)
         else:
-            n_iters = train_test.train_epoch(args, dataloaders['train'], epoch, model, model_dp, model_ema, ema, device, dtype,
-                                             property_norms, optim, nodes_dist, gradnorm_queue, dataset_info,
-                                             prop_dist)
+            n_iters = train_test.train_epoch(args, dataloaders['train'], dataloaders['vis_activations'], epoch, model, model_dp, model_ema, ema, device, dtype,
+                                property_norms, optim, nodes_dist, gradnorm_queue, dataset_info,
+                                prop_dist)
         print(f">>> Epoch took {time.time() - start_epoch:.1f} seconds.")
         nth_iter += n_iters
 
@@ -253,8 +394,8 @@ def main():
                 nll_val = train_test.test_controlnet(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
                                                      property_norms, nodes_dist, partition='Val')
             else:
-                nll_val = train_test.test(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
-                                          property_norms, nodes_dist, partition='Val')
+                nll_val, val_dict = train_test.test(args, dataloaders['val'], epoch, model_ema_dp, device, dtype,
+                                                    property_norms, nodes_dist, partition='Val')
             print(f">>> validation set test took {time.time() - start:.1f} seconds.")
 
             start  = time.time()
@@ -262,8 +403,8 @@ def main():
                 nll_test = train_test.test_controlnet(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
                                                       property_norms, nodes_dist, partition='Test')
             else:
-                nll_test = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
-                                           property_norms, nodes_dist, partition='Test')
+                nll_test, test_dict = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
+                                                      property_norms, nodes_dist, partition='Test')
             print(f">>> testing set test took {time.time() - start:.1f} seconds.")
 
 
@@ -291,6 +432,10 @@ def main():
             wandb.log({"Val loss ": nll_val}, commit=True)
             wandb.log({"Test loss ": nll_test}, commit=True)
             wandb.log({"Best cross-validated test loss ": best_nll_test}, commit=True)
+            
+            if (args.training_mode in args.loss_analysis_modes) and args.loss_analysis:
+                wandb.log(test_dict, commit=True)
+                wandb.log(val_dict, commit=True)
 
 
 if __name__ == "__main__":

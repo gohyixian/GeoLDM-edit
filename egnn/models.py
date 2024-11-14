@@ -702,6 +702,7 @@ class EGNN_dynamics_fusion(nn.Module):
         return self.hook_handles
 
     def forward(self, t, xh, node_mask, edge_mask, context=None):
+        """Managed by ControlNet_Module_Wrapper class"""
         raise NotImplementedError
 
     def get_adj_matrix(self, n_nodes_1, n_nodes_2, batch_size, device):
@@ -722,7 +723,8 @@ class EGNN_dynamics_fusion(nn.Module):
 class ControlNet_Module_Wrapper(nn.Module):
     def __init__(self, diffusion_network, control_network, fusion_network, 
                  fusion_weights=[], fusion_mode='scaled_sum', device=None,
-                 noise_injection_weights=[0.5, 0.5], noise_injection_aggregation_method='mean', noise_injection_normalization_factor=1.):
+                 noise_injection_weights=[0.5, 0.5], noise_injection_aggregation_method='mean', noise_injection_normalization_factor=1.,
+                 time_noisy=False):
         super().__init__()
 
         if not isinstance(diffusion_network, EGNN_dynamics_QM9):
@@ -769,6 +771,7 @@ class ControlNet_Module_Wrapper(nn.Module):
         self.context_node_nf = diffusion_network.context_node_nf
         self.n_dims = diffusion_network.n_dims
         self.condition_time = diffusion_network.condition_time
+        self.time_noisy = time_noisy     # referenced from ControlMol [https://arxiv.org/abs/2405.06659]
 
         # dictionary to store activations
         self.input_activations = {}
@@ -850,6 +853,17 @@ class ControlNet_Module_Wrapper(nn.Module):
                 h_time_2 = h_time_2.view(bs_2 * n_nodes_2, 1) # [1600, 1]
             # h_time.shape
             # [1600, 1]
+            
+            if self.time_noisy:
+                # when t is large, we introduce a relatively significant bias to t, allowing the model to relearn 
+                # the data distribution based on the condition. There- fore, the loss descends more steadily, 
+                # reducing instances of training instability.
+                # (in main network only)
+                # TODO: Fix, move timestep / 2 to only be applied on main network. 
+                #       With this implementation, the timestep might be propagated to the controlnet
+                #       during Initial Noise Injection. See egnn_wrapper.py, line 70
+                h_time_1 = h_time_1 / 2
+            
             h1 = torch.cat([h1, h_time_1], dim=1)
             h2 = torch.cat([h2, h_time_2], dim=1)
             

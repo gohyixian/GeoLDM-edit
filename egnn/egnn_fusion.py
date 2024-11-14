@@ -247,41 +247,41 @@ class EGNN_Fusion(nn.Module):
     def forward(self, h1, x1, h2, x2, edge_index, node_mask_1=None, joint_edge_mask=None):
         """Managed by EGNN_Wrapper class"""
         raise NotImplementedError()
-        # Edit Emiel: Remove velocity as input
-        distances, _ = coord2diff_fusion(x1, x2, edge_index)
-        if self.sin_embedding is not None:      # none
-            distances = self.sin_embedding(distances)
+        # # Edit Emiel: Remove velocity as input
+        # distances, _ = coord2diff_fusion(x1, x2, edge_index)
+        # if self.sin_embedding is not None:      # none
+        #     distances = self.sin_embedding(distances)
         
-        intermediate_conditions = []
+        # intermediate_conditions = []
         
-        use_ckpt = PARAM_REGISTRY.get('use_checkpointing')
-        ckpt_mode = PARAM_REGISTRY.get('checkpointing_mode')
+        # use_ckpt = PARAM_REGISTRY.get('use_checkpointing')
+        # ckpt_mode = PARAM_REGISTRY.get('checkpointing_mode')
         
-        for i in range(0, self.n_layers):
-            # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
-            if use_ckpt and (ckpt_mode == 'sqrt') and ((i+1) % int(math.sqrt(self.n_layers)) == 0) and self.n_layers > 1:
-                print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
-                h1, x1 = checkpoint(checkpoint_fusion_block, 
-                                  (self._modules["fusion_e_block_%d" % i], h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances), 
-                                  use_reentrant=False)
+        # for i in range(0, self.n_layers):
+        #     # checkpointing at multiples of sqrt(n_layers) provides best perf (~30% wall time inc, ~60% vram decrease)
+        #     if use_ckpt and (ckpt_mode == 'sqrt') and ((i+1) % int(math.sqrt(self.n_layers)) == 0) and self.n_layers > 1:
+        #         print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
+        #         h1, x1 = checkpoint(checkpoint_fusion_block, 
+        #                           (self._modules["fusion_e_block_%d" % i], h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances), 
+        #                           use_reentrant=False)
                 
-            # checkpointing all blocks (not so optimal but helps if input size is too large)
-            elif use_ckpt and (ckpt_mode == 'all'):
-                print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
-                h1, x1 = checkpoint(checkpoint_fusion_block, 
-                                  (self._modules["fusion_e_block_%d" % i], h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances), 
-                                  use_reentrant=False)
+        #     # checkpointing all blocks (not so optimal but helps if input size is too large)
+        #     elif use_ckpt and (ckpt_mode == 'all'):
+        #         print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape} ... CHECKPOINTING") if PARAM_REGISTRY.get('verbose')==True else None
+        #         h1, x1 = checkpoint(checkpoint_fusion_block, 
+        #                           (self._modules["fusion_e_block_%d" % i], h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances), 
+        #                           use_reentrant=False)
                 
-            # no checkpointing done
-            else:
-                print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape}") if PARAM_REGISTRY.get('verbose')==True else None
-                h1, x1 = self._modules["fusion_e_block_%d" % i](h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances)
+        #     # no checkpointing done
+        #     else:
+        #         print(f"            >>> EGNN fusion_e_block_{i} ... h1:{h1.shape} x1:{x1.shape}  h2:{h2.shape} x2:{x2.shape}") if PARAM_REGISTRY.get('verbose')==True else None
+        #         h1, x1 = self._modules["fusion_e_block_%d" % i](h1, h2, x1, x2, edge_index, node_mask_1, joint_edge_mask, distances)
 
-            if node_mask_1 is not None:
-                h1 = h1 * node_mask_1
+        #     if node_mask_1 is not None:
+        #         h1 = h1 * node_mask_1
 
-            intermediate_conditions.append((h1, x1))
-        return intermediate_conditions
+        #     intermediate_conditions.append((h1, x1))
+        # return intermediate_conditions
 
 
 

@@ -14,31 +14,42 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
     The E(n) Latent Diffusion Module.
     """
     def __init__(self, **kwargs):
-        vae                     = kwargs.get('vae')
-        dynamics                = kwargs.get('dynamics')
-        trainable_ae_encoder    = kwargs.get('trainable_ae_encoder')
-        trainable_ae_decoder    = kwargs.get('trainable_ae_decoder')
-        trainable_ldm           = kwargs.pop('trainable_ldm')           # pop away, not required in Enlatentdiffusion.__init__()
-        trainable_controlnet    = kwargs.pop('trainable_controlnet')
-        trainable_fusion_blocks = kwargs.pop('trainable_fusion_blocks')
+        ligand_vae                  = kwargs.get('ligand_vae')
+        pocket_vae                  = kwargs.get('pocket_vae')
+        dynamics                    = kwargs.get('dynamics')
+        trainable_ligand_ae_encoder = kwargs.get('trainable_ligand_ae_encoder')
+        trainable_ligand_ae_decoder = kwargs.get('trainable_ligand_ae_decoder')
+        trainable_pocket_ae_encoder = kwargs.get('trainable_pocket_ae_encoder')
+        trainable_ldm               = kwargs.pop('trainable_ldm')           # pop away, not required in Enlatentdiffusion.__init__()
+        trainable_controlnet        = kwargs.pop('trainable_controlnet')
+        trainable_fusion_blocks     = kwargs.pop('trainable_fusion_blocks')
         
+        # override legacy property issues with dummy values
+        kwargs['vae'] = ligand_vae
+        kwargs['trainable_ae_encoder'] = trainable_ligand_ae_encoder
+        kwargs['trainable_ae_decoder'] = trainable_ligand_ae_decoder
+
         super().__init__(**kwargs)
         
-        assert isinstance(vae, EnHierarchicalVAE), f"required VAE class of EnHierarchicalVAE but {vae.__class__.__name__} given"
-        assert isinstance(dynamics, models.ControlNet_Module_Wrapper), f"required controlled_ldm class of ControlNet_Module_Wrapper but {dynamics} given"
+        assert isinstance(ligand_vae, EnHierarchicalVAE), f"required Ligand VAE class of EnHierarchicalVAE but {ligand_vae.__class__.__name__} given"
+        assert isinstance(pocket_vae, EnHierarchicalVAE), f"required Pocket VAE class of EnHierarchicalVAE but {pocket_vae.__class__.__name__} given"
+        assert isinstance(dynamics, models.ControlNet_Module_Wrapper), f"required controlled_ldm class of ControlNet_Module_Wrapper but {dynamics.__class__.__name__} given"
 
-        # Create self.vae as the first stage model.
-        self.trainable_ae_encoder = trainable_ae_encoder
-        self.trainable_ae_decoder = trainable_ae_decoder
+        # Create self.ligand_vae & self.pocket_vae as the first stage model.
+        self.trainable_ligand_ae_encoder = trainable_ligand_ae_encoder
+        self.trainable_ligand_ae_decoder = trainable_ligand_ae_decoder
+        self.trainable_pocket_ae_encoder = trainable_pocket_ae_encoder
+        
         self.trainable_ldm = trainable_ldm
         self.trainable_controlnet = trainable_controlnet
         self.trainable_fusion_blocks = trainable_fusion_blocks
         
-        self.instantiate_first_second_stage(vae, dynamics)
+        self.instantiate_first_second_stage(ligand_vae, pocket_vae, dynamics)
 
         # dictionary to store activations
         self.input_activations = {}
         self.output_activations = {}
+
 
     def _register_hooks(self):
         self.hook_handles = []
@@ -54,6 +65,8 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
                 self.hook_handles.append(handle)
         return self.hook_handles
 
+
+
     # def unnormalize_z(self, z, node_mask):
     #     # Overwrite the unnormalize_z function to do nothing (for sample_chain). 
 
@@ -66,7 +79,8 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
     #     # x, h_cat, h_int = self.unnormalize(x, h_cat, h_int, node_mask)
     #     output = torch.cat([x, h_cat, h_int], dim=2)
     #     return output
-    
+
+
     def log_constants_p_h_given_z0(self, h, node_mask):
         """Computes p(h|z0)."""
         batch_size = h.size(0)
@@ -84,7 +98,6 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         return degrees_of_freedom_h * (- log_sigma_x - 0.5 * np.log(2 * np.pi))
 
 
-
     # ~!fp16
     def log_pxh_given_z0_without_constants(
             self, x, h, z_t, gamma_0, eps, net_out, node_mask, epsilon=1e-10):
@@ -97,7 +110,8 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         log_p_xh_given_z = log_pxh_given_z_without_constants
 
         return log_p_xh_given_z
-    
+
+
     def forward(self, x1, h1, x2, h2, node_mask_1=None, node_mask_2=None, edge_mask_1=None, edge_mask_2=None, joint_edge_mask=None, context=None):
         """
         Computes the loss (type l2 or NLL) if training. And if eval then always computes NLL.
@@ -105,8 +119,8 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
 
         """ VAE Encoding """
         # Encode data to latent space.
-        z_x_mu_1, z_x_sigma_1, z_h_mu_1, z_h_sigma_1 = self.vae.encode(x1, h1, node_mask_1, edge_mask_1, context)
-        z_x_mu_2, z_x_sigma_2, z_h_mu_2, z_h_sigma_2 = self.vae.encode(x2, h2, node_mask_2, edge_mask_2, context)
+        z_x_mu_1, z_x_sigma_1, z_h_mu_1, z_h_sigma_1 = self.ligand_vae.encode(x1, h1, node_mask_1, edge_mask_1, context)
+        z_x_mu_2, z_x_sigma_2, z_h_mu_2, z_h_sigma_2 = self.pocket_vae.encode(x2, h2, node_mask_2, edge_mask_2, context)
 
         # ~!fp16
         # self.gamma = self.gamma.to(x.device)
@@ -135,28 +149,29 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         # z_xh_sigma = torch.cat([z_x_sigma.expand(-1, -1, 3), z_h_sigma], dim=2)
         
         # Add noise to ligand only (modified: pocket too)
-        z_xh_1 = self.vae.sample_normal(z_xh_mean_1, z_xh_sigma, node_mask_1)  # z_xh = mu + sigma * eps
-        z_xh_2 = self.vae.sample_normal(z_xh_mean_2, sigma_0_x2, node_mask_2)
-        if not self.trainable_ae_encoder:
+        z_xh_1 = self.ligand_vae.sample_normal(z_xh_mean_1, z_xh_sigma, node_mask_1)  # z_xh = mu + sigma * eps
+        z_xh_2 = self.pocket_vae.sample_normal(z_xh_mean_2, sigma_0_x2, node_mask_2)
+        if not self.trainable_ligand_ae_encoder:
             z_xh_1 = z_xh_1.detach()  # Always keep the VAE's Encoder fixed when training LDM and/or VAE's Decoder
+        if not self.trainable_pocket_ae_encoder:
             z_xh_2 = z_xh_2.detach()
         
         diffusion_utils.assert_correctly_masked(z_xh_1, node_mask_1)
 
         """ VAE Decoding - required if training VAE too """
         # Compute reconstruction loss - Ligand only
-        if self.trainable_ae_decoder:
+        if self.trainable_ligand_ae_decoder:
             # ground truth
             xh_1 = torch.cat([x1, h1['categorical'], h1['integer']], dim=2)
             # Decoder output (reconstruction).
-            x_recon_1, h_recon_1 = self.vae.decoder._forward(z_xh_1, node_mask_1, edge_mask_1, context)
+            x_recon_1, h_recon_1 = self.ligand_vae.decoder._forward(z_xh_1, node_mask_1, edge_mask_1, context)
 
             # ~!norm
-            if self.vae.vae_normalize_x:
-                x_recon_1 = self.vae.unnormalize_x(x_recon_1)
+            if self.ligand_vae.vae_normalize_x:
+                x_recon_1 = self.ligand_vae.unnormalize_x(x_recon_1)
 
             xh_rec_1 = torch.cat([x_recon_1, h_recon_1], dim=2)
-            loss_recon = self.vae.compute_reconstruction_error(xh_rec_1, xh_1)
+            loss_recon = self.ligand_vae.compute_reconstruction_error(xh_rec_1, xh_1)
 
         else:
             loss_recon = 0
@@ -351,7 +366,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         """ VAE Encoding """
         # Encode data to latent space.
         x2 = diffusion_utils.remove_mean_with_mask(x2, node_mask_2)
-        z_x_mu_2, z_x_sigma_2, z_h_mu_2, z_h_sigma_2 = self.vae.encode(x2, h2, node_mask_2, edge_mask_2, context)
+        z_x_mu_2, z_x_sigma_2, z_h_mu_2, z_h_sigma_2 = self.pocket_vae.encode(x2, h2, node_mask_2, edge_mask_2, context)
 
         z_xh_mean_2 = torch.cat([z_x_mu_2, z_h_mu_2], dim=2)
         diffusion_utils.assert_correctly_masked(z_xh_mean_2, node_mask_2)
@@ -361,7 +376,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         gamma_0_2 = self.inflate_batch_array(self.gamma(t_zeros_2), x2)
         sigma_0_2 = self.sigma(gamma_0_2, x2)
 
-        z_xh_mean_2 = self.vae.sample_normal(z_xh_mean_2, sigma_0_2, node_mask_2)
+        z_xh_mean_2 = self.pocket_vae.sample_normal(z_xh_mean_2, sigma_0_2, node_mask_2)
 
         diffusion_utils.assert_correctly_masked(z_xh_mean_2, node_mask_2)
 
@@ -374,7 +389,6 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         z_h_2 = {'categorical': torch.zeros(0).to(z_h_2), 'integer': z_h_2}
         xh2 = torch.cat([z_x_2, z_h_2['categorical'], z_h_2['integer']], dim=2)  # from compute_loss, next line should be self.phi()
         zt_2 = xh2
-
 
         if fix_noise:
             # Noise is broadcasted over the batch axis, useful for visualizations.
@@ -395,10 +409,12 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
             t_array = t_array / self.T
 
             # from T -> t=1
+            # NOTE: xt_2 must remain unchanged: zt_2.clone()
             z = self.sample_p_zs_given_zt(s_array, t_array, z, zt_2.clone(), node_mask_1, node_mask_2, edge_mask_1, edge_mask_2, joint_edge_mask, context, fix_noise=fix_noise)
 
         # Final sample z0, t=0
         # Finally sample p(x, h | z_0).
+        # NOTE: xt_2 must remain unchanged: zt_2.clone()
         z_x, z_h = self.sample_p_xh_given_z0(z, zt_2.clone(), node_mask_1, node_mask_2, edge_mask_1, edge_mask_2, joint_edge_mask, context, fix_noise=fix_noise)
 
         diffusion_utils.assert_mean_zero_with_mask(z_x, node_mask_1)
@@ -412,7 +428,7 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
 
         z_xh = torch.cat([z_x, z_h['categorical'], z_h['integer']], dim=2)
         diffusion_utils.assert_correctly_masked(z_xh, node_mask_1)
-        x, h = self.vae.decode(z_xh, node_mask_1, edge_mask_1, context)
+        x, h = self.ligand_vae.decode(z_xh, node_mask_1, edge_mask_1, context)
 
         return x, h
 
@@ -421,31 +437,6 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
     @torch.no_grad()
     def sample_chain(self, n_samples, n_nodes, node_mask, edge_mask, context, keep_frames=None):
         raise NotImplementedError()
-        # """
-        # Draw samples from the generative model, keep the intermediate states for visualization purposes.
-        # """
-        # chain_flat = super().sample_chain(n_samples, n_nodes, node_mask, edge_mask, context, keep_frames)
-
-        # # xh = torch.cat([x, h['categorical'], h['integer']], dim=2)
-        # # chain[0] = xh  # Overwrite last frame with the resulting x and h.
-
-        # # chain_flat = chain.view(n_samples * keep_frames, *z.size()[1:])
-
-        # chain = chain_flat.view(keep_frames, n_samples, *chain_flat.size()[1:])
-        # chain_decoded = torch.zeros(
-        #     size=(*chain.size()[:-1], self.vae.in_node_nf + self.vae.n_dims), device=chain.device)
-
-        # for i in range(keep_frames):
-        #     z_xh = chain[i]
-        #     diffusion_utils.assert_mean_zero_with_mask(z_xh[:, :, :self.n_dims], node_mask)
-
-        #     x, h = self.vae.decode(z_xh, node_mask, edge_mask, context)
-        #     xh = torch.cat([x, h['categorical'], h['integer']], dim=2)
-        #     chain_decoded[i] = xh
-        
-        # chain_decoded_flat = chain_decoded.view(n_samples * keep_frames, *chain_decoded.size()[2:])
-
-        # return chain_decoded_flat
 
 
 
@@ -517,36 +508,55 @@ class ControlEnLatentDiffusion(EnLatentDiffusion):
         return z_x, z_h
 
 
-    def instantiate_first_second_stage(self, vae: EnHierarchicalVAE, dynamics: models.ControlNet_Module_Wrapper):
-        # VAE
-        self.vae = vae
-        if not self.trainable_ae_encoder and not self.trainable_ae_decoder:
-            self.vae.eval()
-            self.vae.train = disabled_train
-            for param in self.vae.parameters():
+
+    def instantiate_first_second_stage(self, ligand_vae: EnHierarchicalVAE, pocket_vae: EnHierarchicalVAE, dynamics: models.ControlNet_Module_Wrapper):
+        # Ligand VAE
+        self.ligand_vae = ligand_vae
+        if not self.trainable_ligand_ae_encoder and not self.trainable_ligand_ae_decoder:
+            self.ligand_vae.eval()
+            self.ligand_vae.train = disabled_train
+            for param in self.ligand_vae.parameters():
                 param.requires_grad = False
-            print(">>> [VAE] (Encoder) (Decoder) requires_grad = False")
+            print(">>> [Ligand VAE] (Encoder) (Decoder) requires_grad = False")
         else:
-            # set whole model to trainable, but if self.trainable_ae_encoder=False,
+            # set whole model to trainable, but if self.trainable_ligand_ae_encoder=False,
             # will detach the VAE Encoder's outputs from the loss computational graph
             # hence weights not updated.
 
             # update: setting requires_grad part by part - more secure
-            self.vae.train()
+            self.ligand_vae.train()
             # Encoder
-            for param in self.vae.encoder.parameters():
-                if self.trainable_ae_encoder:
+            for param in self.ligand_vae.encoder.parameters():
+                if self.trainable_ligand_ae_encoder:
                     param.requires_grad = True
                 else:
                     param.requires_grad = False
-            print(f">>> [VAE] (Encoder) requires_grad = {self.trainable_ae_encoder}")
+            print(f">>> [Ligand VAE] (Encoder) requires_grad = {self.trainable_ligand_ae_encoder}")
             # Decoder
-            for param in self.vae.decoder.parameters():
-                if self.trainable_ae_decoder:
+            for param in self.ligand_vae.decoder.parameters():
+                if self.trainable_ligand_ae_decoder:
                     param.requires_grad = True
                 else:
                     param.requires_grad = False
-            print(f">>> [VAE] (Decoder) requires_grad = {self.trainable_ae_decoder}")
+            print(f">>> [Ligand VAE] (Decoder) requires_grad = {self.trainable_ligand_ae_decoder}")
+
+        # Pocket VAE
+        self.pocket_vae = pocket_vae
+        if not self.trainable_pocket_ae_encoder:
+            self.pocket_vae.eval()
+            self.pocket_vae.train = disabled_train
+            for param in self.pocket_vae.parameters():
+                param.requires_grad = False
+            print(">>> [Pocket VAE] (Encoder) requires_grad = False")
+        else:
+            self.pocket_vae.train()
+            # Encoder
+            for param in self.pocket_vae.encoder.parameters():
+                param.requires_grad = True
+            # Decoder
+            for param in self.pocket_vae.decoder.parameters():
+                param.requires_grad = False   # not used, hence always false
+            print(f">>> [Pocket VAE] (Encoder) requires_grad = True")
 
         # Controlled Diffusion Model
         self.dynamics = dynamics

@@ -208,36 +208,17 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
         raise ValueError(args.probabilistic_model)
 
 
+
 def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train):
+    device = torch.device("cuda" if args.cuda else "cpu")
 
-    # # Create (and load) the first stage model (Autoencoder).
-    # if args.ae_path is not None:
-    #     with open(join(args.ae_path, 'args.pickle'), 'rb') as f:
-    #         first_stage_args = pickle.load(f)
-    # else:
-    first_stage_args = args
-    
-    # CAREFUL with this -->
-    if not hasattr(first_stage_args, 'normalization_factor'):
-        first_stage_args.normalization_factor = 1
-    if not hasattr(first_stage_args, 'aggregation_method'):
-        first_stage_args.aggregation_method = 'sum'
-
-    device = torch.device("cuda" if first_stage_args.cuda else "cpu")
-
-    first_stage_model, nodes_dist, prop_dist = get_autoencoder(
-        first_stage_args, device, dataset_info, dataloader_train)
-    first_stage_model.to(device)
-
-    # if args.ae_path is not None:   # null
-    #     print(f">> Loading VAE weights from {args.ae_path}")
-    #     fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
-    #     flow_state_dict = torch.load(join(args.ae_path, fn),
-    #                                     map_location=device)
-    #     first_stage_model.load_state_dict(flow_state_dict)
+    ligand_ae_model, ligand_nodes_dist, ligand_prop_dist = \
+        get_ligand_autoencoder(args, device, dataset_info, dataloader_train)
+    pocket_ae_model, _, _ = \
+        get_pocket_autoencoder(args, device, dataset_info, dataloader_train)
 
     # Create the second stage model (Latent Diffusions).
-    args.latent_nf = first_stage_args.latent_nf
+    # args.latent_nf = ligand_ae_args.latent_nf
     in_node_nf = args.latent_nf  # 1
 
     if args.condition_time:   # true
@@ -266,9 +247,9 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
 
     if args.probabilistic_model == 'diffusion':
         vdm = EnLatentDiffusion(
-            vae=first_stage_model,    # VAE model
-            trainable_ae_encoder=args.trainable_ae_encoder,    # false
-            trainable_ae_decoder=args.trainable_ae_decoder,    # true
+            vae=ligand_ae_model,    # VAE model
+            trainable_ae_encoder=args.trainable_ligand_ae_encoder,    # false
+            trainable_ae_decoder=args.trainable_ligand_ae_decoder,    # true
             dynamics=net_dynamics,    # LDM model
             in_node_nf=in_node_nf,    # 1
             n_dims=3,
@@ -288,9 +269,9 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
                     if args.ldm_ckpt is not None:
                         fn = str(args.ldm_ckpt)
                     else:
-                        fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
+                        fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
                 else:
-                    fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
+                    fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
 
                 print(f">> Loading LDM weights from {join(args.ldm_path, fn)}")
                 flow_state_dict = torch.load(join(args.ldm_path, fn), map_location=device)
@@ -332,15 +313,18 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
             device=device,
             noise_injection_weights=[float(i) for i in args.noise_injection_weights],
             noise_injection_aggregation_method=args.noise_injection_aggregation_method,
-            noise_injection_normalization_factor=float(args.noise_injection_normalization_factor)
+            noise_injection_normalization_factor=float(args.noise_injection_normalization_factor),
+            time_noisy=bool(args.time_noisy)
         )
 
         # return vdm, nodes_dist, prop_dist
         controlldm = ControlEnLatentDiffusion(
-            vae=vdm.vae,                         # VAE model
+            ligand_vae=ligand_ae_model,                         # VAE model
+            pocket_vae=pocket_ae_model,                         # VAE model
             dynamics=controlnet_module_wrapper,  # central stage ldm and controlnet
-            trainable_ae_encoder=args.trainable_ae_encoder,
-            trainable_ae_decoder=args.trainable_ae_decoder,
+            trainable_ligand_ae_encoder=args.trainable_ligand_ae_encoder,
+            trainable_ligand_ae_decoder=args.trainable_ligand_ae_decoder,
+            trainable_pocket_ae_encoder=args.trainable_pocket_ae_encoder,
             trainable_ldm=args.trainable_ldm,
             trainable_controlnet=args.trainable_controlnet,
             trainable_fusion_blocks=args.trainable_fusion_blocks,
@@ -355,10 +339,82 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
         )
         controlldm.to(device)
 
-        return controlldm, nodes_dist, prop_dist
+        return controlldm, ligand_nodes_dist, ligand_prop_dist
 
     else:
         raise ValueError(args.probabilistic_model)
+
+
+
+def get_ligand_autoencoder(args, device, dataset_info, dataloader_train):
+    # Create (and load) the first stage model (Autoencoder).
+    if args.ligand_ae_path is not None:
+        with open(join(args.ligand_ae_path, 'args.pickle'), 'rb') as f:
+            ligand_ae_args = pickle.load(f)
+    else:
+        ligand_ae_args = args
+    
+    # CAREFUL with this -->
+    if not hasattr(ligand_ae_args, 'normalization_factor'):
+        ligand_ae_args.normalization_factor = 1
+    if not hasattr(ligand_ae_args, 'aggregation_method'):
+        ligand_ae_args.aggregation_method = 'sum'
+
+    ligand_ae_model, ligand_nodes_dist, ligand_prop_dist = get_autoencoder(
+        ligand_ae_args, device, dataset_info, dataloader_train)
+    ligand_ae_model.to(device)
+
+    if args.ligand_ae_path is not None:   # null
+        if hasattr(args, 'ae_ckpt'):
+            if args.ligand_ae_ckpt is not None:
+                fn = str(args.ligand_ae_ckpt)
+            else:
+                fn = 'generative_model_ema.npy' if ligand_ae_args.ema_decay > 0 else 'generative_model.npy'
+        else:
+            fn = 'generative_model_ema.npy' if ligand_ae_args.ema_decay > 0 else 'generative_model.npy'
+
+        print(f">> Loading Ligand VAE weights from {join(args.ligand_ae_path, fn)}")
+        flow_state_dict = torch.load(join(args.ligand_ae_path, fn),
+                                        map_location=device)
+        ligand_ae_model.load_state_dict(flow_state_dict)
+
+    return ligand_ae_model, ligand_nodes_dist, ligand_prop_dist
+
+
+
+def get_pocket_autoencoder(args, device, dataset_info, dataloader_train):
+    # Create (and load) the first stage model (Autoencoder).
+    if args.pocket_ae_path is not None:
+        with open(join(args.pocket_ae_path, 'args.pickle'), 'rb') as f:
+            pocket_ae_args = pickle.load(f)
+    else:
+        pocket_ae_args = args
+    
+    # CAREFUL with this -->
+    if not hasattr(pocket_ae_args, 'normalization_factor'):
+        pocket_ae_args.normalization_factor = 1
+    if not hasattr(pocket_ae_args, 'aggregation_method'):
+        pocket_ae_args.aggregation_method = 'sum'
+
+    pocket_ae_model, pocket_nodes_dist, pocket_prop_dist = get_autoencoder(
+        pocket_ae_args, device, dataset_info, dataloader_train)
+    pocket_ae_model.to(device)
+
+    if args.pocket_ae_path is not None:   # null
+        if hasattr(args, 'ae_ckpt'):
+            if args.pocket_ae_ckpt is not None:
+                fn = str(args.pocket_ae_ckpt)
+            else:
+                fn = 'generative_model_ema.npy' if pocket_ae_args.ema_decay > 0 else 'generative_model.npy'
+        else:
+            fn = 'generative_model_ema.npy' if pocket_ae_args.ema_decay > 0 else 'generative_model.npy'
+
+        print(f">> Loading Pocket VAE weights from {join(args.pocket_ae_path, fn)}")
+        flow_state_dict = torch.load(join(args.pocket_ae_path, fn),
+                                        map_location=device)
+        pocket_ae_model.load_state_dict(flow_state_dict)
+
+    return pocket_ae_model, pocket_nodes_dist, pocket_prop_dist
 
 
 
