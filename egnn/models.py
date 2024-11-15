@@ -316,7 +316,7 @@ class EGNN_encoder_QM9(nn.Module):
         #                64x25                                                             64x25x25
         if self.mode == 'egnn_dynamics':
             # ~!mp
-            print(f"h (min-max), x (min-max): {torch.min(h).item(), torch.max(h).item(), torch.min(x).item(), torch.max(x).item()}")
+            print(torch.min(h).item(), torch.max(h).item(), torch.min(x).item(), torch.max(x).item())
             
             with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=PARAM_REGISTRY.get('mixed_precision_autocast_dtype', alt=torch.float16), enabled=PARAM_REGISTRY.get('mixed_precision_training')):
                 h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)   # feed to model
