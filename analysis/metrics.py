@@ -70,7 +70,7 @@ class BasicMolecularMetrics(object):
         least x% of all atoms, where x is determined by
         self.connectivity_thresh (defaults to 100%). """
         if len(valid) < 1:
-            return [], 0.0
+            return [], 0.0, []
 
         connected = []
         connected_smiles = []
