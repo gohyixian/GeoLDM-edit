@@ -34,8 +34,10 @@ conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDo
 
 all_data = np.load(conformation_file)
 
-all_ligand_data = all_data['ligand']  # TODO: fix script for ligand, pocket, ligand+pocket
-all_pocket_data = all_data['pocket']
+# all_ligand_data = all_data['ligand']  # TODO: fix script for ligand, pocket, ligand+pocket
+# all_pocket_data = all_data['pocket']
+all_ligand_data = all_data['ligand_train'] + all_data['ligand_test'] + all_data['ligand_val']  # TODO: fix script for ligand, pocket, ligand+pocket
+all_pocket_data = all_data['pocket_train'] + all_data['pocket_test'] + all_data['pocket_val']
 
 # ligand
 ligand_mol_id = all_ligand_data[:, 0].astype(int)

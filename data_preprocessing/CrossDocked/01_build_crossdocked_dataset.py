@@ -1,4 +1,7 @@
 import os
+import copy
+import shutil
+import random
 import argparse
 from pathlib import Path
 
@@ -76,6 +79,7 @@ if __name__ == '__main__':
     parser.add_argument('--raw_crossd_basedir', type=Path)
     parser.add_argument("--save_dir", type=str, default="data/CrossDocked_LG_PKT")
     parser.add_argument("--save_dataset_name", type=str, default="CrossDocked_LG_PKT")
+    parser.add_argument("--copy_files_dir", type=str, default="data/CrossDocked_LG_PKT/test_val_paired_files")
     
     parser.add_argument('--dist_cutoff', type=float, default=10.0)  # 8.0
     parser.add_argument('--ca_only', action='store_true')
@@ -97,84 +101,121 @@ if __name__ == '__main__':
     split_path = Path(args.raw_crossd_basedir, 'split_by_name.pt')
     data_split = torch.load(split_path)
     
-    # combined train and test set = all
-    all_data = data_split['train'] + data_split['test']  # list
-
-
-    ligand_dataset = []
-    pocket_dataset = []
+    # TODO: update this. temporary split test to test and val by 50:50 ratio (this will affect benchmarking with other models running on this split)
+    # data_split_test = copy.deepcopy(data_split['test'])
+    # data_split_test = random.shuffle(data_split_test)  # randomise
+    # num_test = len(data_split_test)
+    # half_num = int(num_test // 2)
+    # data_split['test'] = []  # reset to empty
+    # data_split['val'] = []
+    # for i in range(num_test):
+    #     if i > half_num:
+    #         data_split['val'].append(data_split_test[i])
+    #     else:
+    #         data_split['test'].append(data_split_test[i])
+    data_split['val'] = copy.deepcopy(data_split['test'])
+    
+    print(f"Num Pairs Train: {len(data_split['train'])}")
+    print(f"Num Pairs Test : {len(data_split['test'])}")
+    print(f"Num Pairs Val  : {len(data_split['val'])}")
+    
+    
+    ligand_dataset = dict()
+    pocket_dataset = dict()
     mol_id = 0
 
 
     num_failed = 0
     failed_save = []
-    pbar = tqdm(all_data)
-    pbar.set_description(f'#failed: {num_failed}')
-    for pocket_fn, ligand_fn in pbar:
-
-        sdffile = datadir / f'{ligand_fn}'
-        pdbfile = datadir / f'{pocket_fn}'
+    for split in data_split.keys():
+        ligand_dataset[split] = []
+        pocket_dataset[split] = []
         
+        pbar = tqdm(data_split[split])
+        pbar.set_description(f'#failed: {num_failed}')
+        for pocket_fn, ligand_fn in pbar:
 
-        try:
-            struct_copy = PDBParser(QUIET=True).get_structure('', pdbfile)
-        except:
-            num_failed += 1
-            failed_save.append((pocket_fn, ligand_fn))
-            print(failed_save[-1])
-            pbar.set_description(f'#failed: {num_failed}')
-            continue
+            sdffile = datadir / f'{ligand_fn}'
+            pdbfile = datadir / f'{pocket_fn}'
+            
 
-        try:
-            ligand_data, pocket_data = process_ligand_and_pocket(
-                pdbfile, sdffile, dist_cutoff=args.dist_cutoff,
-                ca_only=args.ca_only, no_H=args.no_H, mol_id=mol_id,
-                determine_distance_by_ca=args.determine_distance_by_ca)
-            
-            # print("\nLIGAND DATA")
-            # print(ligand_data.shape, '\n', ligand_data)
-            # print("\nPOCKET DATA")
-            # print(pocket_data.shape, '\n', pocket_data)
-            
-            if len(list(ligand_data.shape)) == 2 and len(list(pocket_data.shape)) == 2:
-                if ligand_data.shape[0] > 0 and pocket_data.shape[0] > 0 and \
-                    ligand_data.shape[1] == 5 and pocket_data.shape[1] == 5:
-                    ligand_dataset.append(ligand_data)
-                    pocket_dataset.append(pocket_data)
-                    mol_id += 1
+            try:
+                struct_copy = PDBParser(QUIET=True).get_structure('', pdbfile)
+            except:
+                num_failed += 1
+                failed_save.append((pocket_fn, ligand_fn))
+                print(failed_save[-1])
+                pbar.set_description(f'#failed: {num_failed}')
+                continue
+
+            try:
+                ligand_data, pocket_data = process_ligand_and_pocket(
+                    pdbfile, sdffile, dist_cutoff=args.dist_cutoff,
+                    ca_only=args.ca_only, no_H=args.no_H, mol_id=mol_id,
+                    determine_distance_by_ca=args.determine_distance_by_ca)
+                
+                # print("\nLIGAND DATA")
+                # print(ligand_data.shape, '\n', ligand_data)
+                # print("\nPOCKET DATA")
+                # print(pocket_data.shape, '\n', pocket_data)
+                
+                if len(list(ligand_data.shape)) == 2 and len(list(pocket_data.shape)) == 2:
+                    if ligand_data.shape[0] > 0 and pocket_data.shape[0] > 0 and \
+                        ligand_data.shape[1] == 5 and pocket_data.shape[1] == 5:
+                        ligand_dataset[split].append(ligand_data)
+                        pocket_dataset[split].append(pocket_data)
+                        
+                        if split in ['val']:
+                            # Copy PDB file
+                            pdb_file_dir = os.path.join(args.copy_files_dir, f"{split}_pocket")
+                            if not os.path.exists(pdb_file_dir):
+                                os.makedirs(pdb_file_dir, exist_ok=True)
+                            new_rec_name = Path(pdbfile).stem.replace('_', '-')
+                            pdb_file_out = Path(pdb_file_dir, f"{str(mol_id).zfill(7)}_{new_rec_name}.pdb")
+                            shutil.copy(pdbfile, pdb_file_out)
+
+                            # Copy SDF file
+                            sdf_file_dir = os.path.join(args.copy_files_dir, f"{split}_ligand")
+                            if not os.path.exists(sdf_file_dir):
+                                os.makedirs(sdf_file_dir, exist_ok=True)
+                            new_lig_name = new_rec_name + '_' + Path(sdffile).stem.replace('_', '-')
+                            sdf_file_out = Path(sdf_file_dir, f'{str(mol_id).zfill(7)}_{new_lig_name}.sdf')
+                            shutil.copy(sdffile, sdf_file_out)
+                        
+                        mol_id += 1
+                    else:
+                        print(f">> Skipped due to ligand {ligand_data.shape}, or pocket {pocket_data.shape}")
+                        num_failed += 1
                 else:
                     print(f">> Skipped due to ligand {ligand_data.shape}, or pocket {pocket_data.shape}")
                     num_failed += 1
-            else:
-                print(f">> Skipped due to ligand {ligand_data.shape}, or pocket {pocket_data.shape}")
+                
+            except (KeyError, AssertionError, FileNotFoundError, IndexError,
+                    ValueError) as e:
+                print(type(e).__name__, e, pocket_fn, ligand_fn)
                 num_failed += 1
+                pbar.set_description(f'#failed: {num_failed}')
+                continue
             
-        except (KeyError, AssertionError, FileNotFoundError, IndexError,
-                ValueError) as e:
-            print(type(e).__name__, e, pocket_fn, ligand_fn)
-            num_failed += 1
-            pbar.set_description(f'#failed: {num_failed}')
-            continue
-        
-        # print("===============")
-        # print(ligand_fn)
-        # print(pocket_fn)
+            # print("===============")
+            # print(ligand_fn)
+            # print(pocket_fn)
 
 
-    ligand_dataset = np.vstack(ligand_dataset)
-    pocket_dataset = np.vstack(pocket_dataset)
-    
-    # final checks
-    if args.no_H:
-        ligand_atom_name = ligand_dataset[:, 1]
-        pocket_atom_name = pocket_dataset[:, 1]
+        ligand_dataset[split] = np.vstack(ligand_dataset[split])
+        pocket_dataset[split] = np.vstack(pocket_dataset[split])
         
-        assert np.float64(1.0) not in ligand_atom_name
-        assert np.float64(1.0) not in pocket_atom_name
-    
-    if args.ca_only:
-        pocket_atom_name = pocket_dataset[:, 1]
-        assert np.all(pocket_atom_name < 0.) == True
+        # final checks
+        if args.no_H:
+            ligand_atom_name = ligand_dataset[split][:, 1]
+            pocket_atom_name = pocket_dataset[split][:, 1]
+            
+            assert np.float64(1.0) not in ligand_atom_name
+            assert np.float64(1.0) not in pocket_atom_name
+        
+        if args.ca_only:
+            pocket_atom_name = pocket_dataset[:, 1]
+            assert np.all(pocket_atom_name < 0.) == True
     
     
     # saving dataset
@@ -182,13 +223,30 @@ if __name__ == '__main__':
         os.makedirs(args.save_dir)
     save_file = f"{args.save_dataset_name}__{args.dist_cutoff}A{'__CA_Only' if args.ca_only else ''}{'__no_H' if args.no_H else ''}.npz"
     
-    np.savez(os.path.join(args.save_dir, save_file), ligand=ligand_dataset, pocket=pocket_dataset)
+    np.savez(
+        os.path.join(args.save_dir, save_file), 
+        
+        ligand_train=ligand_dataset['train'], 
+        ligand_test=ligand_dataset['test'], 
+        ligand_val=ligand_dataset['val'], 
+        
+        pocket_train=pocket_dataset['train'], 
+        pocket_test=pocket_dataset['test'], 
+        pocket_val=pocket_dataset['val'], 
+    )
+    
+    ligand_total_num_atoms = ligand_dataset['train'].shape[0] + ligand_dataset['test'].shape[0] + ligand_dataset['val'].shape[0]
+    pocket_total_num_atoms = pocket_dataset['train'].shape[0] + pocket_dataset['test'].shape[0] + pocket_dataset['val'].shape[0]
     
     print()
-    print(f"[LG] Total Atom Num  : {ligand_dataset.shape[0]}", )
-    print(f"[LG] Ave. Atom Num   : {ligand_dataset.shape[0] / (mol_id+1)}")
-    print(f"[PKT] Total Atom Num : {pocket_dataset.shape[0]}", )
-    print(f"[PKT] Ave. Atom Num  : {pocket_dataset.shape[0] / (mol_id+1)}")
+    print(f"Num Pairs Train: {len(data_split['train'])}")
+    print(f"Num Pairs Test : {len(data_split['test'])}")
+    print(f"Num Pairs Val  : {len(data_split['val'])}")
+    print()
+    print(f"[LG] Total Atom Num  : {ligand_total_num_atoms}", )
+    print(f"[LG] Ave. Atom Num   : {ligand_total_num_atoms / (mol_id+1)}")
+    print(f"[PKT] Total Atom Num : {pocket_total_num_atoms}", )
+    print(f"[PKT] Ave. Atom Num  : {pocket_total_num_atoms / (mol_id+1)}")
     print("Total number of Ligand-Pocket pairs:", mol_id+1)
     print("Dataset processed.")
 
