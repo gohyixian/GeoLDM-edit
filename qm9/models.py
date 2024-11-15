@@ -277,7 +277,7 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
                 flow_state_dict = torch.load(join(args.ldm_path, fn), map_location=device)
                 vdm.load_state_dict(flow_state_dict)
             else:
-                raise ValueError(args.ldm_path)
+                print(f">> No LDM weights given, please load manually!")
         else:
             # controlnet eval: manually load whole network's weights after initialisation
             print(f">> No LDM weights given, please load manually!")

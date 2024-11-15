@@ -17,8 +17,10 @@ pocket_ae_path: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32
 pocket_ae_ckpt: generative_model_11_iter_228192.npy   # set null to load automatically selected best
 
 # Specify LDM weights path, set to null for random initialisation
-ldm_path: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_2x_resume
-ldm_ckpt: generative_model_196_iter_234036.npy   # set null to load automatically selected best
+# ldm_path: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_2x_resume
+# ldm_ckpt: generative_model_196_iter_234036.npy   # set null to load automatically selected best
+ldm_path: null
+ldm_ckpt: null
 
 # Zero out all weights of fusion blocks instead of randomly instantiated
 zero_fusion_block_weights: false
@@ -30,7 +32,7 @@ trainable_ligand_ae_decoder: false
 trainable_pocket_ae_encoder: false
 
 # ControlNet specific settings
-trainable_ldm: false
+trainable_ldm: true
 trainable_controlnet: true
 trainable_fusion_blocks: true
 

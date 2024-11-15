@@ -863,6 +863,7 @@ class ControlNet_Module_Wrapper(nn.Module):
                 #       With this implementation, the timestep might be propagated to the controlnet
                 #       during Initial Noise Injection. See egnn_wrapper.py, line 70
                 h_time_1 = h_time_1 / 2
+                print(">> Applying time noisy")
             
             h1 = torch.cat([h1, h_time_1], dim=1)
             h2 = torch.cat([h2, h_time_2], dim=1)
