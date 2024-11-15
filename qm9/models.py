@@ -153,7 +153,7 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
         else:
             fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
 
-        print(f">> Loading VAE weights from {join(args.ae_path, fn)}")
+        print(f"[Loading VAE weights from {join(args.ae_path, fn)} ]")
         flow_state_dict = torch.load(join(args.ae_path, fn),
                                         map_location=device)
         first_stage_model.load_state_dict(flow_state_dict)
@@ -273,14 +273,14 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
                 else:
                     fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
 
-                print(f">> Loading LDM weights from {join(args.ldm_path, fn)}")
+                print(f"[Loading LDM weights from {join(args.ldm_path, fn)} ]")
                 flow_state_dict = torch.load(join(args.ldm_path, fn), map_location=device)
                 vdm.load_state_dict(flow_state_dict)
             else:
-                print(f">> No LDM weights given, please load manually!")
+                print(f"[No LDM weights given, please load manually!]")
         else:
             # controlnet eval: manually load whole network's weights after initialisation
-            print(f">> No LDM weights given, please load manually!")
+            print(f"[No LDM weights given, please load manually!]")
         
         control_network = deepcopy(vdm.dynamics)
         fusion_network = EGNN_dynamics_fusion(
@@ -373,7 +373,7 @@ def get_ligand_autoencoder(args, device, dataset_info, dataloader_train):
         else:
             fn = 'generative_model_ema.npy' if ligand_ae_args.ema_decay > 0 else 'generative_model.npy'
 
-        print(f">> Loading Ligand VAE weights from {join(args.ligand_ae_path, fn)}")
+        print(f"[Loading Ligand VAE weights from {join(args.ligand_ae_path, fn)} ]")
         flow_state_dict = torch.load(join(args.ligand_ae_path, fn),
                                         map_location=device)
         ligand_ae_model.load_state_dict(flow_state_dict)
@@ -409,7 +409,7 @@ def get_pocket_autoencoder(args, device, dataset_info, dataloader_train):
         else:
             fn = 'generative_model_ema.npy' if pocket_ae_args.ema_decay > 0 else 'generative_model.npy'
 
-        print(f">> Loading Pocket VAE weights from {join(args.pocket_ae_path, fn)}")
+        print(f"[Loading Pocket VAE weights from {join(args.pocket_ae_path, fn)} ]")
         flow_state_dict = torch.load(join(args.pocket_ae_path, fn),
                                         map_location=device)
         pocket_ae_model.load_state_dict(flow_state_dict)
