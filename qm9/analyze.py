@@ -382,8 +382,17 @@ def compute_molecule_metrics(molecule_list, dataset_info):
     
     # Other metrics referenced from DiffSBDD
     # convert into rdmols
-    rdmols = [build_molecule(pos, atom_type, dataset_info) \
-              for (pos, atom_type) in processed_list]
+    # rdmols = [build_molecule(pos, atom_type, dataset_info) \
+    #           for (pos, atom_type) in processed_list]
+    rdmols = []
+    for pos, atom_type in processed_list:
+        try:
+            built_molecule = build_molecule(pos, atom_type, dataset_info)
+            if built_molecule is not None:
+                rdmols.append(built_molecule)
+        except Exception as e:
+            print(f"Failed to build molecule: {e}")
+
     # won't be computing novelty & uniqueness with 
     # this, no need for dataset SMILES list.
     ligand_metrics = DiffSBDD_MolecularMetrics(dataset_info, dataset_smiles_list=None)
