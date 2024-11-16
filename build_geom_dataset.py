@@ -67,8 +67,13 @@ def extract_conformers(args):
 
 
 
+def get_mol_id(tensor):
+    flattened_array = np.array(tensor).flatten()
+    assert np.all(flattened_array == flattened_array[0])
+    return int(flattened_array[0])
 
-def process_splitted_pair_data(all_data, filter_size=None, filter_pocket_size=None):
+
+def process_splitted_pair_data(all_data, filter_size=None, filter_pocket_size=None, return_mol_id=False):
     ligand_data_train, pocket_data_train = all_data['ligand_train'], all_data['pocket_train']
     ligand_data_test, pocket_data_test = all_data['ligand_test'], all_data['pocket_test']
     ligand_data_val, pocket_data_val = all_data['ligand_val'], all_data['pocket_val']
@@ -78,33 +83,40 @@ def process_splitted_pair_data(all_data, filter_size=None, filter_pocket_size=No
     ligands_train = ligand_data_train[:, 1:]
     ligand_split_indices_train = np.nonzero(ligand_mol_id_train[:-1] - ligand_mol_id_train[1:])[0] + 1
     ligand_data_list_train = np.split(ligands_train, ligand_split_indices_train)
+    ligand_train_ids = np.split(ligand_mol_id_train, ligand_split_indices_train)
     
     ligand_mol_id_test = ligand_data_test[:, 0].astype(int)
     ligands_test = ligand_data_test[:, 1:]
     ligand_split_indices_test = np.nonzero(ligand_mol_id_test[:-1] - ligand_mol_id_test[1:])[0] + 1
     ligand_data_list_test = np.split(ligands_test, ligand_split_indices_test)
+    ligand_test_ids = np.split(ligand_mol_id_test, ligand_split_indices_test)
     
     ligand_mol_id_val = ligand_data_val[:, 0].astype(int)
     ligands_val = ligand_data_val[:, 1:]
     ligand_split_indices_val = np.nonzero(ligand_mol_id_val[:-1] - ligand_mol_id_val[1:])[0] + 1
     ligand_data_list_val = np.split(ligands_val, ligand_split_indices_val)
+    ligand_val_ids = np.split(ligand_mol_id_val, ligand_split_indices_val)
 
     # pocket
     pocket_mol_id_train = pocket_data_train[:, 0].astype(int)
     pockets_train = pocket_data_train[:, 1:]
     pocket_split_indices_train = np.nonzero(pocket_mol_id_train[:-1] - pocket_mol_id_train[1:])[0] + 1
     pocket_data_list_train = np.split(pockets_train, pocket_split_indices_train)
+    pocket_train_ids = np.split(pocket_mol_id_train, pocket_split_indices_train)
     
     pocket_mol_id_test = pocket_data_test[:, 0].astype(int)
     pockets_test = pocket_data_test[:, 1:]
     pocket_split_indices_test = np.nonzero(pocket_mol_id_test[:-1] - pocket_mol_id_test[1:])[0] + 1
     pocket_data_list_test = np.split(pockets_test, pocket_split_indices_test)
+    pocket_test_ids = np.split(pocket_mol_id_test, pocket_split_indices_test)
 
     pocket_mol_id_val = pocket_data_val[:, 0].astype(int)
     pockets_val = pocket_data_val[:, 1:]
     pocket_split_indices_val = np.nonzero(pocket_mol_id_val[:-1] - pocket_mol_id_val[1:])[0] + 1
     pocket_data_list_val = np.split(pockets_val, pocket_split_indices_val)
+    pocket_val_ids = np.split(pocket_mol_id_val, pocket_split_indices_val)
 
+    train_ids, test_ids, val_ids = [], [], []
     # Keep only molecules <= filter_size
     if filter_size is not None and filter_pocket_size is not None:
         
@@ -117,6 +129,8 @@ def process_splitted_pair_data(all_data, filter_size=None, filter_pocket_size=No
             if (ligand_data_list_train[i].shape[0] <= filter_size) and (pocket_data_list_train[i].shape[0] <= filter_pocket_size):
                 tmp_ligand_data_list.append(ligand_data_list_train[i])
                 tmp_pocket_data_list.append(pocket_data_list_train[i])
+                assert get_mol_id(ligand_train_ids[i]) == get_mol_id(pocket_train_ids[i])
+                train_ids.append(get_mol_id(ligand_train_ids[i]))
         
         ligand_data_list_train = tmp_ligand_data_list
         pocket_data_list_train = tmp_pocket_data_list
@@ -127,6 +141,8 @@ def process_splitted_pair_data(all_data, filter_size=None, filter_pocket_size=No
             if (ligand_data_list_test[i].shape[0] <= filter_size) and (pocket_data_list_test[i].shape[0] <= filter_pocket_size):
                 tmp_ligand_data_list.append(ligand_data_list_test[i])
                 tmp_pocket_data_list.append(pocket_data_list_test[i])
+                assert get_mol_id(ligand_test_ids[i]) == get_mol_id(pocket_test_ids[i])
+                test_ids.append(get_mol_id(ligand_test_ids[i]))
         
         ligand_data_list_test = tmp_ligand_data_list
         pocket_data_list_test = tmp_pocket_data_list
@@ -137,6 +153,8 @@ def process_splitted_pair_data(all_data, filter_size=None, filter_pocket_size=No
             if (ligand_data_list_val[i].shape[0] <= filter_size) and (pocket_data_list_val[i].shape[0] <= filter_pocket_size):
                 tmp_ligand_data_list.append(ligand_data_list_val[i])
                 tmp_pocket_data_list.append(pocket_data_list_val[i])
+                assert get_mol_id(ligand_val_ids[i]) == get_mol_id(pocket_val_ids[i])
+                val_ids.append(get_mol_id(ligand_val_ids[i]))
         
         ligand_data_list_val = tmp_ligand_data_list
         pocket_data_list_val = tmp_pocket_data_list
@@ -146,14 +164,19 @@ def process_splitted_pair_data(all_data, filter_size=None, filter_pocket_size=No
     assert len(list(ligand_data_list_test)) == len(list(pocket_data_list_test)), '[test split] Invalid Ligand-Pocket pairs'
     assert len(list(ligand_data_list_val)) == len(list(pocket_data_list_val)), '[val split] Invalid Ligand-Pocket pairs'
     
-    return ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, \
-        pocket_data_list_train, pocket_data_list_test, pocket_data_list_val
+    if return_mol_id:
+        return ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, \
+            pocket_data_list_train, pocket_data_list_test, pocket_data_list_val, \
+                train_ids, test_ids, val_ids
+    else:
+        return ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, \
+            pocket_data_list_train, pocket_data_list_test, pocket_data_list_val
 
 
 
 
 def process_unsplitted_pair_data(all_data, filter_size=None, filter_pocket_size=None, permutation_file_path=None,
-                            conformation_file=None, base_path=None):
+                            conformation_file=None, base_path=None, return_mol_id=False):
     ligand_data, pocket_data = all_data['ligand'], all_data['pocket']
     
     # ligand
@@ -161,13 +184,16 @@ def process_unsplitted_pair_data(all_data, filter_size=None, filter_pocket_size=
     ligands = ligand_data[:, 1:]
     ligand_split_indices = np.nonzero(ligand_mol_id[:-1] - ligand_mol_id[1:])[0] + 1
     ligand_data_list = np.split(ligands, ligand_split_indices)
+    ligand_ids = np.split(ligand_mol_id, ligand_split_indices)
     
     # pocket
     pocket_mol_id = pocket_data[:, 0].astype(int)
     pockets = pocket_data[:, 1:]
     pocket_split_indices = np.nonzero(pocket_mol_id[:-1] - pocket_mol_id[1:])[0] + 1
     pocket_data_list = np.split(pockets, pocket_split_indices)
+    pocket_ids = np.split(pocket_mol_id, pocket_split_indices)
     
+    ids = []
     # Keep only molecules <= filter_size
     if filter_size is not None and filter_pocket_size is not None:
         
@@ -178,6 +204,8 @@ def process_unsplitted_pair_data(all_data, filter_size=None, filter_pocket_size=
             if (ligand_data_list[i].shape[0] <= filter_size) and (pocket_data_list[i].shape[0] <= filter_pocket_size):
                 tmp_ligand_data_list.append(ligand_data_list[i])
                 tmp_pocket_data_list.append(pocket_data_list[i])
+                assert get_mol_id(ligand_ids[i]) == get_mol_id(pocket_ids[i])
+                ids.append(get_mol_id(ligand_ids[i]))
         
         ligand_data_list = tmp_ligand_data_list
         pocket_data_list = tmp_pocket_data_list
@@ -208,8 +236,12 @@ def process_unsplitted_pair_data(all_data, filter_size=None, filter_pocket_size=
     
     ligand_data_list = [ligand_data_list[i] for i in perm]
     pocket_data_list = [pocket_data_list[i] for i in perm]
+    ids = [ids[i] for i in perm]
 
-    return ligand_data_list, pocket_data_list
+    if return_mol_id:
+        return ligand_data_list, pocket_data_list
+    else:
+        return ligand_data_list, pocket_data_list, ids
 
 
 
@@ -217,7 +249,7 @@ def process_unsplitted_pair_data(all_data, filter_size=None, filter_pocket_size=
 def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
                     filter_size=None, permutation_file_path=None, 
                     dataset_name=None, training_mode=None, filter_pocket_size=None,
-                    data_splitted=False):
+                    data_splitted=False, return_ids=False):
     from pathlib import Path
     path = Path(conformation_file)
     base_path = path.parent.absolute()
@@ -371,14 +403,25 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
 
     elif training_mode == 'ControlNet':
         if not data_splitted:
-            ligand_data_list, pocket_data_list = process_unsplitted_pair_data(
-                                                     all_data, 
-                                                     filter_size, 
-                                                     filter_pocket_size, 
-                                                     permutation_file_path, 
-                                                     conformation_file, 
-                                                     base_path
-                                                 )
+            if return_ids:
+                ligand_data_list, pocket_data_list, ids = process_unsplitted_pair_data(
+                                                        all_data, 
+                                                        filter_size, 
+                                                        filter_pocket_size, 
+                                                        permutation_file_path, 
+                                                        conformation_file, 
+                                                        base_path,
+                                                        return_mol_id=True
+                                                    )
+            else:
+                ligand_data_list, pocket_data_list = process_unsplitted_pair_data(
+                                                        all_data, 
+                                                        filter_size, 
+                                                        filter_pocket_size, 
+                                                        permutation_file_path, 
+                                                        conformation_file, 
+                                                        base_path
+                                                    )
 
             # split
             num_mol = len(ligand_data_list)
@@ -387,6 +430,7 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             print(f">> Data Splits: len(data_list):{len(all_data)},  [val_index, test_index]:{[val_index, test_index]}")
             ligand_val_data, ligand_test_data, ligand_train_data = ligand_data_list[:val_index], ligand_data_list[val_index:test_index], ligand_data_list[test_index:]
             pocket_val_data, pocket_test_data, pocket_train_data = pocket_data_list[:val_index], pocket_data_list[val_index:test_index], pocket_data_list[test_index:]
+            ids_val,         ids_test,         ids_train         = ids[:val_index],              ids[val_index:test_index],              ids[test_index:]
             
             train_data, val_data, test_data = dict(), dict(), dict()
             train_data['ligand'], train_data['pocket'] = ligand_train_data, pocket_train_data
@@ -394,9 +438,15 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             val_data['ligand'],   val_data['pocket']   = ligand_val_data,   pocket_val_data
 
         else:
-            ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, \
-                pocket_data_list_train, pocket_data_list_test, pocket_data_list_val \
-                    = process_splitted_pair_data(all_data, filter_size, filter_pocket_size)
+            if return_ids:
+                ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, \
+                    pocket_data_list_train, pocket_data_list_test, pocket_data_list_val, \
+                        ids_train, ids_test, ids_val \
+                            = process_splitted_pair_data(all_data, filter_size, filter_pocket_size, return_mol_id=True)
+            else:
+                ligand_data_list_train, ligand_data_list_test, ligand_data_list_val, \
+                    pocket_data_list_train, pocket_data_list_test, pocket_data_list_val \
+                        = process_splitted_pair_data(all_data, filter_size, filter_pocket_size)
 
             print(f">> Data Splits (train | test | val):  {len(ligand_data_list_train)} : {len(ligand_data_list_test)} : {len(ligand_data_list_val)}")
             
@@ -404,6 +454,11 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
             train_data['ligand'], train_data['pocket'] = ligand_data_list_train, pocket_data_list_train
             test_data['ligand'],  test_data['pocket']  = ligand_data_list_test,  pocket_data_list_test
             val_data['ligand'],   val_data['pocket']   = ligand_data_list_val,   pocket_data_list_val
+
+    if return_ids:
+        train_data['ids'] = ids_train
+        val_data['ids'] = ids_val
+        test_data['ids'] = ids_test
 
     return train_data, val_data, test_data
 

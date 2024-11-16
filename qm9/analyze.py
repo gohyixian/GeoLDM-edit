@@ -4,20 +4,34 @@ try:
     use_rdkit = True
 except ModuleNotFoundError:
     use_rdkit = False
-import qm9.dataset as dataset
+
+import os
+import copy
+import glob
 import torch
+import subprocess
+from tqdm import tqdm
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import scipy.stats as sp_stats
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
-import scipy.stats as sp_stats
+
 from qm9 import bond_analyze
+import qm9.dataset as dataset
+from analysis.metrics import rdmol_to_smiles
 
 # code borrowed from DiffSBDD
 # https://github.com/arneschneuing/DiffSBDD/tree/main/analysis
 from analysis.metrics import BasicMolecularMetrics as DiffSBDD_MolecularMetrics
 from analysis.metrics import MoleculeProperties
 from analysis.molecule_builder import build_molecule
+
+
 
 # 'atom_decoder': ['H', 'B', 'C', 'N', 'O', 'F', 'Al', 'Si', 'P', 'S', 'Cl', 'As', 'Br', 'I', 'Hg', 'Bi'],
 
@@ -424,6 +438,164 @@ def compute_molecule_metrics(molecule_list, dataset_info):
     }
     
     return metrics_dict
+
+
+def compute_qvina2_score(
+        molecule_list, 
+        dataset_info, 
+        pocket_ids=[], 
+        pocket_pdb_dir="", 
+        output_dir="",
+        mgltools_env_name="mgltools-python2",
+        connectivity_thres=1.,
+        ligand_add_H=False,
+        receptor_add_H=False,
+        remove_nonstd_resi=False,
+        size=20,
+        exhaustiveness=16,
+        cleanup_files=True,
+        save_csv=True
+    ):
+    one_hot = molecule_list['one_hot']
+    x = molecule_list['x']
+    node_mask = molecule_list['node_mask']
+
+    if isinstance(node_mask, torch.Tensor):
+        atomsxmol = torch.sum(node_mask, dim=1)
+    else:
+        atomsxmol = [torch.sum(m) for m in node_mask]
+
+    n_samples = len(x)
+
+    processed_list = []
+    for i in range(n_samples):
+        atom_type = one_hot[i].argmax(1).cpu().detach()
+        pos = x[i].cpu().detach()
+
+        atom_type = atom_type[0:int(atomsxmol[i])]
+        pos = pos[0:int(atomsxmol[i])]
+        processed_list.append((pos, atom_type))
+    
+    # filter molecules
+    rdmols = []
+    rdmols_ids = []
+    for i, (pos, atom_type) in enumerate(processed_list):
+        try:
+            # build RDKit molecule
+            mol = build_molecule(pos, atom_type, dataset_info)
+        except Exception as e:
+            print(f"Failed to build molecule: {e}")
+            continue
+        
+        if mol is not None:
+            # filter valid molecules
+            try:
+                Chem.SanitizeMol(mol)
+            except ValueError:
+                continue
+            
+            if mol is not None:
+                # filter connected molecules
+                mol_frags = Chem.rdmolops.GetMolFrags(mol, asMols=True)
+                largest_mol = \
+                    max(mol_frags, default=mol, key=lambda m: m.GetNumAtoms())
+                if largest_mol.GetNumAtoms() / mol.GetNumAtoms() >= connectivity_thres:
+                    smiles = rdmol_to_smiles(largest_mol)
+                    if smiles is not None:
+                        rdmols.append(largest_mol)
+                        rdmols_ids.append(pocket_ids[i])
+    
+    # compute qvina scores for each pocket-ligand pair
+    scores = []
+    results = {
+        'receptor': [],
+        'ligands': [],
+        'scores': []
+    }
+    for i in tqdm(range(rdmols)):
+        
+        id = str(rdmols_ids[i]).zfill(7)
+        
+        pattern = os.path.join(pocket_pdb_dir, f'{id}*.pdb')
+        pkt_file = glob.glob(pattern)
+        assert len(pkt_file) <= 1
+        
+        if len(pkt_file) == 0:
+            print(f">>> [qm9.analyze.compute_qvina_score] Pocket ID: {id} not found")
+            continue
+        
+        lg_sdf_file   = Path(output_dir, f"{id}.sdf")
+        lg_pdb_file   = Path(output_dir, f"{id}.pdb")
+        lg_pdbqt_file = Path(output_dir, f"{id}.pdbqt")
+        pkt_pdb_file  = Path(pkt_file[0])
+        pkt_pdbqt_file = Path(output_dir, f"{pkt_pdb_file.stem}.pdbqt")
+        
+        # LG: .sdf
+        with Chem.SDWriter() as writer:
+            writer.write(rdmols[i])
+        
+        # LG: .pdb
+        os.popen(f'obabel {lg_sdf_file} -O {lg_pdb_file}').read()
+        
+        # LG: .pdbqt (add charges and torsions)
+        prep_lg_cmd = f"conda run -n {mgltools_env_name} prepare_ligand4.py -l {lg_pdb_file} -o {lg_pdbqt_file}"
+        prep_lg_cmd += " -A hydrogens" if ligand_add_H else ""
+        subprocess.run(prep_lg_cmd, shell=True)
+        
+        # PKT: .pdbqt
+        prep_pkt_cmd = f"conda run -n {mgltools_env_name} prepare_receptor4.py -r {pkt_pdb_file} -o {pkt_pdbqt_file}"
+        prep_pkt_cmd += " -A checkhydrogens" if receptor_add_H else ""
+        prep_pkt_cmd += " -e" if remove_nonstd_resi else ""
+        subprocess.run(prep_pkt_cmd, shell=True)
+
+        # center box at ligand's center of mass
+        cx, cy, cz = rdmols[i].GetConformer().GetPositions().mean(0)
+
+        # run QuickVina 2
+        out = os.popen(
+            f'./analysis/qvina/qvina2.1 --receptor {pkt_pdbqt_file} '
+            f'--ligand {lg_pdbqt_file} '
+            f'--center_x {cx:.4f} --center_y {cy:.4f} --center_z {cz:.4f} '
+            f'--size_x {size} --size_y {size} --size_z {size} '
+            f'--exhaustiveness {exhaustiveness}'
+        ).read()
+
+        if '-----+------------+----------+----------' not in out:
+            scores.append(np.nan)
+            continue
+
+        out_split = out.splitlines()
+        best_idx = out_split.index('-----+------------+----------+----------') + 1
+        best_line = out_split[best_idx].split()
+        assert best_line[0] == '1'
+        scores.append(float(best_line[1]))
+
+        results['receptor'].append(str(pkt_pdb_file))
+        results['ligands'].append(str(lg_sdf_file))
+        results['scores'].append(scores)
+        
+        # clean up
+        if cleanup_files:
+            lg_pdb_file.unlink()
+            lg_pdbqt_file.unlink()
+            pkt_pdbqt_file.unlink()
+    
+    filtered_scores = [score for score in scores if not np.isnan(score)]
+    scores_average = sum(filtered_scores) / len(filtered_scores) if filtered_scores else float('nan')
+    
+    if save_csv:
+        results_save = copy.deepcopy(results)
+        results_save['receptor'].append("")
+        results_save['ligands'].append("Mean Score")
+        results_save['scores'].append([scores_average])
+        df = pd.DataFrame.from_dict(results_save)
+        df.to_csv(Path(output_dir, 'qvina2_scores.csv'))
+    
+    return {
+        'mean': scores_average,
+        'all': scores,
+        'results': results
+    }
 
 
 

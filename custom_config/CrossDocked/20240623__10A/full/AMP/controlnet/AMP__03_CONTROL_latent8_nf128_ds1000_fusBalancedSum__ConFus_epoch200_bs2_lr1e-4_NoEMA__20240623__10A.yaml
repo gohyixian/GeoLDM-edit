@@ -61,9 +61,29 @@ random_seed: 42
 dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND
 
 # geom directory  ~!geom
-data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_split_811.npz
+data_file: ./data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/d_20241115_CrossDocked_LG_PKT_MMseq2_split__10.0A.npz
+# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_split_811.npz
 # data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811.npz
 data_splitted: true
+
+# Quick Vina 2.1
+compute_qvina: true
+qvina_search_size: 20               # search size (all 3 axes) in Angstroms around ligand center
+qvina_exhaustiveness: 16
+qvina_cleanup_files: false          # cleanup tmp pdb, pdbqt files
+qvina_save_csv: true                # save results in csv
+pocket_pdb_dir: ./data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/test_val_paired_files/val_pocket
+match_raw_file_by_id: true
+mgltools_env_name: mgltools-python2 # for pdb -> pdbqt conversion
+
+ligand_add_H: false                 # add hydrogens via: [mgltools] prepare_ligand4.py -l .. -o ..  -A hydrogens
+pocket_add_H: false                 # add hydrogens via: [mgltools] prepare_receptor4.py -r .. -o ..  -A checkhydrogens
+pocket_remove_nonstd_resi: false    # remove any pocket residues not in this list: 
+                                    #   ['CYS','ILE','SER','VAL','GLN','LYS','ASN',
+                                    #   'PRO','THR','PHE','ALA','HIS','GLY','ASP',
+                                    #   'LEU', 'ARG', 'TRP', 'GLU', 'TYR','MET',
+                                    #   'HID', 'HSP', 'HIE', 'HIP', 'CYX', 'CSS']
+
 
 # set to null if you're running this dataset for the first time. 
 # Script will generate a random permutation to shuffle the dataset.
@@ -102,7 +122,7 @@ test_epochs: 1  # 4
 
 
 n_epochs: 200  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 12    # 12 32
+batch_size: 2    # 12 32
 lr: 1.0e-4
 
 # weight of KL term in ELBO, default 0.01
@@ -125,7 +145,7 @@ ema_decay: 0   # 0.99
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 50  # 500
+n_stability_samples: 100  # 50
 n_stability_samples_batch_size: 10
 
 # Dataset partition where pocket samples will be drawn from for analyzing 
@@ -172,7 +192,7 @@ model: egnn_dynamics
 probabilistic_model: diffusion
 
 # Training complexity is O(1) (unaffected), but sampling complexity is O(steps), default 500
-diffusion_steps: 1000
+diffusion_steps: 500
 
 # learned, cosine, polynomial_<power>
 diffusion_noise_schedule: polynomial_2       # polynomial power 2
@@ -270,7 +290,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: false
+no_wandb: true
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true

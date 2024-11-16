@@ -32,6 +32,7 @@ from global_registry import PARAM_REGISTRY, Config
 CONTROLNET = "ControlNet"
 LDM        = "LDM"
 VAE        = "VAE"
+MMSEQ2_SPLIT = "MMseq2_split"
 
 
 def main():
@@ -183,6 +184,33 @@ def main():
         args.time_noisy = False
 
 
+    # match ligand & pocket raw files by ids
+    if not hasattr(args, 'match_raw_file_by_id'):
+        args.match_raw_file_by_id = False
+    if not hasattr(args, 'compute_qvina'):
+        args.compute_qvina = False
+    if not hasattr(args, 'qvina_search_size'):
+        args.qvina_search_size = 20
+    if not hasattr(args, 'qvina_exhaustiveness'):
+        args.qvina_exhaustiveness = 16
+    if not hasattr(args, 'qvina_cleanup_files'):
+        args.qvina_cleanup_files = True
+    if not hasattr(args, 'qvina_save_csv'):
+        args.qvina_save_csv = True
+    if not hasattr(args, 'pocket_pdb_dir'):
+        args.pocket_pdb_dir = ""
+    if not hasattr(args, 'match_raw_file_by_id'):
+        args.match_raw_file_by_id = True
+    if not hasattr(args, 'mgltools_env_name'):
+        args.mgltools_env_name = 'mgltools-python2'
+    if not hasattr(args, 'ligand_add_H'):
+        args.ligand_add_H = False
+    if not hasattr(args, 'pocket_add_H'):
+        args.pocket_add_H = False
+    if not hasattr(args, 'pocket_remove_nonstd_resi'):
+        args.pocket_remove_nonstd_resi = False
+
+
     # params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
 
@@ -198,14 +226,18 @@ def main():
                                                     dataset_name=args.dataset,
                                                     training_mode=args.training_mode,
                                                     filter_pocket_size=args.filter_pocket_size,
-                                                    data_splitted=args.data_splitted)
+                                                    data_splitted=args.data_splitted,
+                                                    return_ids=args.match_raw_file_by_id)
     # ~!to ~!mp
     # ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are added here
     transform = build_geom_dataset.GeomDrugsTransform(dataset_info, args.include_charges, args.device, args.sequential)
 
+    ids = {}
     dataloaders = {}
     for key, data_list in zip(['train', 'val', 'test'], split_data):
         dataset = build_geom_dataset.GeomDrugsDataset(data_list, transform=transform, training_mode=args.training_mode)
+        if args.match_raw_file_by_id:
+            ids[key] = data_list['ids']
         # shuffle = (key == 'train') and not args.sequential
         shuffle = (key == 'train')
 
@@ -226,7 +258,10 @@ def main():
         split = args.n_stability_eval_split   # train, test, val
         # Ligands' & Pockets' ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are already available
         controlnet_eval_datalist = [deepcopy(dataloaders[split].dataset[idx]) for idx in range(args.n_stability_samples)]
-
+        if args.match_raw_file_by_id:
+            controlnet_eval_datalist_ids = [ids[split][idx] for idx in range(args.n_stability_samples)]
+        else:
+            controlnet_eval_datalist_ids = []
 
     # args, unparsed_args = parser.parse_known_args()
     args.wandb_usr = utils.get_wandb_username(args.wandb_usr)
@@ -383,7 +418,8 @@ def main():
                 if args.training_mode == CONTROLNET:
                     train_test.analyze_and_save_controlnet(epoch, model_ema, nodes_dist, args, device, dataset_info, prop_dist,
                                                            n_samples=args.n_stability_samples, batch_size=args.n_stability_samples_batch_size, 
-                                                           pair_dict_list=controlnet_eval_datalist)
+                                                           pair_dict_list=controlnet_eval_datalist, pair_dict_list_ids=controlnet_eval_datalist_ids,
+                                                           output_dir=f"outputs/{args.exp_name}/analysis/epoch_{epoch}_iter_{nth_iter}")
                 else:
                     train_test.analyze_and_save(epoch, model_ema, nodes_dist, args, device,
                                                 dataset_info, prop_dist, n_samples=args.n_stability_samples)
@@ -398,19 +434,25 @@ def main():
                                                     property_norms, nodes_dist, partition='Val')
             print(f">>> validation set test took {time.time() - start:.1f} seconds.")
 
-            start  = time.time()
-            if args.training_mode == CONTROLNET:
-                nll_test = train_test.test_controlnet(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
-                                                      property_norms, nodes_dist, partition='Test')
+            # MMseq2 only has train:val set (test & val are the same, hence skip)
+            if MMSEQ2_SPLIT not in str(args.data_file):
+                start  = time.time()
+                if args.training_mode == CONTROLNET:
+                    nll_test = train_test.test_controlnet(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
+                                                        property_norms, nodes_dist, partition='Test')
+                else:
+                    nll_test, test_dict = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
+                                                        property_norms, nodes_dist, partition='Test')
+                print(f">>> testing set test took {time.time() - start:.1f} seconds.")
             else:
-                nll_test, test_dict = train_test.test(args, dataloaders['test'], epoch, model_ema_dp, device, dtype,
-                                                      property_norms, nodes_dist, partition='Test')
-            print(f">>> testing set test took {time.time() - start:.1f} seconds.")
+                nll_test = None
+                test_dict = {}
 
 
             if nll_val < best_nll_val:
                 best_nll_val = nll_val
-                best_nll_test = nll_test
+                if MMSEQ2_SPLIT not in str(args.data_file):
+                    best_nll_test = nll_test
                 if args.save_model:
                     args.current_epoch = epoch + 1
                     utils.save_model(optim, 'outputs/%s/optim.npy' % args.exp_name)
@@ -427,14 +469,18 @@ def main():
                     utils.save_model(model_ema, 'outputs/%s/generative_model_ema_%d_iter_%d.npy' % (args.exp_name, epoch, nth_iter))
                 with open('outputs/%s/args_%d_iter_%d.pickle' % (args.exp_name, epoch, nth_iter), 'wb') as f:
                     pickle.dump(args, f)
-            print('Val loss: %.4f \t Test loss:  %.4f' % (nll_val, nll_test))
-            print('Best val loss: %.4f \t Best test loss:  %.4f' % (best_nll_val, best_nll_test))
+            if MMSEQ2_SPLIT not in str(args.data_file):
+                print('Val loss: %.4f \t Test loss:  %.4f' % (nll_val, nll_test))
+                print('Best val loss: %.4f \t Best test loss:  %.4f' % (best_nll_val, best_nll_test))
+            else:
+                print('Val loss: %.4f' % (nll_val))
+                print('Best val loss: %.4f' % (best_nll_val))
             wandb.log({"Val loss ": nll_val}, commit=True)
-            wandb.log({"Test loss ": nll_test}, commit=True)
-            wandb.log({"Best cross-validated test loss ": best_nll_test}, commit=True)
+            wandb.log({"Test loss ": nll_test}, commit=True) if MMSEQ2_SPLIT not in str(args.data_file) else None
+            wandb.log({"Best cross-validated test loss ": best_nll_test}, commit=True) if MMSEQ2_SPLIT not in str(args.data_file) else None
             
             if (args.training_mode in args.loss_analysis_modes) and args.loss_analysis:
-                wandb.log(test_dict, commit=True)
+                wandb.log(test_dict, commit=True) if MMSEQ2_SPLIT not in str(args.data_file) else None
                 wandb.log(val_dict, commit=True)
 
 

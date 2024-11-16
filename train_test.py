@@ -1,22 +1,26 @@
-import wandb
-from equivariant_diffusion.utils import assert_mean_zero_with_mask, remove_mean_with_mask,\
-    assert_correctly_masked, sample_center_gravity_zero_gaussian_with_mask
-import numpy as np
-import qm9.visualizer as vis
-from qm9.analyze import compute_molecule_metrics
-from qm9.sampling import sample_chain, sample, sample_sweep_conditional, sample_controlnet
-import utils
-import qm9.utils as qm9utils
-from qm9 import losses
+import gc
+import os
 import time
 import math
 import torch
-from global_registry import PARAM_REGISTRY
+import wandb
 import subprocess
-import gc
-import os
-import matplotlib.pyplot as plt
+import numpy as np
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+
+import utils
+from qm9 import losses
+import qm9.visualizer as vis
+import qm9.utils as qm9utils
+from qm9.analyze import compute_molecule_metrics, compute_qvina2_score
+from qm9.sampling import sample_chain, sample, sample_sweep_conditional, sample_controlnet
+
+from equivariant_diffusion.utils import assert_mean_zero_with_mask, remove_mean_with_mask,\
+    assert_correctly_masked, sample_center_gravity_zero_gaussian_with_mask
+
+from global_registry import PARAM_REGISTRY
+
 
 
 
@@ -33,7 +37,7 @@ def train_epoch_controlnet(args, loader, loader_vis_activations, epoch, model, m
     
     for i, data in enumerate(loader):
         # ~!here
-        if i > 1000:
+        if i > 100:
             break
         lg_x = data['ligand']['positions'].to(device, dtype)
         lg_node_mask = data['ligand']['atom_mask'].to(device, dtype).unsqueeze(2)
@@ -611,7 +615,7 @@ def test_controlnet(args, loader, epoch, eval_model, device, dtype, property_nor
 
         for i, data in enumerate(loader):
             # ~!here
-            if i > 1000:
+            if i > 100:
                 break
             lg_x = data['ligand']['positions'].to(device, dtype)
             lg_batch_size = lg_x.size(0)
@@ -745,7 +749,6 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
     # return validity_dict
     metrics_dict = compute_molecule_metrics(molecules, dataset_info)
 
-    wandb.log(metrics_dict)
     if metrics_dict is not None:
         wandb.log(
             {
@@ -767,13 +770,15 @@ def analyze_and_save(epoch, model_sample, nodes_dist, args, device, dataset_info
 
 
 def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, dataset_info, prop_dist,
-                                n_samples=1000, batch_size=100, pair_dict_list=[]):
+                                n_samples=1000, batch_size=100, pair_dict_list=[], pair_dict_list_ids=[],
+                                output_dir=""):
     print(f'Analyzing molecule stability at epoch {epoch}...')
     batch_size = min(batch_size, n_samples)
     assert len(pair_dict_list) == n_samples
     assert n_samples % batch_size == 0
     molecules = {'one_hot': [], 'x': [], 'node_mask': []}
     batch_id = 0
+    num_success = 0
     for i in range(int(n_samples/batch_size)):
         # this returns the number of nodes. i.e. n_samples=3, return=tensor([16, 17, 15]) / tensor([14, 15, 19]) / tensor([17, 27, 18])
         nodesxsample = nodes_dist.sample(batch_size)
@@ -790,7 +795,9 @@ def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, d
         molecules['x'].append(x.detach().cpu())
         molecules['node_mask'].append(node_mask.detach().cpu())
         batch_id += batch_size
+        num_success += x.shape[0]
 
+    assert len(pair_dict_list_ids) == num_success
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}
     # validity_dict, rdkit_tuple = compute_molecule_metrics(molecules, dataset_info)
     # wandb.log(validity_dict)
@@ -798,24 +805,49 @@ def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, d
     #     wandb.log({'Validity': rdkit_tuple[0][0], 'Uniqueness': rdkit_tuple[0][1], 'Novelty': rdkit_tuple[0][2]})
     # return validity_dict
     metrics_dict = compute_molecule_metrics(molecules, dataset_info)
-
-    wandb.log(metrics_dict)
-    if metrics_dict is not None:
-        wandb.log(
-            {
-                'metrics/Validity': metrics_dict['validity'],
-                'metrics/Uniqueness': metrics_dict['uniqueness'],
-                'metrics/Novelty': metrics_dict['novelty'],
-                'metrics/Mol_Stability': metrics_dict['mol_stable'],
-                'metrics/Atom_Stability': metrics_dict['atm_stable'],
-                'metrics/Connectivity': metrics_dict['connectivity'],
-                'metrics/QED': metrics_dict['QED'],
-                'metrics/SA': metrics_dict['SA'],
-                'metrics/LogP': metrics_dict['logP'],
-                'metrics/Lipinski': metrics_dict['lipinski'],
-                'metrics/Diversity': metrics_dict['diversity']
-            }
+    
+    if args.compute_qvina:
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+        
+        qvina_scores_dict = compute_qvina2_score(
+            molecules, 
+            dataset_info, 
+            pocket_ids=pair_dict_list_ids, 
+            pocket_pdb_dir=args.pocket_pdb_dir, 
+            output_dir=output_dir,
+            mgltools_env_name=args.mgltools_env_name,
+            connectivity_thres=1.,
+            ligand_add_H=args.ligand_add_H,
+            receptor_add_H=args.pocket_add_H,
+            remove_nonstd_resi=args.pocket_remove_nonstd_resi,
+            size=args.qvina_search_size,
+            exhaustiveness=args.qvina_exhaustiveness,
+            cleanup_files=args.qvina_cleanup_files,
+            save_csv=args.qvina_save_csv
         )
+    
+    wandb_metrics = {
+        'metrics/Validity': metrics_dict['validity'],
+        'metrics/Uniqueness': metrics_dict['uniqueness'],
+        'metrics/Novelty': metrics_dict['novelty'],
+        'metrics/Mol_Stability': metrics_dict['mol_stable'],
+        'metrics/Atom_Stability': metrics_dict['atm_stable'],
+        'metrics/Connectivity': metrics_dict['connectivity'],
+        'metrics/QED': metrics_dict['QED'],
+        'metrics/SA': metrics_dict['SA'],
+        'metrics/LogP': metrics_dict['logP'],
+        'metrics/Lipinski': metrics_dict['lipinski'],
+        'metrics/Diversity': metrics_dict['diversity']
+    }
+    
+    if args.compute_qvina:
+        wandb_metrics['Qvina2'] = qvina_scores_dict['mean']
+        metrics_dict['Qvina2'] = qvina_scores_dict['mean']
+    
+    if metrics_dict is not None:
+        wandb.log(wandb_metrics)
+    
     return metrics_dict
 
 
