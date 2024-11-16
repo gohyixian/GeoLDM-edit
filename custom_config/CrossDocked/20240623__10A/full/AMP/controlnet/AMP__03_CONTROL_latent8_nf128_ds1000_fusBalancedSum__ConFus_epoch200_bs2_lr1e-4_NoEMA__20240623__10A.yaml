@@ -145,8 +145,8 @@ ema_decay: 0   # 0.99
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 100  # 50
-n_stability_samples_batch_size: 10
+n_stability_samples: 6  # 98, 50
+n_stability_samples_batch_size: 2  # 7, 14
 
 # Dataset partition where pocket samples will be drawn from for analyzing 
 # generated ligands' stability: train | test | val
@@ -280,10 +280,11 @@ n_report_steps: 50
 
 
 # ========================================================================================================== Saving & Resuming
-# resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_5x_resume
-# resume_model_ckpt: generative_model_ema_108_iter_230208.npy
-# resume_optim_ckpt: optim_108_iter_230208.npy
-resume: null
+resume: outputs/AMP__03_CONTROL_latent8_nf128_ds1000_fusBalancedSum__ConFus_epoch200_bs2_lr1e-4_NoEMA__20240623__10A
+resume_model_ckpt: generative_model_0_iter_47492.npy
+resume_optim_ckpt: optim_0_iter_47492.npy
+# resume: null
+
 save_model: true
 
 

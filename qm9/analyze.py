@@ -512,7 +512,7 @@ def compute_qvina2_score(
         'ligands': [],
         'scores': []
     }
-    for i in tqdm(range(rdmols)):
+    for i in tqdm(range(len(rdmols))):
         
         id = str(rdmols_ids[i]).zfill(7)
         
