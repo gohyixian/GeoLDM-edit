@@ -43,6 +43,10 @@ data_EDA/data_object_cache/**/*.pkl
 data/**/*.npy
 data/**/*.npz
 data/**/*.zip
+data/**/*.xyz
+data/**/*.sdf
+data/**/*.pdb
+data/**/*.pdbqt
 
 sparsity_check/saved_activations/*
 recon_loss_analysis/*
