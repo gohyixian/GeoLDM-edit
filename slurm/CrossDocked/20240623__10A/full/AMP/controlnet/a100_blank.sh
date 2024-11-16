@@ -13,7 +13,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 120519
+# 122320
 module load cuda/12.1       # gpu-a100
 module load miniconda/24.1.2
 conda activate geoldm-a100
@@ -25,5 +25,6 @@ conda activate geoldm-a100
 
 
 cd /home/user/yixian.goh/geoldm-edit
+chmod +x analysis/qvina/qvina2.1
 python check_gpu.py
 python main_geom_drugs_control.py --config_file custom_config/CrossDocked/20240623__10A/full/AMP/controlnet/AMP__03_CONTROL_latent8_nf128_ds500_fusBalancedSum__ConFus_epoch200_bs14_lr1e-4_NoEMA__20240623__10A.yaml
