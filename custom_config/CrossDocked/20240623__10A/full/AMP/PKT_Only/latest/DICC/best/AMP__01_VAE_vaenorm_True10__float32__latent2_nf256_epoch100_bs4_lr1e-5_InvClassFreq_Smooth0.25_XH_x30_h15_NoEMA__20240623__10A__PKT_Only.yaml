@@ -1,27 +1,21 @@
 proj_name: Control-GeoLDM
-# exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A
-# exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_1x
-# exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_2x
-# exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_3x
-exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_4x
+exp_name: AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
-train_diffusion: true
+train_diffusion: false
 
 # training mode: VAE | LDM | ControlNet
-training_mode: LDM
-loss_analysis: false
+training_mode: VAE
+loss_analysis: true
 
 # Specify first stage model path
-ae_path: outputs_selected/vae_ligands/AMP__01_VAE_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs36_lr1e-4_InvClassFreq_Smooth0.25_x10_h5_NoEMA__20240623__10A__LG_Only
-ae_ckpt: generative_model_4_iter_10560.npy   # set null to load automatically selected best
-ldm_ckpt: null   # set null to load automatically selected best
+ae_path: null
 
 # Train first stage AutoEncoder model (no effect if train_diffusion=False)
-trainable_ae_encoder: false
-trainable_ae_decoder: false
+trainable_ae_encoder: true
+trainable_ae_decoder: true
 
 # can contain multiple: homo | onehot | lumo | num_atoms | etc
 conditioning: []
@@ -42,11 +36,12 @@ random_seed: 42
 
 # ========================================================================================================== Dataset
 
-dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND
+dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET
 
 # geom directory  ~!geom
+# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz
+# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01.npz
 data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_split_811.npz
-# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811.npz
 data_splitted: true
 
 # set to null if you're running this dataset for the first time. 
@@ -56,7 +51,7 @@ data_splitted: true
 permutation_file_path: null
 
 # what data to load for VAE training: ligand | pocket | all
-vae_data_mode: ligand
+vae_data_mode: pocket
 
 # When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
 filter_n_atoms: null
@@ -82,12 +77,12 @@ remove_h: false
 
 # ========================================================================================================== Training Params
 start_epoch: 0
-test_epochs: 4
+test_epochs: 1
 
 
-n_epochs: 200  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 64    # 24
-lr: 1.0e-4   # 0.0001
+n_epochs: 100  # 40 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 4    # 24
+lr: 1.0e-5   # 0.0001
 
 # weight of KL term in ELBO, default 0.01
 kl_weight: 0.01
@@ -109,7 +104,7 @@ ema_decay: 0
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 50
+n_stability_samples: 20
 
 
 # disables CUDA training
@@ -163,7 +158,7 @@ diffusion_noise_precision: 1.0e-05 # ~!fp16
 diffusion_loss_type: l2
 
 # number of latent features, default 4
-latent_nf: 8  # 1
+latent_nf: 2  # 1
 
 # normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
 normalize_factors: [1, 4, 10]
@@ -172,12 +167,12 @@ vae_normalize_x: true
 vae_normalize_method: scale     # scale | linear
 vae_normalize_factors: [10, 1, 1]
 
-reweight_class_loss: null  # "inv_class_freq"
-smoothing_factor: 1.0      # [0.1 - 1.0) 1.0 is essentially disabling
+reweight_class_loss: "inv_class_freq"
+reweight_coords_loss: "inv_class_freq"
+smoothing_factor: 0.25     # [0.1 - 1.0) 1.0 is essentially disabling
 
-error_x_weight: 1    # error_x custom weighting
-error_h_weight: 1
-
+error_x_weight: 30    # error_x custom weighting
+error_h_weight: 15
 
 # ========================================================================================================== Network Architecture
 # number of layers of EquivariantBlock to use in LDM and VAE's Decoder
@@ -187,7 +182,7 @@ n_layers: 4  # 9 for qm9
 inv_sublayers: 1
 
 # model's internal operating number of features
-nf: 128
+nf: 256
 
 # use tanh in the coord_mlp
 tanh: true
@@ -215,30 +210,19 @@ aggregation_method: sum
 
 # ========================================================================================================== Logging
 # Can be used to visualize multiple times per epoch, default 1e8
-visualize_sample_chain: true
-visualize_every_batch: 20000
-visualize_sample_chain_epochs: 2   # for 1% testing dataset, others set to 1
+visualize_every_batch: 20
 n_report_steps: 50
 
 
 
 
 # ========================================================================================================== Saving & Resuming
-# str
-# resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A
-# resume_model_ckpt: generative_model_164_iter_196020.npy
-# resume_optim_ckpt: optim_164_iter_196020.npy
-# resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_1x_resume
-# resume_model_ckpt: generative_model_196_iter_234036.npy
-# resume_optim_ckpt: optim_196_iter_234036.npy
-# resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_2x_resume
-# resume_model_ckpt: generative_model_196_iter_234036.npy
-# resume_optim_ckpt: optim_196_iter_234036.npy
-resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_NoEMA__20240623__10A_3x_resume
-resume_model_ckpt: generative_model_192_iter_229284.npy
-resume_optim_ckpt: optim_192_iter_229284.npy
-
+# resume: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf128_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
+# resume_model_ckpt: generative_model_12_iter_247208.npy
+# resume_optim_ckpt: optim_12_iter_247208.npy
+resume: null
 save_model: true
+
 
 
 
