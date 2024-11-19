@@ -205,6 +205,10 @@ def sample_controlnet(args, device, generative_model, dataset_info,
     # n1, n2 = edge_index
     # joint_edge_mask_3 = ligand_atom_mask_batched[n1] * pocket_atom_mask_batched[n2]
 
+    # center pocket coordinates
+    pkt_x = remove_mean_with_mask(pkt_x, pkt_node_mask)
+    assert_mean_zero_with_mask(pkt_x, pkt_node_mask)
+
     # TODO FIX: This conditioning just zeros.
     if args.context_node_nf > 0:
         raise NotImplementedError()
