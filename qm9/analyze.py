@@ -16,6 +16,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import scipy.stats as sp_stats
+from Bio.PDB import PDBParser
 
 import matplotlib
 matplotlib.use('Agg')
@@ -530,9 +531,23 @@ def compute_qvina2_score(
         pkt_pdb_file  = Path(pkt_file[0])
         pkt_pdbqt_file = Path(output_dir, f"{pkt_pdb_file.stem}.pdbqt")
         
+        
+        # Move ligand's center (x,y,z) to pocket's center (x,y,z) so that it falls in 
+        # the bounding box search space in order for qvina2.1 to work
+        pocket_center = get_pocket_center(str(pkt_pdb_file))
+        # Center ligand around (0, 0, 0) first
+        mol_trans = copy.deepcopy(rdmols[i])
+        mol_trans, ligand_original_center = center_ligand(mol_trans)
+        # Translate ligand to the pocket center
+        mol_trans = translate_ligand_to_pocket_center(mol_trans, pocket_center)
+        pocket_center = pocket_center.tolist()
+        cx, cy, cz = float(pocket_center[0]), float(pocket_center[1]), float(pocket_center[2])
+        
+        
         # LG: .sdf
-        with Chem.SDWriter() as writer:
-            writer.write(rdmols[i])
+        with Chem.SDWriter(str(lg_sdf_file)) as writer:
+            writer.write(mol_trans)
+            # writer.write(rdmols[i])
         
         # LG: .pdb
         os.popen(f'obabel {lg_sdf_file} -O {lg_pdb_file}').read()
@@ -548,8 +563,9 @@ def compute_qvina2_score(
         prep_pkt_cmd += " -e" if remove_nonstd_resi else ""
         subprocess.run(prep_pkt_cmd, shell=True)
 
-        # center box at ligand's center of mass
-        cx, cy, cz = rdmols[i].GetConformer().GetPositions().mean(0)
+        # # center box at ligand's center of mass 
+        # # only applicable to DiffSBDD as the model directly positions the ligands in the pockets
+        # cx, cy, cz = rdmols[i].GetConformer().GetPositions().mean(0)
 
         # run QuickVina 2
         out = os.popen(
@@ -559,6 +575,7 @@ def compute_qvina2_score(
             f'--size_x {size} --size_y {size} --size_z {size} '
             f'--exhaustiveness {exhaustiveness}'
         ).read()
+        print(out)
 
         if '-----+------------+----------+----------' not in out:
             scores.append(np.nan)
@@ -596,6 +613,61 @@ def compute_qvina2_score(
         'all': scores,
         'results': results
     }
+
+
+def get_pocket_center(pdb_file):
+    """Calculate the geometric center of a pocket from a PDB file."""
+    parser = PDBParser(QUIET=True)
+    structure = parser.get_structure("pocket", pdb_file)
+    coordinates = []
+
+    # Extract atomic coordinates
+    for atom in structure.get_atoms():
+        coordinates.append(atom.coord)
+
+    # Calculate the geometric center
+    coordinates = np.array(coordinates)
+    center = np.mean(coordinates, axis=0)
+    print(f">>> Pocket center: {center}")
+    
+    return center
+
+def center_ligand(ligand):
+    """Center the ligand coordinates around (0, 0, 0)."""
+    conf = ligand.GetConformer()
+    coords = np.array([list(conf.GetAtomPosition(i)) for i in range(ligand.GetNumAtoms())])
+
+    # Calculate ligand's center
+    ligand_center = np.mean(coords, axis=0)
+    print(f">>> Ligand center beforehand: {ligand_center}")
+
+    # Translate coordinates to center the ligand at (0, 0, 0)
+    for i in range(ligand.GetNumAtoms()):
+        conf.SetAtomPosition(i, coords[i] - ligand_center)
+    
+    return ligand, ligand_center
+
+def translate_ligand_to_pocket_center(ligand, pocket_center):
+    """Translate the ligand to align its center with the pocket center and display the new center."""
+    # Get the conformer (3D coordinates) of the ligand
+    conf = ligand.GetConformer()
+    
+    # Iterate over each atom in the ligand
+    for i in range(ligand.GetNumAtoms()):
+        # Get the current position of the atom
+        current_pos = np.array(conf.GetAtomPosition(i))
+        
+        # Translate the atom position by adding the pocket center (move the ligand)
+        conf.SetAtomPosition(i, current_pos + pocket_center)
+
+    # Calculate the new center of the ligand after translation
+    new_center = np.mean([np.array(conf.GetAtomPosition(i)) for i in range(ligand.GetNumAtoms())], axis=0)
+    
+    # Display the new center (xyz coordinates)
+    print(f">>> Ligand center after: {new_center}")
+    
+    # Return the modified ligand with updated positions
+    return ligand
 
 
 
