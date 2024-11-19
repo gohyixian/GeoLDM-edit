@@ -1,5 +1,6 @@
 proj_name: Control-GeoLDM
-exp_name: AMP__03_CONTROL_latent8_nf128_ds500_fusBalancedSum__ConFus_epoch200_bs14_lr1e-4_NoEMA__20240623__10A
+# exp_name: AMP__03_CONTROL_latent8_nf128_ds500_fusBalancedSum__ConFus_epoch200_bs14_lr1e-4_NoEMA__20240623__10A
+exp_name: AMP__03_CONTROL_latent8_nf128_ds500_fusBalancedSum__ConFus_epoch200_bs14_lr1e-4_NoEMA__20240623__10A_1x
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -280,10 +281,10 @@ n_report_steps: 50
 
 
 # ========================================================================================================== Saving & Resuming
-# resume: outputs/AMP__03_CONTROL_latent8_nf128_ds1000_fusBalancedSum__ConFus_epoch200_bs2_lr1e-4_NoEMA__20240623__10A
-# resume_model_ckpt: generative_model_0_iter_47492.npy
-# resume_optim_ckpt: optim_0_iter_47492.npy
-resume: null
+resume: outputs/AMP__03_CONTROL_latent8_nf128_ds500_fusBalancedSum__ConFus_epoch200_bs14_lr1e-4_NoEMA__20240623__10A
+resume_model_ckpt: generative_model_10_iter_74624.npy
+resume_optim_ckpt: optim_10_iter_74624.npy
+# resume: null
 save_model: true
 
 

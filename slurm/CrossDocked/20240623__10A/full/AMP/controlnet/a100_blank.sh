@@ -8,12 +8,12 @@
 #SBATCH --job-name=AMP__03_CONTROL_test
 #SBATCH --output=slurm_out/AMP__03_CONTROL_test.out
 #SBATCH --error=slurm_err/AMP__03_CONTROL_test.err
-#SBATCH --qos=long
+#SBATCH --qos=normal
 #SBATCH --hint=multithread
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 122320
+# 122770
 module load cuda/12.1       # gpu-a100
 module load miniconda/24.1.2
 conda activate geoldm-a100
