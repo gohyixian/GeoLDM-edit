@@ -1,5 +1,7 @@
 proj_name: Control-GeoLDM
-exp_name: AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
+# exp_name: AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
+exp_name: AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x
+
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
 # Train second stage LatentDiffusionModel model
@@ -217,10 +219,11 @@ n_report_steps: 50
 
 
 # ========================================================================================================== Saving & Resuming
-# resume: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf128_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
-# resume_model_ckpt: generative_model_12_iter_247208.npy
-# resume_optim_ckpt: optim_12_iter_247208.npy
-resume: null
+# resume: null
+resume: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
+resume_model_ckpt: generative_model_4_iter_95080.npy
+resume_optim_ckpt: optim_4_iter_95080.npy
+
 save_model: true
 
 
