@@ -8,7 +8,7 @@
 #SBATCH --job-name=AMP__03_CONTROL_test
 #SBATCH --output=slurm_out/AMP__03_CONTROL_test.out
 #SBATCH --error=slurm_err/AMP__03_CONTROL_test.err
-#SBATCH --qos=normal
+#SBATCH --qos=long
 #SBATCH --hint=multithread
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
