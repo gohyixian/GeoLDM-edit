@@ -466,13 +466,14 @@ def load_split_data(conformation_file, val_proportion=0.1, test_proportion=0.1,
 
 
 class GeomDrugsDataset(Dataset):
-    def __init__(self, data_list, transform=None, training_mode=None):
+    def __init__(self, data_list, transform=None, pocket_transform=None, training_mode=None):
         """
         Args:
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
         self.transform = transform
+        self.pocket_transform = pocket_transform
         self.training_mode = training_mode
 
         if (training_mode is None) or (training_mode == 'VAE') or (training_mode == 'LDM'):
@@ -513,7 +514,9 @@ class GeomDrugsDataset(Dataset):
 
         elif self.training_mode == 'ControlNet':
             sample_ligand, sample_pocket = self.data_list[idx], self.data_list_pocket[idx]
-            if self.transform:
+            if self.transform and self.pocket_transform:
+                sample_ligand, sample_pocket = self.transform(sample_ligand), self.pocket_transform(sample_pocket)
+            elif self.transform and not self.pocket_transform:
                 sample_ligand, sample_pocket = self.transform(sample_ligand), self.transform(sample_pocket)
             sample = dict()
             sample['ligand'] = sample_ligand

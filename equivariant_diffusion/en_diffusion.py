@@ -991,10 +991,22 @@ class EnHierarchicalVAE(torch.nn.Module):
             self,
             encoder: models.EGNN_encoder_QM9,
             decoder: models.EGNN_decoder_QM9,
-            in_node_nf: int, n_dims: int, latent_node_nf: int,
+            in_node_nf: int, 
+            n_dims: int, 
+            latent_node_nf: int,
             kl_weight: float,
-            norm_values=(1., 1., 1.), norm_biases=(None, 0., 0.), 
-            include_charges=True):
+            include_charges=True,
+            normalize_x=False,
+            normalize_method=None,
+            normalize_values=(1., 1., 1.), 
+            reweight_coords_loss=None,
+            error_x_weight=None,
+            reweight_class_loss=None,
+            error_h_weight=None,
+            class_weights=None,
+            atom_decoder=None,
+            identifier='VAE'
+            ):
         super().__init__()
 
         self.include_charges = include_charges  # true
@@ -1007,27 +1019,26 @@ class EnHierarchicalVAE(torch.nn.Module):
         self.latent_node_nf = latent_node_nf  # 1
         self.num_classes = self.in_node_nf - self.include_charges  # 5
         self.kl_weight = kl_weight  # 0.01
+        
+        self.reweight_coords_loss = reweight_coords_loss
+        self.error_x_weight = error_x_weight
+        self.reweight_class_loss = reweight_class_loss
+        self.error_h_weight = error_h_weight
+        self.class_weights = class_weights
+        self.atom_decoder = atom_decoder
+        self.identifier = identifier
 
-        self.vae_normalize_x = PARAM_REGISTRY.get('vae_normalize_x', False)
+        self.vae_normalize_x = normalize_x
+        # self.vae_normalize_x = PARAM_REGISTRY.get('vae_normalize_x', False)
         if self.vae_normalize_x:
-            self.vae_normalize_method = PARAM_REGISTRY.get('vae_normalize_method', None)
-            print(f">> EnHierarchicalVAE self.vae_normalize_method={self.vae_normalize_method}") if self.vae_normalize_x else None
+            # self.vae_normalize_method = PARAM_REGISTRY.get('vae_normalize_method', None)
+            self.vae_normalize_method = normalize_method
+            print(f"[{self.identifier}] >> EnHierarchicalVAE self.vae_normalize_method={self.vae_normalize_method}") if self.vae_normalize_x else None
             
             if self.vae_normalize_method == 'scale':
-                norm_values = PARAM_REGISTRY.get('vae_normalize_factors')
-                self.norm_values = norm_values  # (1., 1., 1.)
-                self.norm_biases = norm_biases  # (1., 1., 1.)
-                print(f">> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
-
-            elif self.vae_normalize_method == 'linear':
-                fn_points = PARAM_REGISTRY.get('vae_normalize_fn_points')  # [x_min, y_min, x_max, y_max]
-                x_min, y_min = float(fn_points[0]), float(fn_points[1])
-                x_max, y_max = float(fn_points[2]), float(fn_points[3])
-                print(x_min, x_max, y_min, y_max)
-                
-                self.scale_fn_m = (y_max - y_min) / (x_max - x_min)
-                self.scale_fn_c = y_min - (self.scale_fn_m * x_min)
-                print(f">> EnHierarchicalVAE self.scale_fn_m={self.scale_fn_m} self.scale_fn_c={self.scale_fn_c}")
+                # norm_values = PARAM_REGISTRY.get('vae_normalize_factors')
+                self.norm_values = normalize_values  # (1., 1., 1.)
+                print(f"[{self.identifier}] >> EnHierarchicalVAE self.norm_values={self.norm_values} self.norm_biases={self.norm_biases}")
 
             else:
                 raise NotImplementedError()
@@ -1055,16 +1066,14 @@ class EnHierarchicalVAE(torch.nn.Module):
     # ~!norm
     def normalize_x(self, x):
         if self.vae_normalize_method == 'scale':
+            print(f"[{self.identifier}] Normalising coords with scale: {self.norm_values[0]}")
             x = x / self.norm_values[0]
-        elif self.vae_normalize_method == 'linear':
-            x = (self.scale_fn_m * x) + self.scale_fn_c  # y=mx+c
         return x
     # ~!norm
     def unnormalize_x(self, x):
         if self.vae_normalize_method == 'scale':
+            print(f"[{self.identifier}] Unnormalising coords with scale: {self.norm_values[0]}")
             x = x * self.norm_values[0]
-        elif self.vae_normalize_method == 'linear':
-            x = (x - self.scale_fn_c) / self.scale_fn_m  # x=(y-c)/m
         return x
 
 
@@ -1236,9 +1245,11 @@ class EnHierarchicalVAE(torch.nn.Module):
         # Error on positions. / coordinates loss
         x_rec = xh_rec[:, :, :self.n_dims]
         x = xh[:, :, :self.n_dims]
-        if PARAM_REGISTRY.get('reweight_coords_loss') == "inv_class_freq":
+        # if PARAM_REGISTRY.get('reweight_coords_loss') == "inv_class_freq":
+        if self.reweight_coords_loss == "inv_class_freq":
             h_cat = xh[:, :, self.n_dims:self.n_dims + self.num_classes]
-            class_weights = PARAM_REGISTRY.get('class_weights').to(h_cat.device, h_cat.dtype)   # sum to 1
+            # class_weights = PARAM_REGISTRY.get('class_weights').to(h_cat.device, h_cat.dtype)   # sum to 1
+            class_weights = self.class_weights.to(h_cat.device, h_cat.dtype)   # sum to 1
             class_weights = class_weights * (bs * n_nodes)                                      # scale back
 
             atom_classes = h_cat.argmax(dim=2)                      # (batch_size, num_atoms)
@@ -1247,8 +1258,10 @@ class EnHierarchicalVAE(torch.nn.Module):
         else:
             error_x = sum_except_batch((x_rec - x) ** 2)
         
-        if PARAM_REGISTRY.get('error_x_weight', None) is not None:
-            error_x = error_x * float(PARAM_REGISTRY.get('error_x_weight'))
+        # if PARAM_REGISTRY.get('error_x_weight', None) is not None:
+        if self.error_x_weight is not None:
+            # error_x = error_x * float(PARAM_REGISTRY.get('error_x_weight'))
+            error_x = error_x * float(self.error_x_weight)
         
         # Error on classes. / node features (one-hot) loss
         h_cat_rec = xh_rec[:, :, self.n_dims:self.n_dims + self.num_classes]
@@ -1257,16 +1270,20 @@ class EnHierarchicalVAE(torch.nn.Module):
         h_cat = h_cat.reshape(bs * n_nodes, self.num_classes)
 
         # ~!fp16 ~!mp
-        if PARAM_REGISTRY.get('reweight_class_loss') == "inv_class_freq":
-            class_weights = PARAM_REGISTRY.get('class_weights').to(h_cat.device, h_cat.dtype)   # sum to 1
+        # if PARAM_REGISTRY.get('reweight_class_loss') == "inv_class_freq":
+        if self.reweight_class_loss == "inv_class_freq":
+            # class_weights = PARAM_REGISTRY.get('class_weights').to(h_cat.device, h_cat.dtype)   # sum to 1
+            class_weights = self.class_weights.to(h_cat.device, h_cat.dtype)   # sum to 1
             class_weights = class_weights * (bs * n_nodes)                                      # scale back
             error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), weight=class_weights, reduction='none')
             print(f"balancing class loss with inv_class_freq={class_weights}")
         else:
             error_h_cat = F.cross_entropy(h_cat_rec, h_cat.argmax(dim=1), reduction='none')
 
-        if PARAM_REGISTRY.get('error_h_weight', None) is not None:
-            error_h_cat = error_h_cat * float(PARAM_REGISTRY.get('error_h_weight'))
+        # if PARAM_REGISTRY.get('error_h_weight', None) is not None:
+        if self.error_h_weight is not None:
+            # error_h_cat = error_h_cat * float(PARAM_REGISTRY.get('error_h_weight'))
+            error_h_cat = error_h_cat * float(self.error_h_weight)
 
         error_h_cat = error_h_cat.reshape(bs, n_nodes, 1)
         error_h_cat = sum_except_batch(error_h_cat)
@@ -1324,7 +1341,8 @@ class EnHierarchicalVAE(torch.nn.Module):
 
         # class-wise acurracy
         classwise_accuracy = {}
-        for class_idx, class_char in enumerate(PARAM_REGISTRY.get('atom_decoder')):
+        # for class_idx, class_char in enumerate(PARAM_REGISTRY.get('atom_decoder')):
+        for class_idx, class_char in enumerate(self.atom_decoder):
             # Create a mask for instances belonging to the current class
             class_mask = (h_cat_idx == class_idx)
             true_class = h_cat_idx[class_mask]

@@ -44,7 +44,6 @@ atom_encoder = dataset_info['atom_encoder']
 atom_decoder = dataset_info['atom_decoder']
 
 # args, unparsed_args = parser.parse_known_args()
-args.wandb_usr = utils.get_wandb_username(args.wandb_usr)
 
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if args.cuda else "cpu")

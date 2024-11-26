@@ -145,7 +145,8 @@ def main():
         args.class_weights = class_weights
         [print(f"{atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
             inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
-
+    else:
+        args.class_weights = None
 
     # coordinates loss weighting
     if not hasattr(args, 'error_x_weight'):
@@ -214,9 +215,6 @@ def main():
 
     del split_data
 
-
-    # args, unparsed_args = parser.parse_known_args()
-    args.wandb_usr = utils.get_wandb_username(args.wandb_usr)
 
 
     # resume

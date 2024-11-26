@@ -3,7 +3,205 @@ import getpass
 import os
 import re
 import torch
+from torch import nn
 from global_registry import PARAM_REGISTRY
+
+
+def add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_dataset_info):
+
+    # mp autocast dtype
+    if args.mixed_precision_training == True:
+        _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
+        mp_dtype = getattr(torch, mp_dtype_name)
+        args.mixed_precision_autocast_dtype = mp_dtype
+    else:
+        args.mixed_precision_autocast_dtype = dtype
+
+    if len(args.conditioning) > 0:
+        raise NotImplementedError()
+        # print(f'Conditioning on {args.conditioning}')
+        # data_dummy = next(iter(dataloaders['train']))
+        # property_norms = compute_mean_mad(dataloaders, args.conditioning)
+        # context_dummy = prepare_context(args.conditioning, data_dummy, property_norms)
+        # context_node_nf = context_dummy.size(2)
+    else:
+        args.context_node_nf = 0
+        args.property_norms = None
+    
+    # [Pocket VAE]
+    if len(args.pocket_vae.conditioning) > 0:
+        raise NotImplementedError()
+    else:
+        args.pocket_vae.context_node_nf = 0
+        args.pocket_vae.property_norms = 0
+
+    # gradient accumulation
+    if not hasattr(args, 'grad_accumulation_steps'):
+        args.grad_accumulation_steps = 1  # call optim every step
+
+    # vae data mode
+    if not hasattr(args, 'vae_data_mode'):
+        args.vae_data_mode = 'all'
+    if not hasattr(args.pocket, 'vae_data_mode'):
+        args.pocket.vae_data_mode = 'all'
+
+    # vae encoder n layers
+    if not hasattr(args, 'encoder_n_layers'):
+        args.encoder_n_layers = 1
+    if not hasattr(args.pocket_vae, 'encoder_n_layers'):
+        args.pocket_vae.encoder_n_layers = 1
+
+    # grad prenalty
+    if not hasattr(args, 'grad_penalty'):
+        args.grad_penalty = False
+
+    # loss analysis
+    if not hasattr(args, 'loss_analysis'):
+        args.loss_analysis = False
+    args.loss_analysis_modes = ['VAE', 'LDM']
+
+    # loss analysis usage
+    args.atom_encoder = ligand_dataset_info['atom_encoder']
+    args.atom_decoder = ligand_dataset_info['atom_decoder']
+    # [Pocket VAE]
+    args.pocket_vae.atom_encoder = pocket_dataset_info['atom_encoder']
+    args.pocket_vae.atom_decoder = pocket_dataset_info['atom_decoder']
+
+    # intermediate activations analysis usage
+    args.vis_activations_instances = (nn.Linear)
+    args.save_activations_path = 'vis_activations'
+    args.vis_activations_bins = 200
+    if not hasattr(args, 'vis_activations_specific_ylim'):
+        args.vis_activations_specific_ylim = [0, 40]
+    if not hasattr(args, 'vis_activations'):
+        args.vis_activations = False
+    if not hasattr(args, 'vis_activations_batch_samples'):
+        args.vis_activations_batch_samples = 0
+    if not hasattr(args, 'vis_activations_batch_size'):
+        args.vis_activations_batch_size = 1
+
+    # data splits
+    if not hasattr(args, 'data_splitted'):
+        args.data_splitted = False
+
+    # visualise sample chain
+    if not hasattr(args, 'visualize_sample_chain'):
+        args.visualize_sample_chain = False
+    if not hasattr(args, 'visualize_sample_chain_epochs'):
+        args.visualize_sample_chain_epochs = 1
+
+    # [Ligand VAE] scaling of coordinates/x
+    if not hasattr(args, 'vae_normalize_x'):
+        args.vae_normalize_x = False
+    if not hasattr(args, 'vae_normalize_method'):  # supported: "scale" | "linear"
+        args.vae_normalize_method = None
+    if not hasattr(args, 'vae_normalize_factors'):
+        args.vae_normalize_factors = [1, 1, 1]
+
+    # [Ligand VAE] class-imbalance loss reweighting
+    if not hasattr(args, 'reweight_class_loss'):  # supported: "inv_class_freq"
+        args.reweight_class_loss = None
+    if not hasattr(args, 'reweight_coords_loss'):  # supported: "inv_class_freq"
+        args.reweight_coords_loss = None
+    if not hasattr(args, 'smoothing_factor'):  # smoothing: (0. - 1.]
+        args.smoothing_factor = None
+    if args.reweight_class_loss == "inv_class_freq":
+        class_freq_dict = ligand_dataset_info['atom_types']
+        sorted_keys = sorted(class_freq_dict.keys())
+        frequencies = torch.tensor([class_freq_dict[key] for key in sorted_keys], dtype=args.dtype)
+        inverse_frequencies = 1.0 / frequencies
+
+        if args.smoothing_factor is not None:
+            smoothing_factor = float(args.smoothing_factor)
+            inverse_frequencies = torch.pow(inverse_frequencies, smoothing_factor)
+
+        class_weights = inverse_frequencies / inverse_frequencies.sum()  # normalize
+        args.class_weights = class_weights
+        [print(f"{args.atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
+            inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
+    else:
+        args.class_weights = None
+
+    # [Ligand VAE] coordinates loss weighting
+    if not hasattr(args, 'error_x_weight'):
+        args.error_x_weight = None
+    # [Ligand VAE] atom types loss weighting
+    if not hasattr(args, 'error_h_weight'):
+        args.error_h_weight = None
+
+
+    # [Pocket VAE] scaling of coordinates/x
+    if not hasattr(args.pocket_vae, 'vae_normalize_x'):
+        args.pocket_vae.vae_normalize_x = False
+    if not hasattr(args.pocket_vae, 'vae_normalize_method'):  # supported: "scale" | "linear"
+        args.pocket_vae.vae_normalize_method = None
+    if not hasattr(args.pocket_vae, 'vae_normalize_factors'):
+        args.pocket_vae.vae_normalize_factors = [1, 1, 1]
+    
+    # [Pocket VAE] class-imbalance loss reweighting
+    if not hasattr(args.pocket_vae, 'reweight_class_loss'):  # supported: "inv_class_freq"
+        args.pocket_vae.reweight_class_loss = None
+    if not hasattr(args.pocket_vae, 'reweight_coords_loss'):  # supported: "inv_class_freq"
+        args.pocket_vae.reweight_coords_loss = None
+    if not hasattr(args.pocket_vae, 'smoothing_factor'):  # smoothing: (0. - 1.]
+        args.pocket_vae.smoothing_factor = None
+    if args.pocket_vae.reweight_class_loss == "inv_class_freq":
+        class_freq_dict = pocket_dataset_info['atom_types']
+        sorted_keys = sorted(class_freq_dict.keys())
+        frequencies = torch.tensor([class_freq_dict[key] for key in sorted_keys], dtype=args.dtype)
+        inverse_frequencies = 1.0 / frequencies
+
+        if args.pocket_vae.smoothing_factor is not None:
+            smoothing_factor = float(args.pocket_vae.smoothing_factor)
+            inverse_frequencies = torch.pow(inverse_frequencies, smoothing_factor)
+
+        class_weights = inverse_frequencies / inverse_frequencies.sum()  # normalize
+        args.pocket_vae.class_weights = class_weights
+        [print(f"{args.pocket_vae.atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
+            inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
+
+    # [Pocket VAE] coordinates loss weighting
+    if not hasattr(args.pocket_vae, 'error_x_weight'):
+        args.pocket_vae.error_x_weight = None
+    # [Pocket VAE] atom types loss weighting
+    if not hasattr(args.pocket_vae, 'error_h_weight'):
+        args.pocket_vae.error_h_weight = None
+
+
+    # [ControlNet] time noisy: t/2 for main network, adopted from [https://arxiv.org/abs/2405.06659]
+    if not hasattr(args, 'time_noisy'):
+        args.time_noisy = False
+
+
+    # [ControlNet] match ligand & pocket raw files by ids
+    if not hasattr(args, 'match_raw_file_by_id'):
+        args.match_raw_file_by_id = False
+    if not hasattr(args, 'compute_qvina'):
+        args.compute_qvina = False
+    if not hasattr(args, 'qvina_search_size'):
+        args.qvina_search_size = 20
+    if not hasattr(args, 'qvina_exhaustiveness'):
+        args.qvina_exhaustiveness = 16
+    if not hasattr(args, 'qvina_cleanup_files'):
+        args.qvina_cleanup_files = True
+    if not hasattr(args, 'qvina_save_csv'):
+        args.qvina_save_csv = True
+    if not hasattr(args, 'pocket_pdb_dir'):
+        args.pocket_pdb_dir = ""
+    if not hasattr(args, 'match_raw_file_by_id'):
+        args.match_raw_file_by_id = True
+    if not hasattr(args, 'mgltools_env_name'):
+        args.mgltools_env_name = 'mgltools-python2'
+    if not hasattr(args, 'ligand_add_H'):
+        args.ligand_add_H = False
+    if not hasattr(args, 'pocket_add_H'):
+        args.pocket_add_H = False
+    if not hasattr(args, 'pocket_remove_nonstd_resi'):
+        args.pocket_remove_nonstd_resi = False
+
+    return args
+
+
 
 
 import periodictable
@@ -166,16 +364,6 @@ def random_rotation(x):
 
     return x.contiguous()
 
-
-# Other utilities
-def get_wandb_username(username):
-    if username == 'cvignac':
-        return 'cvignac'
-    current_user = getpass.getuser()
-    if current_user == 'victor' or current_user == 'garciasa':
-        return 'vgsatorras'
-    else:
-        return username
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ from configs.constants_colors_radius import get_radius, get_colors
 from configs.dataset_config_QM9 import *
 from configs.dataset_config_GEOM import *
 from configs.dataset_config_GEOM_PDBB_combined import *
+from configs.dataset_config_GEOM_CrossDocked import *
 from configs.dataset_config_CrossDocked import *
 from configs.dataset_config_BindingMOAD import *
 
@@ -46,6 +47,7 @@ def get_dataset_info(dataset_name, remove_h=False):
         return d_20240623_CrossDocked_LG_PKT__10A__LIGAND_POCKET
     elif dataset_name == 'd_20240623_CrossDocked_LG_PKT__10A__LIGAND' and remove_h == False:
         return d_20240623_CrossDocked_LG_PKT__10A__LIGAND
-
+    elif dataset_name == 'd_20241115_GEOM_LDM_CrossDocked_LG_PKT_MMseq2_split__10A__LIGAND' and remove_h == False:
+        return d_20241115_GEOM_LDM_CrossDocked_LG_PKT_MMseq2_split__10A__LIGAND
     else:
         raise Exception(f"Wrong dataset {dataset_name} with remove_h={remove_h}")

@@ -53,14 +53,15 @@ def get_model(args, device, dataset_info, dataloader_train):
         raise ValueError(args.probabilistic_model)
 
 
-def get_autoencoder(args, device, dataset_info, dataloader_train):
+def get_autoencoder(args, device, dataset_info, dataloader_train, identifier='VAE'):
     histogram = dataset_info['n_nodes']
     in_node_nf = len(dataset_info['atom_decoder']) + int(args.include_charges)     # len[H,C,N,O,F] + int(True) = 6
     nodes_dist = DistributionNodes(histogram)
 
     prop_dist = None
     if len(args.conditioning) > 0:
-        prop_dist = DistributionProperty(dataloader_train, args.conditioning)
+        raise NotImplementedError()
+        # prop_dist = DistributionProperty(dataloader_train, args.conditioning)
 
     # if args.condition_time:
     #     dynamics_in_node_nf = in_node_nf + 1
@@ -111,14 +112,22 @@ def get_autoencoder(args, device, dataset_info, dataloader_train):
     vae = EnHierarchicalVAE(
         encoder=encoder,
         decoder=decoder,
-        in_node_nf=in_node_nf,  # 6
-        n_dims=3,
-        latent_node_nf=args.latent_nf,  # 1
-        kl_weight=args.kl_weight,   # 0.01
-        # norm_values=args.normalize_factors,   # 1,4,10
-        # norm_values=args.vae_normalize_factors,   # 1,4,10
-        include_charges=args.include_charges  # true
-        )
+        in_node_nf=in_node_nf, 
+        n_dims=3, 
+        latent_node_nf=args.latent_nf,
+        kl_weight=args.kl_weight,
+        include_charges=args.include_charges,
+        normalize_x=args.vae_normalize_x,
+        normalize_method=args.vae_normalize_method,
+        normalize_values=args.vae_normalize_factors, 
+        reweight_coords_loss=args.reweight_coords_loss,
+        error_x_weight=args.error_x_weight,
+        reweight_class_loss=args.reweight_class_loss,
+        error_h_weight=args.error_h_weight,
+        class_weights=args.class_weights,
+        atom_decoder=args.atom_decoder,
+        identifier=identifier
+    )
 
     return vae, nodes_dist, prop_dist
 
@@ -209,13 +218,13 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
 
 
 
-def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train):
+def get_controlled_latent_diffusion(args, device, ligand_dataset_info, pocket_dataset_info, dataloader_train):
     device = torch.device("cuda" if args.cuda else "cpu")
 
     ligand_ae_model, ligand_nodes_dist, ligand_prop_dist = \
-        get_ligand_autoencoder(args, device, dataset_info, dataloader_train)
+        get_ligand_autoencoder(args, device, ligand_dataset_info, dataloader_train)
     pocket_ae_model, _, _ = \
-        get_pocket_autoencoder(args, device, dataset_info, dataloader_train)
+        get_pocket_autoencoder(args.pocket_vae, device, pocket_dataset_info, dataloader_train)
 
     # Create the second stage model (Latent Diffusions).
     # args.latent_nf = ligand_ae_args.latent_nf
@@ -346,7 +355,7 @@ def get_controlled_latent_diffusion(args, device, dataset_info, dataloader_train
 
 
 
-def get_ligand_autoencoder(args, device, dataset_info, dataloader_train):
+def get_ligand_autoencoder(args, device, ligand_dataset_info, dataloader_train):
     # Create (and load) the first stage model (Autoencoder).
     if args.ligand_ae_path is not None:
         with open(join(args.ligand_ae_path, 'args.pickle'), 'rb') as f:
@@ -361,7 +370,7 @@ def get_ligand_autoencoder(args, device, dataset_info, dataloader_train):
         ligand_ae_args.aggregation_method = 'sum'
 
     ligand_ae_model, ligand_nodes_dist, ligand_prop_dist = get_autoencoder(
-        ligand_ae_args, device, dataset_info, dataloader_train)
+        ligand_ae_args, device, ligand_dataset_info, dataloader_train, identifier='Ligand VAE')
     ligand_ae_model.to(device)
 
     if args.ligand_ae_path is not None:   # null
@@ -382,7 +391,7 @@ def get_ligand_autoencoder(args, device, dataset_info, dataloader_train):
 
 
 
-def get_pocket_autoencoder(args, device, dataset_info, dataloader_train):
+def get_pocket_autoencoder(args, device, pocket_dataset_info, dataloader_train):
     # Create (and load) the first stage model (Autoencoder).
     if args.pocket_ae_path is not None:
         with open(join(args.pocket_ae_path, 'args.pickle'), 'rb') as f:
@@ -397,7 +406,7 @@ def get_pocket_autoencoder(args, device, dataset_info, dataloader_train):
         pocket_ae_args.aggregation_method = 'sum'
 
     pocket_ae_model, pocket_nodes_dist, pocket_prop_dist = get_autoencoder(
-        pocket_ae_args, device, dataset_info, dataloader_train)
+        pocket_ae_args, device, pocket_dataset_info, dataloader_train, identifier='Pocket VAE')
     pocket_ae_model.to(device)
 
     if args.pocket_ae_path is not None:   # null
