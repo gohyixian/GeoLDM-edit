@@ -5,8 +5,10 @@ import random
 import argparse
 from pathlib import Path
 
+import math
 import torch
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -15,6 +17,13 @@ from Bio.PDB.Polypeptide import is_aa
 from pathlib import Path
 
 from constants import get_periodictable_list
+
+
+# Function to calculate 3D Euclidean distance
+def calculate_distance(coord1, coord2):
+    return math.sqrt((coord1[0] - coord2[0]) ** 2 +
+                     (coord1[1] - coord2[1]) ** 2 +
+                     (coord1[2] - coord2[2]) ** 2)
 
 
 def process_ligand_and_pocket(pdbfile, sdffile, add_H=True, save_dir='test_add_H'):
@@ -40,7 +49,7 @@ def process_ligand_and_pocket(pdbfile, sdffile, add_H=True, save_dir='test_add_H
     print(f"Original ligand saved to {sdffile_save_path}.")
 
     # Add hydrogens to the molecule while preserving the original heavy atom coordinates
-    ligand_with_h = Chem.AddHs(ligand)
+    ligand_with_h = Chem.AddHs(copy.deepcopy(ligand))
 
     # Copy original heavy atom coordinates to the new molecule with hydrogens
     conf = ligand.GetConformer(0)
@@ -64,8 +73,28 @@ def process_ligand_and_pocket(pdbfile, sdffile, add_H=True, save_dir='test_add_H
     hydrogens_writer.close()
 
     print(f"Ligand with hydrogens saved to {sdffile_add_H_save_path}.")
-    
-    return True
+
+
+    # calculate euclidean distance to see of atoms originally present in ligand have been shifted in ligand_with_h
+    conf_ligand = ligand.GetConformer()
+    conf_ligand_with_h = ligand_with_h.GetConformer()
+
+    # Sum of 3D distances for all heavy atoms
+    total_distance = 0.0
+
+    for atom in ligand.GetAtoms():
+        if atom.GetAtomicNum() > 1:  # Exclude hydrogens
+            atom_idx = atom.GetIdx()  # Index in the original molecule
+            coord_ligand = list(conf_ligand.GetAtomPosition(atom_idx))
+            coord_ligand_with_h = list(conf_ligand_with_h.GetAtomPosition(atom_idx))
+            print(f"{coord_ligand}    {coord_ligand_with_h}")
+            # Compute distance
+            distance = calculate_distance(coord_ligand, coord_ligand_with_h)
+            total_distance += distance
+
+    print(f"Total sum of distances for all heavy atoms: {total_distance:.4f}")
+
+    return total_distance, sdffile_path.stem
 
     # # LIGAND
     # ligand_atom_charge_positions = []
@@ -126,6 +155,9 @@ if __name__ == '__main__':
 
     num_failed = 0
     failed_save = []
+    total_distance_result = {
+        'id': [], 'dist': []
+    }
     for split in data_split.keys():
         ligand_dataset[split] = []
         pocket_dataset[split] = []
@@ -148,9 +180,11 @@ if __name__ == '__main__':
                 continue
 
             try:
-                success = process_ligand_and_pocket(
+                total_distance, ligand_id = process_ligand_and_pocket(
                     pdbfile, sdffile, add_H=True, save_dir=args.save_dir
                 )
+                total_distance_result['id'].append(str(ligand_id))
+                total_distance_result['dist'].append(float(total_distance))
                 
             except (KeyError, AssertionError, FileNotFoundError, IndexError,
                     ValueError) as e:
@@ -163,6 +197,9 @@ if __name__ == '__main__':
             # print(ligand_fn)
             # print(pocket_fn)
 
+    df = pd.DataFrame.from_dict(total_distance_result)
+    df.to_csv(Path(args.save_dir, '00_total_distances.csv'))
+    
     print("Dataset processed.")
 
 
