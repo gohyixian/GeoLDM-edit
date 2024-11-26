@@ -297,7 +297,7 @@ save_model: true
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: true
+no_wandb: false
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true
