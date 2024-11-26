@@ -9,6 +9,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from rdkit import Chem
+from rdkit.Chem import AllChem
 from Bio.PDB import PDBParser
 from Bio.PDB.Polypeptide import is_aa
 
