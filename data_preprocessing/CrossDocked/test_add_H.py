@@ -48,8 +48,12 @@ def process_ligand_and_pocket(pdbfile, sdffile, add_H=True, save_dir='test_add_H
     original_writer.close()
     print(f"Original ligand saved to {sdffile_save_path}.")
 
+    # Embed the original molecule (before adding hydrogens)
+    ligand_with_h = copy.deepcopy(ligand)
+    AllChem.EmbedMolecule(ligand_with_h, randomSeed=42)  # Embed in 3D space
+
     # Add hydrogens to the molecule while preserving the original heavy atom coordinates
-    ligand_with_h = Chem.AddHs(copy.deepcopy(ligand))
+    ligand_with_h = Chem.AddHs(ligand_with_h, addCoords=True)
 
     # Copy original heavy atom coordinates to the new molecule with hydrogens
     conf = ligand.GetConformer(0)
