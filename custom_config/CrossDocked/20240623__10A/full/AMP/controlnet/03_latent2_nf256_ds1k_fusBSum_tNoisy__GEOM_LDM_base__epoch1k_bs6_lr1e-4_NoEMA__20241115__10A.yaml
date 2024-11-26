@@ -25,13 +25,15 @@ ldm_ckpt: generative_model_ema.npy
 zero_fusion_block_weights: false
 
 
-# Train first stage AutoEncoder model (no effect if train_diffusion=False)
+# Train 1st stage AutoEncoder model (no effect if train_diffusion=False)
 trainable_ligand_ae_encoder: false
 trainable_ligand_ae_decoder: false
 trainable_pocket_ae_encoder: false
 
-# ControlNet specific settings
+# Train 2nd stage LDM model
 trainable_ldm: false
+
+# Train 3rd stage ControlNet
 trainable_controlnet: true
 trainable_fusion_blocks: true
 
