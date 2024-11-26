@@ -224,7 +224,7 @@ def get_controlled_latent_diffusion(args, device, ligand_dataset_info, pocket_da
     ligand_ae_model, ligand_nodes_dist, ligand_prop_dist = \
         get_ligand_autoencoder(args, device, ligand_dataset_info, dataloader_train)
     pocket_ae_model, _, _ = \
-        get_pocket_autoencoder(args.pocket_vae, device, pocket_dataset_info, dataloader_train)
+        get_pocket_autoencoder(args.pocket_vae, device, pocket_dataset_info, dataloader_train, ae_path=args.pocket_ae_path, ae_ckpt=args.pocket_ae_ckpt)
 
     # Create the second stage model (Latent Diffusions).
     # args.latent_nf = ligand_ae_args.latent_nf
@@ -391,10 +391,10 @@ def get_ligand_autoencoder(args, device, ligand_dataset_info, dataloader_train):
 
 
 
-def get_pocket_autoencoder(args, device, pocket_dataset_info, dataloader_train):
+def get_pocket_autoencoder(args, device, pocket_dataset_info, dataloader_train, ae_path=None, ae_ckpt=None):
     # Create (and load) the first stage model (Autoencoder).
-    if args.pocket_ae_path is not None:
-        with open(join(args.pocket_ae_path, 'args.pickle'), 'rb') as f:
+    if ae_path is not None:
+        with open(join(ae_path, 'args.pickle'), 'rb') as f:
             pocket_ae_args = pickle.load(f)
     else:
         pocket_ae_args = args
@@ -409,17 +409,17 @@ def get_pocket_autoencoder(args, device, pocket_dataset_info, dataloader_train):
         pocket_ae_args, device, pocket_dataset_info, dataloader_train, identifier='Pocket VAE')
     pocket_ae_model.to(device)
 
-    if args.pocket_ae_path is not None:   # null
+    if ae_path is not None:   # null
         if hasattr(args, 'ae_ckpt'):
-            if args.pocket_ae_ckpt is not None:
-                fn = str(args.pocket_ae_ckpt)
+            if ae_ckpt is not None:
+                fn = str(ae_ckpt)
             else:
                 fn = 'generative_model_ema.npy' if pocket_ae_args.ema_decay > 0 else 'generative_model.npy'
         else:
             fn = 'generative_model_ema.npy' if pocket_ae_args.ema_decay > 0 else 'generative_model.npy'
 
-        print(f"[Loading Pocket VAE weights from {join(args.pocket_ae_path, fn)} ]")
-        flow_state_dict = torch.load(join(args.pocket_ae_path, fn),
+        print(f"[Loading Pocket VAE weights from {join(ae_path, fn)} ]")
+        flow_state_dict = torch.load(join(ae_path, fn),
                                         map_location=device)
         pocket_ae_model.load_state_dict(flow_state_dict)
 

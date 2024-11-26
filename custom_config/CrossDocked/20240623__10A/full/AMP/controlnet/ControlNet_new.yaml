@@ -147,8 +147,8 @@ ema_decay: 0   # 0.99
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 98  # 98, 50
-n_stability_samples_batch_size: 14  # 7, 14
+n_stability_samples: 4  # 98, 50
+n_stability_samples_batch_size: 2  # 7, 14
 
 # Dataset partition where pocket samples will be drawn from for analyzing 
 # generated ligands' stability: train | test | val

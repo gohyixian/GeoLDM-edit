@@ -42,8 +42,8 @@ def add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_data
     # vae data mode
     if not hasattr(args, 'vae_data_mode'):
         args.vae_data_mode = 'all'
-    if not hasattr(args.pocket, 'vae_data_mode'):
-        args.pocket.vae_data_mode = 'all'
+    if not hasattr(args.pocket_vae, 'vae_data_mode'):
+        args.pocket_vae.vae_data_mode = 'all'
 
     # vae encoder n layers
     if not hasattr(args, 'encoder_n_layers'):

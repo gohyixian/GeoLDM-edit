@@ -36,6 +36,9 @@ def train_epoch_controlnet(args, loader, loader_vis_activations, epoch, model, m
     loss_analysis_modes = PARAM_REGISTRY.get('loss_analysis_modes')
     
     for i, data in enumerate(loader):
+        # here
+        if i > 10:
+            break
         lg_x = data['ligand']['positions'].to(device, dtype)
         lg_node_mask = data['ligand']['atom_mask'].to(device, dtype).unsqueeze(2)
         lg_edge_mask = data['ligand']['edge_mask'].to(device, dtype)
@@ -611,6 +614,9 @@ def test_controlnet(args, loader, epoch, eval_model, device, dtype, property_nor
         n_iterations = len(loader)
 
         for i, data in enumerate(loader):
+            # here
+            if i > 10:
+                break
             lg_x = data['ligand']['positions'].to(device, dtype)
             lg_batch_size = lg_x.size(0)
             lg_node_mask = data['ligand']['atom_mask'].to(device, dtype).unsqueeze(2)

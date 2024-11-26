@@ -316,7 +316,7 @@ class EGNN_encoder_QM9(nn.Module):
         #                64x25                                                             64x25x25
         if self.mode == 'egnn_dynamics':
             # ~!mp
-            print(torch.min(h).item(), torch.max(h).item(), torch.min(x).item(), torch.max(x).item())
+            print("[EGNN_encoder_QM9] min(h), max(h), min(x), max(x) :", torch.min(h).item(), torch.max(h).item(), torch.min(x).item(), torch.max(x).item())
             
             with torch.autocast(device_type=PARAM_REGISTRY.get('device_'), dtype=PARAM_REGISTRY.get('mixed_precision_autocast_dtype', alt=torch.float16), enabled=PARAM_REGISTRY.get('mixed_precision_training')):
                 h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)   # feed to model
@@ -864,7 +864,8 @@ class ControlNet_Module_Wrapper(nn.Module):
                 #       With this implementation, the timestep might be propagated to the controlnet
                 #       during Initial Noise Injection. See egnn_wrapper.py, line 70
                 h_time_1 = h_time_1 / 2
-                print(">> Applying time noisy")
+                h_time_2 = h_time_2 / 2
+                print("[ControlNet_Module_Wrapper] Applying time noisy")
             
             h1 = torch.cat([h1, h_time_1], dim=1)
             h2 = torch.cat([h2, h_time_2], dim=1)
