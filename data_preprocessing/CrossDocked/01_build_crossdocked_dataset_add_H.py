@@ -162,15 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('--determine_distance_by_ca', action='store_true')  # wrong method, do not use
     args = parser.parse_args()
 
-    # python 01_build_crossdocked_dataset.py --raw_crossd_basedir /Users/gohyixian/Documents/Documents/3.2_FYP_1/data/CrossDocked --dist_cutoff 10.0 --no_H --ca_only --save_dir /Users/gohyixian/Documents/GitHub/FYP/GeoLDM-edit/data/d_20240623_CrossDocked_LG_PKT --save_dataset_name d_20240623_CrossDocked_LG_PKT
-    
-    # python 01_build_crossdocked_dataset.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --no_H --ca_only --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20240623_CrossDocked_LG_PKT --save_dataset_name d_20240623_CrossDocked_LG_PKT
-    
-    # python 01_build_crossdocked_dataset.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20240623_CrossDocked_LG_PKT --save_dataset_name d_20240623_CrossDocked_LG_PKT
-    
-    # python 01_build_crossdocked_dataset.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241115_CrossDocked_LG_PKT_MMseq2_split --save_dataset_name d_20241115_CrossDocked_LG_PKT_MMseq2_split --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/test_val_paired_files
-    
-    # python 01_build_crossdocked_dataset.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --add_H --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H --save_dataset_name d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H/test_val_paired_files
+    # python 01_build_crossdocked_dataset_add_H.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --add_H --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H --save_dataset_name d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H/test_val_paired_files
 
 
     datadir = args.raw_crossd_basedir / 'crossdocked_pocket10/'
