@@ -237,7 +237,7 @@ if __name__ == '__main__':
                     ligand_data, pocket_data, total_distance, ligand, ligand_with_h = \
                         process_ligand_and_pocket(
                             pdbfile, sdffile, dist_cutoff=args.dist_cutoff, 
-                            ca_only=args.ca_only, no_H=args.no_H, add_H=False, 
+                            ca_only=args.ca_only, no_H=args.no_H, add_H=True, 
                             mol_id=mol_id,
                             determine_distance_by_ca=args.determine_distance_by_ca
                         )
