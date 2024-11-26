@@ -14,6 +14,7 @@ import os
 import pickle
 import numpy as np
 from tqdm import tqdm
+from pathlib import Path
 from constants import get_periodictable_list
 
 # path to .npy file containing the combined/processed conformations/molecules,
@@ -151,7 +152,7 @@ for i in range(len(ligand_atomic_nb)):
 
 
 # save to txt file
-file_name = conformation_file.split("/")[-1][:-4]
+file_name = Path(conformation_file).stem
 with open(f'stats__{file_name}.txt', 'w') as f:
     print("Ligand+Pocket", file=f)
     print("=============", file=f)

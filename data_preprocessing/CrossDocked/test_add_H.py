@@ -14,7 +14,6 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from Bio.PDB import PDBParser
 from Bio.PDB.Polypeptide import is_aa
-from pathlib import Path
 
 from constants import get_periodictable_list
 
@@ -204,7 +203,7 @@ if __name__ == '__main__':
             # print(pocket_fn)
 
     df = pd.DataFrame.from_dict(total_distance_result)
-    df.to_csv(Path(args.save_dir, '00_total_distances.csv'))
+    df.to_csv(Path(args.save_dir, 'total_distances.csv'))
     
     print("Dataset processed.")
 
