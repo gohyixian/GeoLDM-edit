@@ -42,12 +42,6 @@ def process_ligand_and_pocket(pdbfile, sdffile, add_H=True, save_dir='test_add_H
     sdffile_add_H_save_path = Path(save_dir, f"{sdffile_path.stem}_add_H.sdf")
     
 
-    # Save the original ligand to an SDF file
-    original_writer = Chem.SDWriter(sdffile_save_path)
-    original_writer.write(ligand)
-    original_writer.close()
-    print(f"Original ligand saved to {sdffile_save_path}.")
-
     # Embed the original molecule (before adding hydrogens)
     ligand_with_h = copy.deepcopy(ligand)
     AllChem.EmbedMolecule(ligand_with_h, randomSeed=42)  # Embed in 3D space
@@ -65,11 +59,19 @@ def process_ligand_and_pocket(pdbfile, sdffile, add_H=True, save_dir='test_add_H
 
     # Optimize only hydrogen positions
     ff = AllChem.MMFFGetMoleculeForceField(ligand_with_h, AllChem.MMFFGetMoleculeProperties(ligand_with_h))
+    if ff is None:
+        raise Exception(f"Cannot optimise molecule ({sdffile})")
     for i, atom in enumerate(ligand_with_h.GetAtoms()):
         if atom.GetAtomicNum() > 1:  # Freeze heavy atoms
             ff.AddFixedPoint(i)
     ff.Minimize()
 
+
+    # Save the original ligand to an SDF file
+    original_writer = Chem.SDWriter(sdffile_save_path)
+    original_writer.write(ligand)
+    original_writer.close()
+    print(f"Original ligand saved to {sdffile_save_path}.")
 
     # Save the updated molecule with hydrogens to a new SDF file
     hydrogens_writer = Chem.SDWriter(sdffile_add_H_save_path)
@@ -80,8 +82,8 @@ def process_ligand_and_pocket(pdbfile, sdffile, add_H=True, save_dir='test_add_H
 
 
     # calculate euclidean distance to see of atoms originally present in ligand have been shifted in ligand_with_h
-    conf_ligand = ligand.GetConformer()
-    conf_ligand_with_h = ligand_with_h.GetConformer()
+    conf_ligand = ligand.GetConformer(0)
+    conf_ligand_with_h = ligand_with_h.GetConformer(0)
 
     # Sum of 3D distances for all heavy atoms
     total_distance = 0.0
@@ -190,7 +192,7 @@ if __name__ == '__main__':
                 total_distance_result['id'].append(str(ligand_id))
                 total_distance_result['dist'].append(float(total_distance))
                 
-            except (KeyError, AssertionError, FileNotFoundError, IndexError,
+            except (Exception, KeyError, AssertionError, FileNotFoundError, IndexError,
                     ValueError) as e:
                 print(type(e).__name__, e, pocket_fn, ligand_fn)
                 num_failed += 1
