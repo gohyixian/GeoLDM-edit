@@ -59,19 +59,22 @@ def process_ligand_and_pocket(pdbfile, sdffile, dist_cutoff, ca_only, no_H, add_
         ligand_with_h = Chem.AddHs(ligand_with_h, addCoords=True)
         
         # Copy original heavy atom coordinates to the new molecule with hydrogens
+        id_atoms_in_ligand = []
         conf = ligand.GetConformer(0)
         new_conf = ligand_with_h.GetConformer(0)
         for i, atom in enumerate(ligand.GetAtoms()):
-            if atom.GetAtomicNum() > 1:  # Skip hydrogens
-                pos = conf.GetAtomPosition(i)
-                new_conf.SetAtomPosition(i, pos)
+            # if atom.GetAtomicNum() > 1:  # Skip hydrogens
+            pos = conf.GetAtomPosition(i)
+            new_conf.SetAtomPosition(i, pos)
+            id_atoms_in_ligand.append(i)
         
         # Optimize only hydrogen positions while keeping original heavy atom coordinates fixed
         ff = AllChem.MMFFGetMoleculeForceField(ligand_with_h, AllChem.MMFFGetMoleculeProperties(ligand_with_h))
         if ff is None:
             raise Exception(f"Cannot optimise molecule ({sdffile})")
         for i, atom in enumerate(ligand_with_h.GetAtoms()):
-            if atom.GetAtomicNum() > 1:  # Freeze heavy atoms
+            # if atom.GetAtomicNum() > 1:  # Freeze heavy atoms
+            if i in id_atoms_in_ligand:
                 ff.AddFixedPoint(i)
         ff.Minimize()
 
@@ -79,6 +82,12 @@ def process_ligand_and_pocket(pdbfile, sdffile, dist_cutoff, ca_only, no_H, add_
         # present in ligand have been shifted in ligand_with_h
         conf_ligand = ligand.GetConformer(0)
         conf_ligand_with_h = ligand_with_h.GetConformer(0)
+
+        # TO REMOVE
+        # sanity check: verify atom mapping same
+        for i, atom in enumerate(ligand.GetAtoms()):
+            ligand_with_h_atom = ligand_with_h.GetAtomWithIdx(i)
+            assert atom.GetAtomicNum() == ligand_with_h_atom.GetAtomicNum(), f"Atom mismatch at index {i}"
 
         # Sum of 3D distances for all heavy atoms
         total_distance = 0.0
@@ -164,6 +173,7 @@ if __name__ == '__main__':
 
     # python 01_build_crossdocked_dataset_add_H.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --add_H --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H --save_dataset_name d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H/test_val_paired_files
 
+    # python 01_build_crossdocked_dataset_add_H_new.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --add_H --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H_new --save_dataset_name d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H_new --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H_new/test_val_paired_files
 
     datadir = args.raw_crossd_basedir / 'crossdocked_pocket10/'
 
