@@ -106,7 +106,7 @@ filter_pocket_size: 600   # refer EDA
 sequential: false
 
 # Number of worker for the dataloader
-num_workers: 4
+num_workers: 60   # match cpu count
 
 # use data augmentation (i.e. random rotation of x atom coordinates)
 data_augmentation: false

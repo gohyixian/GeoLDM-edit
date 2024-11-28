@@ -6,7 +6,8 @@ proj_name: Control-GeoLDM
 # exp_name: AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_4x
 # exp_name: AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_5x
 # exp_name: AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_6x
-exp_name: AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_7x
+# exp_name: AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_7x
+exp_name: AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_8x
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -72,7 +73,7 @@ filter_pocket_size: 600   # refer EDA
 sequential: false
 
 # Number of worker for the dataloader
-num_workers: 0
+num_workers: 16  # match cpu count
 
 # use data augmentation (i.e. random rotation of x atom coordinates)
 data_augmentation: false
@@ -246,7 +247,10 @@ n_report_steps: 50
 # resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_5x_resume
 # resume_model_ckpt: generative_model_ema_108_iter_230208.npy
 # resume_optim_ckpt: optim_108_iter_230208.npy
-resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_6x_resume
+# resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_6x_resume
+# resume_model_ckpt: generative_model_ema_104_iter_221760.npy
+# resume_optim_ckpt: optim_104_iter_221760.npy
+resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_EMA-0.99__VAE_DecOnly_KL-0__20240623__10A_7x_resume
 resume_model_ckpt: generative_model_ema_104_iter_221760.npy
 resume_optim_ckpt: optim_104_iter_221760.npy
 

@@ -146,7 +146,9 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
         first_stage_args.normalization_factor = 1
     if not hasattr(first_stage_args, 'aggregation_method'):
         first_stage_args.aggregation_method = 'sum'
-
+    if not hasattr(first_stage_args, 'reweight_coords_loss'):
+        first_stage_args.reweight_coords_loss = None
+    
     device = torch.device("cuda" if first_stage_args.cuda else "cpu")
 
     first_stage_model, nodes_dist, prop_dist = get_autoencoder(

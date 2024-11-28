@@ -1,6 +1,7 @@
 proj_name: Control-GeoLDM
 # exp_name: AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
-exp_name: AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x
+# exp_name: AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x
+exp_name: AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -66,7 +67,7 @@ filter_pocket_size: 600   # refer EDA
 sequential: false
 
 # Number of worker for the dataloader
-num_workers: 0
+num_workers: 30   # match with cpu
 
 # use data augmentation (i.e. random rotation of x atom coordinates)
 data_augmentation: false
@@ -220,9 +221,12 @@ n_report_steps: 50
 
 # ========================================================================================================== Saving & Resuming
 # resume: null
-resume: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
-resume_model_ckpt: generative_model_4_iter_95080.npy
-resume_optim_ckpt: optim_4_iter_95080.npy
+# resume: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
+# resume_model_ckpt: generative_model_4_iter_95080.npy
+# resume_optim_ckpt: optim_4_iter_95080.npy
+resume: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume
+resume_model_ckpt: generative_model_5_iter_114096.npy
+resume_optim_ckpt: optim_5_iter_114096.npy
 
 save_model: true
 
