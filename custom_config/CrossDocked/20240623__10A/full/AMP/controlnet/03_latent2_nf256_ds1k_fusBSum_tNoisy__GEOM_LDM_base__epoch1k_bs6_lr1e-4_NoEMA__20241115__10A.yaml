@@ -48,7 +48,7 @@ include_charges: false   # true for qm9
 condition_time: true
 
 # Time Noisy, t/2, adopted from [https://arxiv.org/abs/2405.06659]
-time_noisy: true
+time_noisy: true    # results in numerical instability (alpha & injection of time)
 
 vis_activations: false
 vis_activations_batch_samples: 5
