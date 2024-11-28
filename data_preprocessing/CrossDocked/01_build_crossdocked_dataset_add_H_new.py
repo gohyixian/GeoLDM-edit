@@ -69,7 +69,10 @@ def process_ligand_and_pocket(pdbfile, sdffile, dist_cutoff, ca_only, no_H, add_
             id_atoms_in_ligand.append(i)
         
         # Optimize only hydrogen positions while keeping original heavy atom coordinates fixed
-        ff = AllChem.MMFFGetMoleculeForceField(ligand_with_h, AllChem.MMFFGetMoleculeProperties(ligand_with_h))
+        # Merck Molecular Force Field (MMFF)
+        # ff = AllChem.MMFFGetMoleculeForceField(ligand_with_h, AllChem.MMFFGetMoleculeProperties(ligand_with_h))
+        # Universal Force Filed (UFF)
+        ff = AllChem.UFFGetMoleculeForceField(ligand_with_h)
         if ff is None:
             raise Exception(f"Cannot optimise molecule ({sdffile})")
         for i, atom in enumerate(ligand_with_h.GetAtoms()):
@@ -174,6 +177,8 @@ if __name__ == '__main__':
     # python 01_build_crossdocked_dataset_add_H.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --add_H --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H --save_dataset_name d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H/test_val_paired_files
 
     # python 01_build_crossdocked_dataset_add_H_new.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --add_H --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H_new --save_dataset_name d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H_new --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H_new/test_val_paired_files
+    
+    # python 01_build_crossdocked_dataset_add_H_new.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --add_H --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H_new_UFF --save_dataset_name d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H_new_UFF --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241126_CrossDocked_LG_PKT_MMseq2_split_add_H_new_UFF/test_val_paired_files
 
     datadir = args.raw_crossd_basedir / 'crossdocked_pocket10/'
 
