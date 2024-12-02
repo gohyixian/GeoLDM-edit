@@ -71,6 +71,15 @@ def analyze_and_save(args, eval_args, device, generative_model,
 
 # python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_ligands/AMP__01_VAE_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs36_lr1e-4_InvClassFreq_Smooth0.25_x10_h5_NoEMA__20240623__10A__LG_Only --load_last --batch_size_gen 2 --n_samples 10
 
+# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --batch_size_gen 2 --n_samples 10
+# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --batch_size_gen 2 --n_samples 10
+# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --batch_size_gen 2 --n_samples 10
+
+# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --batch_size_gen 2 --n_samples 10
+# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --batch_size_gen 2 --n_samples 10
+# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --batch_size_gen 2 --n_samples 10
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str, default="outputs/edm_1",
@@ -172,15 +181,33 @@ def main():
     # class-imbalance loss reweighting
     if not hasattr(args, 'reweight_class_loss'):  # supported: "inv_class_freq"
         args.reweight_class_loss = None
+    if not hasattr(args, 'reweight_coords_loss'):  # supported: "inv_class_freq"
+        args.reweight_coords_loss = None
+    if not hasattr(args, 'smoothing_factor'):  # smoothing: (0. - 1.]
+        args.smoothing_factor = None
     if args.reweight_class_loss == "inv_class_freq":
         class_freq_dict = dataset_info['atom_types']
         sorted_keys = sorted(class_freq_dict.keys())
         frequencies = torch.tensor([class_freq_dict[key] for key in sorted_keys], dtype=args.dtype)
         inverse_frequencies = 1.0 / frequencies
+
+        if args.smoothing_factor is not None:
+            smoothing_factor = float(args.smoothing_factor)
+            inverse_frequencies = torch.pow(inverse_frequencies, smoothing_factor)
+
         class_weights = inverse_frequencies / inverse_frequencies.sum()  # normalize
         args.class_weights = class_weights
-        # [print(f"{atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
-            # inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
+        [print(f"{atom_decoder[sorted_keys[i]]} freq={class_freq_dict[sorted_keys[i]]} \
+            inv_freq={inverse_frequencies[i]} \weight={class_weights[i]}") for i in sorted_keys]
+    else:
+        args.class_weights = None
+
+    # coordinates loss weighting
+    if not hasattr(args, 'error_x_weight'):
+        args.error_x_weight = None
+    # atom types loss weighting
+    if not hasattr(args, 'error_h_weight'):
+        args.error_h_weight = None
 
     # scaling of coordinates/x
     if not hasattr(args, 'vae_normalize_x'):
