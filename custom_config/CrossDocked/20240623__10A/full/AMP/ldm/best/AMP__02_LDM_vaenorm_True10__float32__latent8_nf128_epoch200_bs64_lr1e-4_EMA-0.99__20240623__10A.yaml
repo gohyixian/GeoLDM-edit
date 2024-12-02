@@ -6,7 +6,8 @@ proj_name: Control-GeoLDM
 # exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_4x
 # exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_5x
 # exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_6x
-exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_7x
+# exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_7x
+exp_name: AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_8x
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -246,9 +247,12 @@ n_report_steps: 50
 # resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_5x_resume
 # resume_model_ckpt: generative_model_ema_176_iter_210276.npy
 # resume_optim_ckpt: optim_176_iter_210276.npy
-resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_6x_resume
-resume_model_ckpt: generative_model_ema_168_iter_200772.npy
-resume_optim_ckpt: optim_168_iter_200772.npy
+# resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_6x_resume
+# resume_model_ckpt: generative_model_ema_168_iter_200772.npy
+# resume_optim_ckpt: optim_168_iter_200772.npy
+resume: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_epoch200_bs64_lr1e-4_EMA-0.99__20240623__10A_7x_resume
+resume_model_ckpt: generative_model_ema_176_iter_210276.npy
+resume_optim_ckpt: optim_176_iter_210276.npy
 
 save_model: true
 
