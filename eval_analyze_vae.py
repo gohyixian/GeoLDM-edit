@@ -69,16 +69,6 @@ def analyze_and_save(args, eval_args, device, generative_model,
 
 
 
-# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_ligands/AMP__01_VAE_vaenorm_True10__bfloat16__latent8_nf128_epoch100_bs36_lr1e-4_InvClassFreq_Smooth0.25_x10_h5_NoEMA__20240623__10A__LG_Only --load_last --batch_size_gen 2 --n_samples 10
-
-# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --batch_size_gen 1 --n_samples 10
-# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --batch_size_gen 1 --n_samples 10
-# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --batch_size_gen 1 --n_samples 10
-
-# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --batch_size_gen 1 --n_samples 10
-# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --batch_size_gen 1 --n_samples 10
-# python eval_analyze_vae.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --batch_size_gen 1 --n_samples 10
-
 
 def main():
     parser = argparse.ArgumentParser()
