@@ -22,9 +22,10 @@ def process_sdf_files(session, input_dir, output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
     counter = 0
+    session.logger.info(f"{len(os.listdir(input_dir))}")
     
     # Iterate over all .sdf files in the input directory
-    for file_name in sorted(list(os.listdir(input_dir)))[50]:
+    for i, file_name in enumerate(sorted(list(os.listdir(input_dir)))):
         if file_name.endswith(".sdf"):
             input_path = os.path.join(input_dir, file_name)
             base_name = os.path.splitext(file_name)[0]  # File name without extension
