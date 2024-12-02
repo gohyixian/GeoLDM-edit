@@ -9,6 +9,7 @@ import utils
 import yaml
 import os
 import re
+import pickle
 import argparse
 from os.path import join
 from qm9.models import get_optim, get_model, get_autoencoder, get_latent_diffusion
@@ -54,18 +55,24 @@ def save_xyz_file(path, one_hot, charges, positions, dataset_info, id_from=0, na
         f.close()
 
 
+# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --data_size 0.1
+# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --data_size 0.1
+# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --data_size 0.1
+# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --data_size 0.1
+# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --data_size 0.1
+# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --data_size 0.1
+
 
 def main():
     parser = argparse.ArgumentParser(description='e3_diffusion')
-    parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
+    parser.add_argument('--model_path', type=str, default="outputs/edm_1", help='Specify model path')
     parser.add_argument('--load_last', action='store_true', help='load weights of model of last epoch')
     parser.add_argument('--data_size', type=float, default=0.1, help='portion of val data split to use for test')
     parser.add_argument('--store_samples', action='store_true', help='keeps samples from the same model in previous runs, else deleted')
     opt = parser.parse_args()
 
-    with open(opt.config_file, 'r') as file:
-        args_dict = yaml.safe_load(file)
-    args = Config(**args_dict)
+    with open(join(opt.model_path, 'args.pickle'), 'rb') as f:
+        args = pickle.load(f)
 
     dataset_info = get_dataset_info(dataset_name=args.dataset, remove_h=args.remove_h)
 
@@ -221,8 +228,6 @@ def main():
 
     model = model.to(args.device)
     
-    if args.ae_path is None:
-        args.ae_path = join(os.getcwd(), 'outputs', args.exp_name)
 
     if opt.load_last:
         if args.ema_decay > 0:
@@ -230,7 +235,7 @@ def main():
         else:
             pattern_str = r'generative_model_(\d+)_iter_(\d+)\.npy'
             
-        filtered_files = [f for f in os.listdir(args.ae_path) if re.compile(pattern_str).match(f)]
+        filtered_files = [f for f in os.listdir(opt.model_path) if re.compile(pattern_str).match(f)]
         filtered_files.sort(key=lambda x: (
             int(re.search(pattern_str, x).group(1)),
             int(re.search(pattern_str, x).group(2))
@@ -239,8 +244,8 @@ def main():
     else:
         fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
     
-    print(f">> Loading VAE weights from {join(args.ae_path, fn)}")
-    flow_state_dict = torch.load(join(args.ae_path, fn), map_location=device)
+    print(f">> Loading VAE weights from {join(opt.model_path, fn)}")
+    flow_state_dict = torch.load(join(opt.model_path, fn), map_location=device)
     model.load_state_dict(flow_state_dict)
 
     
