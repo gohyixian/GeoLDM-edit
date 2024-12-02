@@ -100,19 +100,17 @@ def main():
 
 
     # dtype settings
-    module_name, dtype_name = args.dtype.split('.')
-    dtype = getattr(torch, dtype_name)
-    args.dtype = dtype
+    dtype = args.dtype
     torch.set_default_dtype(dtype)
 
 
-    # mp autocast dtype
-    if args.mixed_precision_training == True:
-        _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
-        mp_dtype = getattr(torch, mp_dtype_name)
-        args.mixed_precision_autocast_dtype = mp_dtype
-    else:
-        args.mixed_precision_autocast_dtype = dtype
+    # # mp autocast dtype
+    # if args.mixed_precision_training == True:
+    #     _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
+    #     mp_dtype = getattr(torch, mp_dtype_name)
+    #     args.mixed_precision_autocast_dtype = mp_dtype
+    # else:
+    #     args.mixed_precision_autocast_dtype = dtype
 
 
     # gradient accumulation
