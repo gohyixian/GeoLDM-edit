@@ -53,6 +53,6 @@ def process_sdf_files(session, input_dir, output_dir):
 # Replace 'your_input_directory' and 'your_output_directory' with actual paths
 # process_sdf_files(session, "your_input_directory", "your_output_directory")
 
-process_sdf_files(session, "C:\Users\PC\Desktop\yixian\Crossdocked_Pocket10_ToAddH\data", "C:\Users\PC\Desktop\yixian\Crossdocked_Pocket10_ToAddH\data_add_H")
+process_sdf_files(session, "C:/Users/PC/Desktop/yixian/Crossdocked_Pocket10_ToAddH/data", "C:/Users/PC/Desktop/yixian/Crossdocked_Pocket10_ToAddH/data_add_H")
 
 # runscript C:\Users\PC\Desktop\yixian\GeoLDM-edit\data_preprocessing\CrossDocked\01_add_H.py
