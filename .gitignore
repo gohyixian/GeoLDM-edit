@@ -60,3 +60,4 @@ eval_vae/*
 eval_ldm/*
 eval_controlnet/*
 
+*.xyz
