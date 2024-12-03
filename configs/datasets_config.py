@@ -47,7 +47,14 @@ def get_dataset_info(dataset_name, remove_h=False):
         return d_20240623_CrossDocked_LG_PKT__10A__LIGAND_POCKET
     elif dataset_name == 'd_20240623_CrossDocked_LG_PKT__10A__LIGAND' and remove_h == False:
         return d_20240623_CrossDocked_LG_PKT__10A__LIGAND
+    
     elif dataset_name == 'd_20241115_GEOM_LDM_CrossDocked_LG_PKT_MMseq2_split__10A__LIGAND' and remove_h == False:
         return d_20241115_GEOM_LDM_CrossDocked_LG_PKT_MMseq2_split__10A__LIGAND
+    
+    elif dataset_name == 'd_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only__10A__POCKET' and remove_h == False:
+        return d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only__10A__POCKET
+    elif dataset_name == 'd_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only__10A__LIGAND' and remove_h == False:
+        return d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only__10A__LIGAND
+    
     else:
         raise Exception(f"Wrong dataset {dataset_name} with remove_h={remove_h}")
