@@ -199,6 +199,10 @@ def add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_data
     if not hasattr(args, 'pocket_remove_nonstd_resi'):
         args.pocket_remove_nonstd_resi = False
 
+    # [Pocket VAE] trained on pockets' Alpha Carbon only
+    if not hasattr(args.pocket_vae, 'ca_only'):
+        args.pocket_vae.ca_only = False
+    
     return args
 
 

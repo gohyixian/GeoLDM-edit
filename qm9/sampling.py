@@ -179,7 +179,6 @@ def sample_controlnet(args, device, generative_model, dataset_info,
     lg_edge_mask *= lg_diag_mask
     lg_edge_mask = lg_edge_mask.view(batch_size * max_n_nodes * max_n_nodes, 1).to(device)
     lg_node_mask = lg_node_mask.unsqueeze(2).to(device)
-    # lg_node_mask = lg_node_mask.unsqueeze(2).to(device)
 
     # Pocket: zero padding done here
     pocket_batch = {prop: qm9_collate.batch_stack([mol[prop] for mol in pocket_dict_list])

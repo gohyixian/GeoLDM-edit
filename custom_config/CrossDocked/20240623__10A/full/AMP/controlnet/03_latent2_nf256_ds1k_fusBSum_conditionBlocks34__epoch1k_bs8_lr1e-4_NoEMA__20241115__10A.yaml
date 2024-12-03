@@ -308,6 +308,7 @@ pocket_vae:
     dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET
     vae_data_mode: pocket
     remove_h: false
+    ca_only: false
 
     # can contain multiple: homo | onehot | lumo | num_atoms | etc
     conditioning: []

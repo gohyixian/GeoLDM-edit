@@ -27,10 +27,12 @@ from constants import get_periodictable_list
 #   ...
 #  [idx, atomic_num, x, y, z]]
 
+    # python 01_build_crossdocked_dataset.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only --save_dataset_name d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only/test_val_paired_files --ca_only
 
 
 # conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__CA_Only__no_H.npz'
-conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz'
+# conformation_file = '../../data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A.npz'
+conformation_file = '../../data/d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only/d_20241203_CrossDocked_LG_PKT_MMseq2_split__10.0A__CA_Only.npz'
 
 
 all_data = np.load(conformation_file)
