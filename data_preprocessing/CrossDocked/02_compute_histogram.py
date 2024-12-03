@@ -38,8 +38,14 @@ all_data = np.load(conformation_file)
 
 # all_ligand_data = all_data['ligand']  # TODO: fix script for ligand, pocket, ligand+pocket
 # all_pocket_data = all_data['pocket']
-all_ligand_data = np.concatenate((all_data['ligand_train'], all_data['ligand_test'], all_data['ligand_val']), axis=0)
-all_pocket_data = np.concatenate((all_data['pocket_train'], all_data['pocket_test'], all_data['pocket_val']), axis=0)
+
+if 'MMseq2' in conformation_file:
+    all_ligand_data = np.concatenate((all_data['ligand_train'], all_data['ligand_test']), axis=0)
+    all_pocket_data = np.concatenate((all_data['pocket_train'], all_data['pocket_test']), axis=0)
+else:
+    all_ligand_data = np.concatenate((all_data['ligand_train'], all_data['ligand_test'], all_data['ligand_val']), axis=0)
+    all_pocket_data = np.concatenate((all_data['pocket_train'], all_data['pocket_test'], all_data['pocket_val']), axis=0)
+
 
 # ligand
 ligand_mol_id = all_ligand_data[:, 0].astype(int)
