@@ -1,5 +1,7 @@
 proj_name: Control-GeoLDM
-exp_name: AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs12_lr1e-4_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_CA_Only
+# exp_name: AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs12_lr1e-4_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_CA_Only
+exp_name: AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs12_lr1e-4_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_CA_Only_1x
+
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -31,7 +33,7 @@ vis_activations_batch_samples: 5
 vis_activations_batch_size: 1
 vis_activations_specific_ylim: [0, 40]
 
-random_seed: 42
+random_seed: 0
 
 
 # ========================================================================================================== Dataset
@@ -215,10 +217,10 @@ n_report_steps: 50
 
 
 # ========================================================================================================== Saving & Resuming
-# resume: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
-# resume_model_ckpt: generative_model_4_iter_95080.npy
-# resume_optim_ckpt: optim_4_iter_95080.npy
-resume: null
+# resume: null
+resume: outputs/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs12_lr1e-4_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_CA_Only
+resume_model_ckpt: generative_model_0_iter_8327.npy
+resume_optim_ckpt: optim_0_iter_8327.npy
 
 save_model: true
 
