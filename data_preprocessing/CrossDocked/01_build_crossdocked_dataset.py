@@ -96,6 +96,8 @@ if __name__ == '__main__':
     
     # python 01_build_crossdocked_dataset.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241115_CrossDocked_LG_PKT_MMseq2_split --save_dataset_name d_20241115_CrossDocked_LG_PKT_MMseq2_split --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/test_val_paired_files
 
+    # python 01_build_crossdocked_dataset.py --raw_crossd_basedir /mnt/c/Users/PC/Desktop/yixian/data/CrossDocked --dist_cutoff 10.0 --save_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only --save_dataset_name d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only --copy_files_dir /mnt/c/Users/PC/Desktop/yixian/GeoLDM-edit/data/d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only/test_val_paired_files --ca_only
+
 
     datadir = args.raw_crossd_basedir / 'crossdocked_pocket10/'
 

@@ -56,4 +56,4 @@ def process_sdf_files(session, input_dir, output_dir):
 
 process_sdf_files(session, "C:/Users/PC/Desktop/yixian/Crossdocked_Pocket10_ToAddH/data", "C:/Users/PC/Desktop/yixian/Crossdocked_Pocket10_ToAddH/data_add_H")
 
-# runscript C:\Users\PC\Desktop\yixian\GeoLDM-edit\data_preprocessing\CrossDocked\01_add_H.py
+# runscript C:\Users\PC\Desktop\yixian\GeoLDM-edit\data_preprocessing\CrossDocked\chimerax_add_H.py

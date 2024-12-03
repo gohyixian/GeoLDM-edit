@@ -49,7 +49,7 @@ def process_ligand_and_pocket(sdffile, savefile, id):
         raise Exception(f'Error saving first conformer ({sdffile})')
 
 
-# python 01_index_sdf_files.py --raw_crossd_basedir /Users/gohyixian/Downloads/Crossdocked_Pocket10 --copy_files_dir /Users/gohyixian/Downloads/Crossdocked_Pocket10_ToAddH/data --mapping_file /Users/gohyixian/Downloads/Crossdocked_Pocket10_ToAddH/mapping.json
+# python 00_index_sdf_files.py --raw_crossd_basedir /Users/gohyixian/Downloads/Crossdocked_Pocket10 --copy_files_dir /Users/gohyixian/Downloads/Crossdocked_Pocket10_ToAddH/data --mapping_file /Users/gohyixian/Downloads/Crossdocked_Pocket10_ToAddH/mapping.json
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
