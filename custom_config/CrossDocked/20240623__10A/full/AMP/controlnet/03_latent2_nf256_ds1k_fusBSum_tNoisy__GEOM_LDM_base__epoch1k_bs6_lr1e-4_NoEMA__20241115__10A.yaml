@@ -14,8 +14,8 @@ loss_analysis: false
 # set checkpoint (ckpt) to null to automatically select best
 ligand_ae_path: null
 ligand_ae_ckpt: null
-pocket_ae_path: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
-pocket_ae_ckpt: generative_model_4_iter_95080.npy
+pocket_ae_path: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume
+pocket_ae_ckpt: generative_model_3_iter_76064.npy
 
 # Specify LDM weights path, set to null for random initialisation
 ldm_path: outputs_selected/ldm/ori_drugs_latent2
