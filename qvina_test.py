@@ -172,9 +172,12 @@ def compute_qvina2_score(
         
         # LG: .pdb
         os.popen(f'obabel {lg_sdf_file} -O {lg_pdb_file}').read()
+        print(f">>> {os.path.exists(lg_pdb_file)}")
+        print(lg_pdb_file)
         
         # LG: .pdbqt (add charges and torsions)
-        prep_lg_cmd = f"conda run -n {mgltools_env_name} prepare_ligand4.py -l {lg_pdb_file} -o {lg_pdbqt_file}"
+        cd_cmd = f"cd {os.path.dirname(lg_pdb_file)}"
+        prep_lg_cmd = f"{cd_cmd} && conda run -n {mgltools_env_name} prepare_ligand4.py -l {os.path.basename(lg_pdb_file)} -o {os.path.basename(lg_pdbqt_file)}"
         prep_lg_cmd += " -A hydrogens" if ligand_add_H else ""
         subprocess.run(prep_lg_cmd, shell=True)
         
@@ -241,11 +244,12 @@ def compute_qvina2_score(
 
 if __name__ == '__main__':
     
-    ligand_sdf_files_dir = ""
-    pocket_pdb_files_dir = ""
-    output_dir = ""
+    ligand_sdf_files_dir = "/mnt/c/Users/PC/Desktop/yixian/epoch_1_iter_3122/epoch_1_iter_3122"
+    pocket_pdb_files_dir = "./data/d_20241203_CrossDocked_LG_PKT_MMseq2_split_CA_only/test_val_paired_files/val_pocket"
+    output_dir = "/mnt/c/Users/PC/Desktop/yixian/epoch_1_iter_3122/test_output"
     
-    os.makedirs(output_dir, exist_ok=True)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
     
     results = compute_qvina2_score(
         dir=ligand_sdf_files_dir,
