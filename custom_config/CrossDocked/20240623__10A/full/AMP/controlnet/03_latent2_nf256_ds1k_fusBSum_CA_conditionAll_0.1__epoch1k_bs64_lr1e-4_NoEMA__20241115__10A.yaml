@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionBlocks34__epoch1k_bs64_lr1e-4_NoEMA__20241115__10A
+exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.1__epoch1k_bs64_lr1e-4_NoEMA__20241115__10A
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -260,7 +260,7 @@ aggregation_method: sum
 
 
 # Fusion Block specific settings
-fusion_weights: [0, 0, 0.1, 0.1]    # [0.25, 0.5, 0.75, 1]
+fusion_weights: [0.1, 0.1, 0.1, 0.1]    # [0.25, 0.5, 0.75, 1]
 # Condition fusion method:
 #  - scaled_sum   : (h1_i,x1_i) = (h1_i,x1_i) + w_i * (f_h1_i,f_x1_i)
 #  - balanced_sum : (h1_i,x1_i) = [(1 - w_i) * (h1_i,x1_i)] + [w_i * (f_h1_i,f_x1_i)]

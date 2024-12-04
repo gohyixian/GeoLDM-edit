@@ -837,6 +837,7 @@ def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, d
     
     if args.compute_qvina:
         wandb_metrics['metrics/Qvina2'] = qvina_scores_dict['mean']
+        wandb_metrics['metrics/Qvina2_Num_Docked'] = len([n for n in qvina_scores_dict['all'] if not np.isnan(n)])
         metrics_dict['Qvina2'] = qvina_scores_dict['mean']
         print(f"Qvina over {len(qvina_scores_dict['all'])} molecules: {qvina_scores_dict['mean']}")
     
