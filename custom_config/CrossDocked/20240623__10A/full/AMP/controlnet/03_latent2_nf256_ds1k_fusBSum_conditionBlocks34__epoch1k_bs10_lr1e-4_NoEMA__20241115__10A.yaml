@@ -1,0 +1,373 @@
+proj_name: Control-GeoLDM
+exp_name: 03_latent2_nf256_ds1k_fusBSum_conditionBlocks34__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A
+
+
+# ========================================================================================================== Training Mode (ldm/vae/both)
+# Train second stage LatentDiffusionModel model
+train_diffusion: true
+
+# training mode: VAE | LDM | ControlNet
+training_mode: ControlNet
+loss_analysis: false
+
+# Specify ligand & pocket VAE weights path, set to null for random initialisation
+# set checkpoint (ckpt) to null to automatically select best
+ligand_ae_path: outputs_selected/vae_ligands/AMP__01_VAE_vaenorm_True10__bfloat16__latent2_nf256_epoch100_bs36_lr1e-4_InvClassFreq_Smooth0.25_x10_h5_NoEMA__DecOnly_KL-0__20240623__10A__LG_Only
+ligand_ae_ckpt: generative_model_2_iter_6336.npy
+pocket_ae_path: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume
+pocket_ae_ckpt: generative_model_3_iter_76064.npy
+
+# Specify LDM weights path, set to null for random initialisation
+ldm_path: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_9x_resume
+ldm_ckpt: generative_model_108_iter_230208.npy
+
+# Zero out all weights of fusion blocks instead of randomly instantiated
+zero_fusion_block_weights: false
+
+
+# Train 1st stage AutoEncoder model (no effect if train_diffusion=False)
+trainable_ligand_ae_encoder: false
+trainable_ligand_ae_decoder: false
+trainable_pocket_ae_encoder: false
+
+# Train 2nd stage LDM model
+trainable_ldm: false
+
+# Train 3rd stage ControlNet
+trainable_controlnet: true
+trainable_fusion_blocks: true
+
+
+# can contain multiple: homo | onehot | lumo | num_atoms | etc
+conditioning: []
+
+# include atom charge, according to periodic table
+include_charges: false   # true for qm9
+
+# only works for ldm, not for VAE
+condition_time: true
+
+# Time Noisy, t/2, adopted from [https://arxiv.org/abs/2405.06659]
+time_noisy: false
+
+vis_activations: false
+vis_activations_batch_samples: 5
+vis_activations_batch_size: 1
+vis_activations_specific_ylim: [0, 40]
+
+random_seed: 42
+
+
+# ========================================================================================================== Dataset
+
+# pre-computed dataset stats
+dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND
+
+# pre-computed training dataset
+data_file: ./data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/d_20241115_CrossDocked_LG_PKT_MMseq2_split__10.0A.npz
+data_splitted: true
+
+# Quick Vina 2.1
+compute_qvina: true
+qvina_search_size: 20               # search size (all 3 axes) in Angstroms around ligand center
+qvina_exhaustiveness: 16
+qvina_cleanup_files: false          # cleanup tmp pdb, pdbqt files
+qvina_save_csv: true                # save results in csv
+pocket_pdb_dir: ./data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/test_val_paired_files/val_pocket
+match_raw_file_by_id: true
+mgltools_env_name: mgltools-python2 # for pdb -> pdbqt conversion
+
+ligand_add_H: true                 # add hydrogens via: [mgltools] prepare_ligand4.py -l .. -o ..  -A hydrogens
+pocket_add_H: true                 # add hydrogens via: [mgltools] prepare_receptor4.py -r .. -o ..  -A checkhydrogens
+pocket_remove_nonstd_resi: false    # remove any pocket residues not in this list: 
+                                    #   ['CYS','ILE','SER','VAL','GLN','LYS','ASN',
+                                    #   'PRO','THR','PHE','ALA','HIS','GLY','ASP',
+                                    #   'LEU', 'ARG', 'TRP', 'GLU', 'TYR','MET',
+                                    #   'HID', 'HSP', 'HIE', 'HIP', 'CYX', 'CSS']
+
+
+# set to null if you're running this dataset for the first time. 
+# Script will generate a random permutation to shuffle the dataset.
+# Please set the path to the DATASET_permutation.npy file after it is generated.
+# permutation_file_path: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_LG100_PKT600_permutation.npy
+permutation_file_path: null
+
+# what data to load for VAE training: ligand | pocket | all
+vae_data_mode: ligand
+
+# When set to an integer value, QM9 will only contain molecules of that amount of atoms, default null
+filter_n_atoms: null
+
+# Only use molecules below this size. Int, default null  ~!geom
+filter_molecule_size: 100
+filter_pocket_size: 600   # refer EDA
+
+# Organize data by size to reduce average memory usage. ~!geom
+sequential: false
+
+# Number of worker for the dataloader
+num_workers: 60   # match cpu count
+
+# use data augmentation (i.e. random rotation of x atom coordinates)
+data_augmentation: false
+
+# remove hydrogen atoms
+remove_h: false
+
+
+
+
+# ========================================================================================================== Training Params
+start_epoch: 0
+test_epochs: 1  # 4
+
+
+n_epochs: 1000  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 10    # 14
+lr: 1.0e-4
+
+# weight of KL term in ELBO, default 0.01
+kl_weight: 0.0
+
+# ode_regularization weightage, default 1e-3
+ode_regularization: 0.001
+# brute_force: false
+# actnorm: true
+break_train_epoch: false
+
+# Data Parallel for multi GPU support
+dp: true
+clip_grad: true
+
+# Amount of EMA decay, 0 means off. A reasonable value is 0.999.
+ema_decay: 0   # 0.99
+
+# add noise to x before encoding, data augmenting
+augment_noise: 0
+
+# Number of samples to compute the stability, default 500
+n_stability_samples: 90  # 98, 50
+n_stability_samples_batch_size: 10  # 7, 14
+
+# Dataset partition where pocket samples will be drawn from for analyzing 
+# generated ligands' stability: train | test | val
+n_stability_eval_split: val
+
+
+# disables CUDA training
+no_cuda: false
+
+# hutch | exact
+trace: hutch
+
+# verbose logging
+verbose: false
+
+dtype: torch.float32
+
+# enable mixed precision training (fp32, fp16)
+mixed_precision_training: false
+mixed_precision_autocast_dtype: torch.bfloat16
+
+# use model checkpointing during training to reduce GPU memory usage
+use_checkpointing: true
+
+# sqrt: checkpointing is done on the sqrt(block_num)'th Equivariant block of each EGNN for most optimal perf
+# all:  checkpointing is done on all Equivariant blocks. Not optimal but helps if input size is too large
+checkpointing_mode: sqrt
+
+# splits tensors into managable chunks and performs forward propagation without breaking GPU memory limit
+forward_tensor_chunk_size: 50000
+
+
+
+
+
+
+
+
+# ========================================================================================================== LDM
+# our_dynamics | schnet | simple_dynamics | kernel_dynamics | egnn_dynamics | gnn_dynamics
+model: egnn_dynamics
+
+probabilistic_model: diffusion
+
+# Training complexity is O(1) (unaffected), but sampling complexity is O(steps), default 500
+diffusion_steps: 1000
+
+# learned, cosine, polynomial_<power>
+diffusion_noise_schedule: polynomial_2
+
+# default 1e-5
+diffusion_noise_precision: 1.0e-05 # ~!fp16
+
+# vlb | l2
+diffusion_loss_type: l2
+
+# number of latent features, default 4
+latent_nf: 2
+
+# VAE configs below will be overriden by the original VAE's configs (.pkl file)
+# normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
+normalize_factors: [1, 4, 10]
+
+# vae_normalize_x: true
+# vae_normalize_method: scale     # scale | linear
+# vae_normalize_factors: [10, 1, 1]
+
+# reweight_class_loss: null  # "inv_class_freq"
+# smoothing_factor: 1.0      # [0.1 - 1.0) 1.0 is essentially disabling
+
+# error_x_weight: null    # error_x custom weighting
+# error_h_weight: null
+
+
+# ========================================================================================================== Network Architecture
+
+# number of layers of EquivariantBlock to use in VAE's Encoder
+encoder_n_layers: 1
+  
+# number of layers of EquivariantBlock to use in LDM and VAE's Decoder
+n_layers: 4
+
+# number of GCL Blocks to use in each EquivariantBlock
+inv_sublayers: 1
+
+# model's internal operating number of features
+nf: 256
+
+# use tanh in the coord_mlp
+tanh: true
+
+# use attention in the EGNN
+attention: true
+
+# diff/(|diff| + norm_constant)
+norm_constant: 1
+
+# whether using or not the sin embedding
+sin_embedding: false
+
+# uniform | variational | argmax_variational | deterministic
+dequantization: argmax_variational
+
+# Normalize the sum aggregation of EGNN
+normalization_factor: 1
+
+# EGNN aggregation method: sum | mean
+aggregation_method: sum
+
+
+# Fusion Block specific settings
+fusion_weights: [0, 0, 0.1, 0.1]    # [0.25, 0.5, 0.75, 1]
+# Condition fusion method:
+#  - scaled_sum   : (h1_i,x1_i) = (h1_i,x1_i) + w_i * (f_h1_i,f_x1_i)
+#  - balanced_sum : (h1_i,x1_i) = [(1 - w_i) * (h1_i,x1_i)] + [w_i * (f_h1_i,f_x1_i)]
+#  - replace      : (h1_i,x1_i) = (f_h1_i,f_x1_i)
+fusion_mode: balanced_sum
+
+# Initial Noise Injection / Feedback Mechanism
+noise_injection_weights: [0.5, 0.5]       # pkt = w[0]*lg + w[1]*pkt
+noise_injection_aggregation_method: mean  # mean | sum
+noise_injection_normalization_factor: 1   # aggregation normalization factor
+
+
+
+
+# ========================================================================================================== Logging
+# Can be used to visualize multiple times per epoch, default 1e8
+visualize_sample_chain: true
+visualize_every_batch: 20000
+visualize_sample_chain_epochs: 2   # for 1% testing dataset, others set to 1
+n_report_steps: 50
+
+
+
+
+# ========================================================================================================== Saving & Resuming
+# resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum__GEOM_LDM_base__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A
+# resume_model_ckpt: generative_model_4_iter_79150.npy
+# resume_optim_ckpt: optim_4_iter_79150.npy
+resume: null
+
+save_model: true
+
+
+
+# ========================================================================================================== Wandb
+# disable wandb
+no_wandb: false
+wandb_usr: gohyixian456
+# True = wandb online -- False = wandb offline
+online: true
+
+
+
+
+pocket_vae:
+    dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET
+    vae_data_mode: pocket
+    remove_h: false
+    ca_only: false
+
+    # can contain multiple: homo | onehot | lumo | num_atoms | etc
+    conditioning: []
+
+    # include atom charge, according to periodic table
+    include_charges: false
+
+    # Amount of EMA decay, 0 means off. A reasonable value is 0.999.
+    ema_decay: 0
+
+    # weight of KL term in ELBO, default 0.01
+    kl_weight: 0.01
+
+    # number of latent features, default 4 (have to match ligand VAE & LDM's latent_nf)
+    latent_nf: 2
+
+    # number of layers of EquivariantBlock to use in VAE's Encoder
+    encoder_n_layers: 1
+
+    # number of layers of EquivariantBlock to use in VAE's Decoder
+    n_layers: 4
+
+    # number of GCL Blocks to use in each EquivariantBlock
+    inv_sublayers: 1
+
+    # model's internal operating number of features
+    nf: 256
+
+    # use tanh in the coord_mlp
+    tanh: true
+
+    # use attention in the EGNN
+    attention: true
+
+    # diff/(|diff| + norm_constant)
+    norm_constant: 1
+
+    # whether using or not the sin embedding
+    sin_embedding: false
+
+    # uniform | variational | argmax_variational | deterministic
+    dequantization: argmax_variational
+
+    # Normalize the sum aggregation of EGNN
+    normalization_factor: 1
+
+    # EGNN aggregation method: sum | mean
+    aggregation_method: sum
+
+    # normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
+    normalize_factors: [1, 4, 10]
+
+    vae_normalize_x: true
+    vae_normalize_method: scale     # scale | linear
+    vae_normalize_factors: [10, 1, 1]
+
+    reweight_class_loss: "inv_class_freq"
+    reweight_coords_loss: "inv_class_freq"
+    smoothing_factor: 0.25     # [0.1 - 1.0) 1.0 is essentially disabling
+
+    error_x_weight: 30
+    error_h_weight: 15
