@@ -1,10 +1,10 @@
 #! /bin/bash -l
 
 #SBATCH --partition=gpu-a100
-#SBATCH --ntasks=60
+#SBATCH --ntasks=32
 #SBATCH --nodes=1
 #SBATCH --mem=100G
-#SBATCH --gpus=2
+#SBATCH --gpus=1
 #SBATCH --job-name=03_latent2_nf256_ds1k_fusBSum_CA__epoch1k_bs64_lr1e-4_NoEMA__20241115__10A
 #SBATCH --output=slurm_out/03_latent2_nf256_ds1k_fusBSum_CA__epoch1k_bs64_lr1e-4_NoEMA__20241115__10A.out
 #SBATCH --error=slurm_err/03_latent2_nf256_ds1k_fusBSum_CA__epoch1k_bs64_lr1e-4_NoEMA__20241115__10A.err
@@ -13,7 +13,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 124461
+# 124466
 module load cuda/12.1       # gpu-a100
 module load miniconda/24.1.2
 conda activate geoldm-a100

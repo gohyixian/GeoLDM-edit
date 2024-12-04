@@ -376,7 +376,7 @@ def get_ligand_autoencoder(args, device, ligand_dataset_info, dataloader_train):
     ligand_ae_model.to(device)
 
     if args.ligand_ae_path is not None:   # null
-        if hasattr(args, 'ae_ckpt'):
+        if hasattr(args, 'ligand_ae_ckpt'):
             if args.ligand_ae_ckpt is not None:
                 fn = str(args.ligand_ae_ckpt)
             else:
@@ -411,12 +411,9 @@ def get_pocket_autoencoder(args, device, pocket_dataset_info, dataloader_train, 
         pocket_ae_args, device, pocket_dataset_info, dataloader_train, identifier='Pocket VAE')
     pocket_ae_model.to(device)
 
-    if ae_path is not None:   # null
-        if hasattr(args, 'ae_ckpt'):
-            if ae_ckpt is not None:
-                fn = str(ae_ckpt)
-            else:
-                fn = 'generative_model_ema.npy' if pocket_ae_args.ema_decay > 0 else 'generative_model.npy'
+    if ae_path is not None:
+        if ae_ckpt is not None:
+            fn = str(ae_ckpt)
         else:
             fn = 'generative_model_ema.npy' if pocket_ae_args.ema_decay > 0 else 'generative_model.npy'
 

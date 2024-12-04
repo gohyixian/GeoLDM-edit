@@ -1,6 +1,5 @@
 proj_name: Control-GeoLDM
-# exp_name: 03_latent2_nf256_ds1k_fusBSum__GEOM_LDM_base__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A
-exp_name: 03_latent2_nf256_ds1k_fusBSum__GEOM_LDM_base__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A__1x
+exp_name: 03_latent2_nf256_ds1k_fusBSum__GEOM_LDM_base__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -289,10 +288,10 @@ n_report_steps: 50
 
 
 # ========================================================================================================== Saving & Resuming
-# resume: null
-resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum__GEOM_LDM_base__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A
-resume_model_ckpt: generative_model_4_iter_79150.npy
-resume_optim_ckpt: optim_4_iter_79150.npy
+# resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum__GEOM_LDM_base__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A
+# resume_model_ckpt: generative_model_4_iter_79150.npy
+# resume_optim_ckpt: optim_4_iter_79150.npy
+resume: null
 
 save_model: true
 
