@@ -78,8 +78,8 @@ pocket_pdb_dir: ./data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/test_val_paire
 match_raw_file_by_id: true
 mgltools_env_name: mgltools-python2 # for pdb -> pdbqt conversion
 
-ligand_add_H: true                 # add hydrogens via: [mgltools] prepare_ligand4.py -l .. -o ..  -A hydrogens
-pocket_add_H: true                 # add hydrogens via: [mgltools] prepare_receptor4.py -r .. -o ..  -A checkhydrogens
+ligand_add_H: false                 # add hydrogens via: [mgltools] prepare_ligand4.py -l .. -o ..  -A hydrogens
+pocket_add_H: false                 # add hydrogens via: [mgltools] prepare_receptor4.py -r .. -o ..  -A checkhydrogens
 pocket_remove_nonstd_resi: false    # remove any pocket residues not in this list: 
                                     #   ['CYS','ILE','SER','VAL','GLN','LYS','ASN',
                                     #   'PRO','THR','PHE','ALA','HIS','GLY','ASP',

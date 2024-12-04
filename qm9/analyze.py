@@ -530,6 +530,7 @@ def compute_qvina2_score(
         lg_pdbqt_file = Path(output_dir, f"{id}.pdbqt")
         pkt_pdb_file  = Path(pkt_file[0])
         pkt_pdbqt_file = Path(output_dir, f"{pkt_pdb_file.stem}.pdbqt")
+        qvina_out_file = Path(output_dir, f"{id}_qvina.txt")
         
         
         # Move ligand's center (x,y,z) to pocket's center (x,y,z) so that it falls in 
@@ -576,6 +577,8 @@ def compute_qvina2_score(
             f'--exhaustiveness {exhaustiveness}'
         ).read()
         print(out)
+        with open(str(qvina_out_file), 'w') as f:
+            print(out, file=f)
 
         if '-----+------------+----------+----------' not in out:
             scores.append(np.nan)
