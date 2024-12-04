@@ -554,7 +554,11 @@ def compute_qvina2_score(
         os.popen(f'obabel {lg_sdf_file} -O {lg_pdb_file}').read()
         
         # LG: .pdbqt (add charges and torsions)
-        prep_lg_cmd = f"conda run -n {mgltools_env_name} prepare_ligand4.py -l {lg_pdb_file} -o {lg_pdbqt_file}"
+        # prep_lg_cmd = f"conda run -n {mgltools_env_name} prepare_ligand4.py -l {lg_pdb_file} -o {lg_pdbqt_file}"
+        # prep_lg_cmd += " -A hydrogens" if ligand_add_H else ""
+        # subprocess.run(prep_lg_cmd, shell=True)
+        cd_cmd = f"cd {os.path.dirname(lg_pdb_file)}"
+        prep_lg_cmd = f"{cd_cmd} && conda run -n {mgltools_env_name} prepare_ligand4.py -l {os.path.basename(lg_pdb_file)} -o {os.path.basename(lg_pdbqt_file)}"
         prep_lg_cmd += " -A hydrogens" if ligand_add_H else ""
         subprocess.run(prep_lg_cmd, shell=True)
         
