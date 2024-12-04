@@ -256,8 +256,8 @@ if __name__ == '__main__':
         pocket_pdb_dir=pocket_pdb_files_dir, 
         output_dir=output_dir,
         mgltools_env_name="mgltools-python2",
-        ligand_add_H=False,
-        receptor_add_H=False,
+        ligand_add_H=True,
+        receptor_add_H=True,
         remove_nonstd_resi=False,
         size=20,
         exhaustiveness=16,
@@ -266,3 +266,7 @@ if __name__ == '__main__':
     )
     
     print(results)
+
+    not_nan = [n for n in results['all'] if not np.isnan(n)]
+    print(not_nan)
+    print(len(not_nan))
