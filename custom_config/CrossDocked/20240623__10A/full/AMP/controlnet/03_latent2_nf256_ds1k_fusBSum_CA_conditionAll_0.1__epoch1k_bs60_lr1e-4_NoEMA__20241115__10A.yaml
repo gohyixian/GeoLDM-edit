@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionBlocks34_0.5__epoch1k_bs64_lr1e-4_NoEMA__20241115__10A
+exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.1__epoch1k_bs60_lr1e-4_NoEMA__20241115__10A
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -55,8 +55,8 @@ vis_activations_batch_samples: 5
 vis_activations_batch_size: 1
 vis_activations_specific_ylim: [0, 40]
 
-# random_seed: 42
-random_seed: 0
+# random_seed: 0
+random_seed: 42
 
 
 # ========================================================================================================== Dataset
@@ -101,7 +101,7 @@ filter_n_atoms: null
 
 # Only use molecules below this size. Int, default null  ~!geom
 filter_molecule_size: 100
-filter_pocket_size: 200
+filter_pocket_size: 80
 
 # Organize data by size to reduce average memory usage. ~!geom
 sequential: false
@@ -124,7 +124,7 @@ test_epochs: 1  # 4
 
 
 n_epochs: 1000  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 64    # 14
+batch_size: 60    # 14
 lr: 1.0e-4
 
 # weight of KL term in ELBO, default 0.01
@@ -171,7 +171,7 @@ mixed_precision_training: true
 mixed_precision_autocast_dtype: torch.bfloat16
 
 # use model checkpointing during training to reduce GPU memory usage
-use_checkpointing: false
+use_checkpointing: true
 
 # sqrt: checkpointing is done on the sqrt(block_num)'th Equivariant block of each EGNN for most optimal perf
 # all:  checkpointing is done on all Equivariant blocks. Not optimal but helps if input size is too large
@@ -260,7 +260,7 @@ aggregation_method: sum
 
 
 # Fusion Block specific settings
-fusion_weights: [0, 0, 0.5, 0.5]    # [0.25, 0.5, 0.75, 1]
+fusion_weights: [0.1, 0.1, 0.1, 0.1]    # [0.25, 0.5, 0.75, 1]
 # Condition fusion method:
 #  - scaled_sum   : (h1_i,x1_i) = (h1_i,x1_i) + w_i * (f_h1_i,f_x1_i)
 #  - balanced_sum : (h1_i,x1_i) = [(1 - w_i) * (h1_i,x1_i)] + [w_i * (f_h1_i,f_x1_i)]
