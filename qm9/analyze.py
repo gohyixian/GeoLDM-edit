@@ -592,11 +592,12 @@ def compute_qvina2_score(
         best_idx = out_split.index('-----+------------+----------+----------') + 1
         best_line = out_split[best_idx].split()
         assert best_line[0] == '1'
-        scores.append(float(best_line[1]))
+        best_score = float(best_line[1])
+        scores.append(best_score)
 
         results['receptor'].append(str(pkt_pdb_file))
         results['ligands'].append(str(lg_sdf_file))
-        results['scores'].append(scores)
+        results['scores'].append(best_score)
         
         # clean up
         if cleanup_files:
