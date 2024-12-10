@@ -1,5 +1,5 @@
 proj_name: Control-GeoLDM
-exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_1.0__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
+exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -260,7 +260,7 @@ aggregation_method: sum
 
 
 # Fusion Block specific settings
-fusion_weights: [0.5, 0.5, 0.5, 0.5]    # [0.25, 0.5, 0.75, 1]
+fusion_weights: [0.9, 0.9, 0.9, 0.9]    # [0.25, 0.5, 0.75, 1]
 # Condition fusion method:
 #  - scaled_sum   : (h1_i,x1_i) = (h1_i,x1_i) + w_i * (f_h1_i,f_x1_i)
 #  - balanced_sum : (h1_i,x1_i) = [(1 - w_i) * (h1_i,x1_i)] + [w_i * (f_h1_i,f_x1_i)]
@@ -286,10 +286,10 @@ n_report_steps: 50
 
 
 # ========================================================================================================== Saving & Resuming
-# resume: null
-resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.5__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
-resume_model_ckpt: generative_model_8_iter_14049.npy
-resume_optim_ckpt: optim_8_iter_14049.npy
+# resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.5__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
+# resume_model_ckpt: generative_model_8_iter_14049.npy
+# resume_optim_ckpt: optim_8_iter_14049.npy
+resume: null
 
 save_model: true
 

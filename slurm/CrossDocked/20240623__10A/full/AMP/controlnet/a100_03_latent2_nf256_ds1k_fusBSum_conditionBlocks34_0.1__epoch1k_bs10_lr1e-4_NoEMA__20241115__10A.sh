@@ -13,7 +13,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=gohyixian456@gmail.com
 
-# 124582
+# 125108
 module load cuda/12.1       # gpu-a100
 module load miniconda/24.1.2
 conda activate geoldm-a100
