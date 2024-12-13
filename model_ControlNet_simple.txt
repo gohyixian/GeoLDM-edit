@@ -1,0 +1,133 @@
+Model running on device  : cuda
+Model running on dtype   : torch.float32
+Model Size               : 0.009599335491657257 GB  /  9.829719543457031 MB  /  10307208 Bytes
+Training Dataset Name    : d_20240623_CrossDocked_LG_PKT__10A__CA_Only__no_H__LIGAND
+Model Training Mode      : ControlNet
+================================
+
+
+ControlEnLatentDiffusion(
+  (gamma): PredefinedNoiseSchedule()
+  (dynamics): ControlNet_Module_Wrapper(
+    (controlnet_arch_wrapper): ControlNet_Arch_Wrapper(
+      (diffusion_net): EGNN(
+        (embedding): Linear(in_features=9, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=9, bias=True)
+        (e_block_0): EquivariantBlock(
+        (e_block_1): EquivariantBlock(
+        (e_block_2): EquivariantBlock(
+        (e_block_3): EquivariantBlock(
+      )
+      (control_net): EGNN(
+        (embedding): Linear(in_features=9, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=9, bias=True)
+        (e_block_0): EquivariantBlock(
+        (e_block_1): EquivariantBlock(
+        (e_block_2): EquivariantBlock(
+        (e_block_3): EquivariantBlock(
+      (fusion_net): EGNN_Fusion(
+        (fusion_e_block_0): FusionBlock(
+        (fusion_e_block_1): FusionBlock(
+        (fusion_e_block_2): FusionBlock(
+        (fusion_e_block_3): FusionBlock(
+      )
+    )
+    (diffusion_network): EGNN_dynamics_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=9, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=9, bias=True)
+        (e_block_0): EquivariantBlock(
+        (e_block_1): EquivariantBlock(
+        (e_block_2): EquivariantBlock(
+        (e_block_3): EquivariantBlock(
+      )
+    )
+    (control_network): EGNN_dynamics_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=9, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=9, bias=True)
+        (e_block_0): EquivariantBlock(
+        (e_block_1): EquivariantBlock(
+        (e_block_2): EquivariantBlock(
+        (e_block_3): EquivariantBlock(
+      )
+    )
+    (fusion_network): EGNN_dynamics_fusion(
+      (egnn_fusion): EGNN_Fusion(
+        (fusion_e_block_0): FusionBlock(
+        (fusion_e_block_1): FusionBlock(
+        (fusion_e_block_2): FusionBlock(
+        (fusion_e_block_3): FusionBlock(
+      )
+    )
+  )
+  (vae): EnHierarchicalVAE(
+    (encoder): EGNN_encoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=128, bias=True)
+        (e_block_0): EquivariantBlock(
+      (final_mlp): Sequential(
+        (0): Linear(in_features=128, out_features=128, bias=True)
+        (1): SiLU()
+        (2): Linear(in_features=128, out_features=17, bias=True)
+      )
+    )
+    (decoder): EGNN_decoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=8, bias=True)
+        (e_block_0): EquivariantBlock(
+        (e_block_1): EquivariantBlock(
+        (e_block_2): EquivariantBlock(
+        (e_block_3): EquivariantBlock(
+      )
+    )
+  )
+  (ligand_vae): EnHierarchicalVAE(
+    (encoder): EGNN_encoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=128, bias=True)
+        (e_block_0): EquivariantBlock(
+      (final_mlp): Sequential(
+        (0): Linear(in_features=128, out_features=128, bias=True)
+        (1): SiLU()
+        (2): Linear(in_features=128, out_features=17, bias=True)
+      )
+    )
+    (decoder): EGNN_decoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=8, bias=True)
+        (e_block_0): EquivariantBlock(
+        (e_block_1): EquivariantBlock(
+        (e_block_2): EquivariantBlock(
+        (e_block_3): EquivariantBlock(
+      )
+    )
+  )
+  (pocket_vae): EnHierarchicalVAE(
+    (encoder): EGNN_encoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=128, bias=True)
+        (e_block_0): EquivariantBlock(
+      (final_mlp): Sequential(
+        (0): Linear(in_features=128, out_features=128, bias=True)
+        (1): SiLU()
+        (2): Linear(in_features=128, out_features=17, bias=True)
+      )
+    )
+    (decoder): EGNN_decoder_QM9(
+      (egnn): EGNN(
+        (embedding): Linear(in_features=8, out_features=128, bias=True)
+        (embedding_out): Linear(in_features=128, out_features=8, bias=True)
+        (e_block_0): EquivariantBlock(
+        (e_block_1): EquivariantBlock(
+        (e_block_2): EquivariantBlock(
+        (e_block_3): EquivariantBlock(
+      )
+    )
+  )
+)
