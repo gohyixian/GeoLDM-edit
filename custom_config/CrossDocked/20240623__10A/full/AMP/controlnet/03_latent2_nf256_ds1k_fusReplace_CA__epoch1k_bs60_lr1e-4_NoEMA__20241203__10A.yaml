@@ -120,7 +120,7 @@ remove_h: false
 
 # ========================================================================================================== Training Params
 start_epoch: 0
-test_epochs: 4  # 4
+test_epochs: 5  # 4
 
 
 n_epochs: 1000  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
