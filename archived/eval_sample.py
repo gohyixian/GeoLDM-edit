@@ -140,8 +140,7 @@ def main():
 
     dataloaders, charge_scale = dataset.retrieve_dataloaders(args)
 
-    flow, nodes_dist, prop_dist = get_latent_diffusion(
-        args, device, dataset_info, dataloaders['train'])
+    flow, nodes_dist, prop_dist = get_latent_diffusion(args, device, dataset_info)
     flow.to(device)
 
     fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'

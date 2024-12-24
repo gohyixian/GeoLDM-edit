@@ -224,7 +224,7 @@ def main():
     if args.train_diffusion:
         raise NotImplementedError()
     else:
-        model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info, dataloaders['train'])
+        model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info)
 
     model = model.to(args.device)
     

@@ -263,9 +263,9 @@ def main():
 
     # Create Latent Diffusion Model or Audoencoder
     if args.train_diffusion:
-        model, nodes_dist, prop_dist = get_latent_diffusion(args, args.device, dataset_info, dataloaders['train'])
+        model, nodes_dist, prop_dist = get_latent_diffusion(args, args.device, dataset_info)
     else:
-        model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info, dataloaders['train'])
+        model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info)
 
     model = model.to(args.device)
     optim = get_optim(args, model)

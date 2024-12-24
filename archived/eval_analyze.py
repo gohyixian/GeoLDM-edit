@@ -152,7 +152,7 @@ def main():
     dataset_info = get_dataset_info(args.dataset, args.remove_h)
 
     # Load model
-    generative_model, nodes_dist, prop_dist = get_latent_diffusion(args, device, dataset_info, dataloaders['train'])
+    generative_model, nodes_dist, prop_dist = get_latent_diffusion(args, device, dataset_info)
     if prop_dist is not None:
         property_norms = compute_mean_mad(dataloaders, args.conditioning, args.dataset)
         prop_dist.set_normalizer(property_norms)

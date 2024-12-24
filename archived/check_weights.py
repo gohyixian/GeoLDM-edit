@@ -61,11 +61,11 @@ def main():
 
     # Create Control-LDM, Latent Diffusion Model or Autoencoder
     if args.training_mode == CONTROLNET:
-        model, nodes_dist, prop_dist = get_controlled_latent_diffusion(args, args.device, dataset_info, None)
+        model, nodes_dist, prop_dist = get_controlled_latent_diffusion(args, args.device, dataset_info)
     elif args.training_mode == LDM:
-        model, nodes_dist, prop_dist = get_latent_diffusion(args, args.device, dataset_info, None)
+        model, nodes_dist, prop_dist = get_latent_diffusion(args, args.device, dataset_info)
     elif args.training_mode == VAE:
-        model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info, None)
+        model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info)
     else:
         raise NotImplementedError()
 

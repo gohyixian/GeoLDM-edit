@@ -157,15 +157,15 @@ def sample(args, device, generative_model, dataset_info,
 
 
 def sample_controlnet(args, device, generative_model, dataset_info,
-                      prop_dist=None, nodesxsample=torch.tensor([10]), context=None,
+                      nodesxsample=torch.tensor([10]), context=None,
                       fix_noise=False, pocket_dict_list=[]):
 
-    max_n_nodes = dataset_info['max_n_nodes']  # this is the maximum node_size in QM9
+    max_n_nodes = dataset_info['max_n_nodes']  # this is the maximum node_size
 
     # Pockets' ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are already available
     assert int(torch.max(nodesxsample)) <= max_n_nodes
     batch_size = len(nodesxsample)
-    
+
     assert batch_size == len(pocket_dict_list), f"Different batch_size encountered! batch_size={batch_size}, len(pocket_dict_list)={len(pocket_dict_list)}"
 
     # Ligand node_mask
@@ -208,12 +208,8 @@ def sample_controlnet(args, device, generative_model, dataset_info,
     pkt_x = remove_mean_with_mask(pkt_x, pkt_node_mask)
     assert_mean_zero_with_mask(pkt_x, pkt_node_mask)
 
-    # TODO FIX: This conditioning just zeros.
     if args.context_node_nf > 0:
         raise NotImplementedError()
-        # if context is None:
-        #     context = prop_dist.sample_batch(nodesxsample)
-        # context = context.unsqueeze(1).repeat(1, max_n_nodes, 1).to(device) * node_mask
     else:
         context = None
 

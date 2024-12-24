@@ -102,14 +102,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str, default="outputs/edm_1",
                         help='Specify model path')
-    parser.add_argument('--load_last', action='store_true', 
+    parser.add_argument('--Load_last', action='store_true', 
                         help='load weights of model of last epoch')
     parser.add_argument('--n_samples', type=int, default=100,
                         help='Number of samples to generate & evaluate')
     parser.add_argument('--batch_size_gen', type=int, default=100,
                         help='Sampling batch size')
     parser.add_argument('--save_path', type=str, default='eval_ldm',
-                        help='Should save samples to xyz files.')
+                        help='Path to save xyz files.')
     eval_args, unparsed_args = parser.parse_known_args()
     eval_args.save_to_xyz = True
     
@@ -248,20 +248,12 @@ def main():
     utils.create_folders(args)
     print(args)
 
-    # Retrieve QM9 dataloaders
-    # dataloaders, charge_scale = dataset.retrieve_dataloaders(args)
-
     dataset_info = get_dataset_info(args.dataset, args.remove_h)
 
     # Load model
-    # generative_model, nodes_dist, prop_dist = get_latent_diffusion(args, device, dataset_info, dataloaders['train'])
-    # if prop_dist is not None:
-    #     property_norms = compute_mean_mad(dataloaders, args.conditioning, args.dataset)
-    #     prop_dist.set_normalizer(property_norms)
-    # Load model
-    if args.train_diffusion:
+    if args.training_mode == "LDM":
         assert len(args.conditioning) == 0, "Conditioning not supported"
-        generative_model, nodes_dist, prop_dist = get_latent_diffusion(args, args.device, dataset_info, None)   # prop_dist = None
+        generative_model, nodes_dist, prop_dist = get_latent_diffusion(args, args.device, dataset_info)   # prop_dist = None
     else:
         raise NotImplementedError()
 

@@ -235,7 +235,7 @@ def main():
         raise NotImplementedError()
     else:
         assert len(args.conditioning) == 0, "Conditioning not supported"
-        generative_model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info, None)   # prop_dist = None
+        generative_model, nodes_dist, prop_dist = get_autoencoder(args, args.device, dataset_info)   # prop_dist = None
     generative_model.to(device)
 
     if eval_args.load_last:

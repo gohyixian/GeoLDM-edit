@@ -555,8 +555,6 @@ def compute_qvina2_score(
         os.popen(f'obabel {lg_sdf_file} -O {lg_pdb_file}').read()
         
         # LG: .pdbqt (add charges and torsions)
-        # prep_lg_cmd = f"conda run -n {mgltools_env_name} prepare_ligand4.py -l {lg_pdb_file} -o {lg_pdbqt_file}"
-        # prep_lg_cmd += " -A hydrogens" if ligand_add_H else ""
         # subprocess.run(prep_lg_cmd, shell=True)
         cd_cmd = f"cd {os.path.dirname(lg_pdb_file)}"
         prep_lg_cmd = f"{cd_cmd} && conda run -n {mgltools_env_name} prepare_ligand4.py -l {os.path.basename(lg_pdb_file)} -o {os.path.basename(lg_pdbqt_file)}"
@@ -568,10 +566,6 @@ def compute_qvina2_score(
         prep_pkt_cmd += " -A checkhydrogens" if receptor_add_H else ""
         prep_pkt_cmd += " -e" if remove_nonstd_resi else ""
         subprocess.run(prep_pkt_cmd, shell=True)
-
-        # # center box at ligand's center of mass 
-        # # only applicable to DiffSBDD as the model directly positions the ligands in the pockets
-        # cx, cy, cz = rdmols[i].GetConformer().GetPositions().mean(0)
 
         # run QuickVina 2
         out = os.popen(

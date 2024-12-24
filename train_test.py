@@ -782,7 +782,7 @@ def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, d
             pocket_dict_list.append(pair_dict_list[j + batch_id]['pocket'])
 
         # ~!mp
-        one_hot, charges, x, node_mask = sample_controlnet(args, device, model_sample, dataset_info, prop_dist,
+        one_hot, charges, x, node_mask = sample_controlnet(args, device, model_sample, dataset_info,
                                                 nodesxsample=nodesxsample, context=None, fix_noise=False, pocket_dict_list=pocket_dict_list)
 
         molecules['one_hot'].append(one_hot.detach().cpu())
@@ -793,10 +793,7 @@ def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, d
 
     assert len(pair_dict_list_ids) == num_success
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}
-    # validity_dict, rdkit_tuple = compute_molecule_metrics(molecules, dataset_info)
-    # wandb.log(validity_dict)
-    # if rdkit_tuple is not None:
-    #     wandb.log({'Validity': rdkit_tuple[0][0], 'Uniqueness': rdkit_tuple[0][1], 'Novelty': rdkit_tuple[0][2]})
+
     # return validity_dict
     metrics_dict = compute_molecule_metrics(molecules, dataset_info)
     

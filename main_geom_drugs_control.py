@@ -149,7 +149,7 @@ def main():
 
 
     # Create Control-LDM
-    model, nodes_dist, prop_dist = get_controlled_latent_diffusion(args, args.device, ligand_dataset_info, pocket_dataset_info, dataloaders['train'])
+    model, nodes_dist, prop_dist = get_controlled_latent_diffusion(args, args.device, ligand_dataset_info, pocket_dataset_info)
 
     # move model to gpu
     model = model.to(args.device)

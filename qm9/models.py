@@ -53,7 +53,7 @@ def get_model(args, device, dataset_info, dataloader_train):
         raise ValueError(args.probabilistic_model)
 
 
-def get_autoencoder(args, device, dataset_info, dataloader_train, identifier='VAE'):
+def get_autoencoder(args, device, dataset_info, identifier='VAE'):
     histogram = dataset_info['n_nodes']
     in_node_nf = len(dataset_info['atom_decoder']) + int(args.include_charges)     # len[H,C,N,O,F] + int(True) = 6
     nodes_dist = DistributionNodes(histogram)
@@ -63,11 +63,7 @@ def get_autoencoder(args, device, dataset_info, dataloader_train, identifier='VA
         raise NotImplementedError()
         # prop_dist = DistributionProperty(dataloader_train, args.conditioning)
 
-    # if args.condition_time:
-    #     dynamics_in_node_nf = in_node_nf + 1
-    # else:
     print('Autoencoder models are _not_ conditioned on time.')
-        # dynamics_in_node_nf = in_node_nf
     
     encoder = EGNN_encoder_QM9(
         in_node_nf=in_node_nf,     # 6
@@ -132,7 +128,7 @@ def get_autoencoder(args, device, dataset_info, dataloader_train, identifier='VA
     return vae, nodes_dist, prop_dist
 
 
-def get_latent_diffusion(args, device, dataset_info, dataloader_train):
+def get_latent_diffusion(args, device, dataset_info):
 
     # Create (and load) the first stage model (Autoencoder).
     if args.ae_path is not None:
@@ -152,7 +148,7 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
     device = torch.device("cuda" if first_stage_args.cuda else "cpu")
 
     first_stage_model, nodes_dist, prop_dist = get_autoencoder(
-        first_stage_args, device, dataset_info, dataloader_train)
+        first_stage_args, device, dataset_info)
     first_stage_model.to(device)
 
     if args.ae_path is not None:   # null
@@ -220,13 +216,13 @@ def get_latent_diffusion(args, device, dataset_info, dataloader_train):
 
 
 
-def get_controlled_latent_diffusion(args, device, ligand_dataset_info, pocket_dataset_info, dataloader_train):
+def get_controlled_latent_diffusion(args, device, ligand_dataset_info, pocket_dataset_info):
     device = torch.device("cuda" if args.cuda else "cpu")
 
     ligand_ae_model, ligand_nodes_dist, ligand_prop_dist = \
-        get_ligand_autoencoder(args, device, ligand_dataset_info, dataloader_train)
+        get_ligand_autoencoder(args, device, ligand_dataset_info)
     pocket_ae_model, _, _ = \
-        get_pocket_autoencoder(args.pocket_vae, device, pocket_dataset_info, dataloader_train, ae_path=args.pocket_ae_path, ae_ckpt=args.pocket_ae_ckpt)
+        get_pocket_autoencoder(args.pocket_vae, device, pocket_dataset_info, ae_path=args.pocket_ae_path, ae_ckpt=args.pocket_ae_ckpt)
 
     # Create the second stage model (Latent Diffusions).
     # args.latent_nf = ligand_ae_args.latent_nf
@@ -357,7 +353,7 @@ def get_controlled_latent_diffusion(args, device, ligand_dataset_info, pocket_da
 
 
 
-def get_ligand_autoencoder(args, device, ligand_dataset_info, dataloader_train):
+def get_ligand_autoencoder(args, device, ligand_dataset_info):
     # Create (and load) the first stage model (Autoencoder).
     if args.ligand_ae_path is not None:
         with open(join(args.ligand_ae_path, 'args.pickle'), 'rb') as f:
@@ -372,7 +368,7 @@ def get_ligand_autoencoder(args, device, ligand_dataset_info, dataloader_train):
         ligand_ae_args.aggregation_method = 'sum'
 
     ligand_ae_model, ligand_nodes_dist, ligand_prop_dist = get_autoencoder(
-        ligand_ae_args, device, ligand_dataset_info, dataloader_train, identifier='Ligand VAE')
+        ligand_ae_args, device, ligand_dataset_info, identifier='Ligand VAE')
     ligand_ae_model.to(device)
 
     if args.ligand_ae_path is not None:   # null
@@ -393,7 +389,7 @@ def get_ligand_autoencoder(args, device, ligand_dataset_info, dataloader_train):
 
 
 
-def get_pocket_autoencoder(args, device, pocket_dataset_info, dataloader_train, ae_path=None, ae_ckpt=None):
+def get_pocket_autoencoder(args, device, pocket_dataset_info, ae_path=None, ae_ckpt=None):
     # Create (and load) the first stage model (Autoencoder).
     if ae_path is not None:
         with open(join(ae_path, 'args.pickle'), 'rb') as f:
@@ -408,7 +404,7 @@ def get_pocket_autoencoder(args, device, pocket_dataset_info, dataloader_train, 
         pocket_ae_args.aggregation_method = 'sum'
 
     pocket_ae_model, pocket_nodes_dist, pocket_prop_dist = get_autoencoder(
-        pocket_ae_args, device, pocket_dataset_info, dataloader_train, identifier='Pocket VAE')
+        pocket_ae_args, device, pocket_dataset_info, identifier='Pocket VAE')
     pocket_ae_model.to(device)
 
     if ae_path is not None:
