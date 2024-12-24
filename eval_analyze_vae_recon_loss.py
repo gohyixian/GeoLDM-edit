@@ -55,14 +55,14 @@ def save_xyz_file(path, one_hot, charges, positions, dataset_info, id_from=0, na
         f.close()
 
 
-# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --data_size 0.1
-# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --data_size 0.1
-# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --data_size 0.1
-# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --data_size 0.1
-# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --data_size 0.1
-# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --data_size 0.1
+# python eval_analyze_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --data_size 0.1
+# python eval_analyze_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --data_size 0.1
+# python eval_analyze_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --data_size 0.1
+# python eval_analyze_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only --load_last --data_size 0.1
+# python eval_analyze_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_1x_resume --load_last --data_size 0.1
+# python eval_analyze_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent8_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume --load_last --data_size 0.1
 
-# python check_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs12_lr1e-4_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_CA_Only --load_last --data_size 1
+# python eval_analyze_vae_recon_loss.py --model_path /mnt/c/Users/PC/Desktop/yixian/geoldm-edit/outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs12_lr1e-4_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_CA_Only --load_last --data_size 1
 
 
 def main():
