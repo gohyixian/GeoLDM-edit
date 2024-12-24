@@ -6,7 +6,6 @@ except ModuleNotFoundError:
 
 import os
 import re
-import sys
 import time
 import math
 import copy
@@ -144,20 +143,22 @@ def compute_qvina2_score(
             continue
         
         unique_id = str(time.time_ns())
-        lg_sdf_file   = Path(output_dir, f"{unique_id}_LG_{id}.sdf")
-        lg_pdb_file   = Path(output_dir, f"{unique_id}_LG_{id}.pdb")
-        lg_pdbqt_file = Path(output_dir, f"{unique_id}_LG_{id}.pdbqt")
-        pkt_pdb_file  = Path(pkt_file)
-        pkt_pdbqt_file = Path(output_dir, f"{unique_id}_PKT_{id}.pdbqt")
-        qvina_out_file = Path(output_dir, f"{unique_id}_{id}_qvina.txt")
+        lg_sdf_file    = Path(output_dir, f"{id}_LG_{unique_id}.sdf")
+        lg_pdb_file    = Path(output_dir, f"{id}_LG_{unique_id}.pdb")
+        lg_pdbqt_file  = Path(output_dir, f"{id}_LG_{unique_id}.pdbqt")
+        pkt_pdb_file   = Path(pkt_file)
+        pkt_pdbqt_file = Path(output_dir, f"{id}_PKT_{unique_id}.pdbqt")
+        qvina_out_file = Path(output_dir, f"{id}_Qvina_{unique_id}.txt")
         
         
         # Move ligand's center (x,y,z) to pocket's center (x,y,z) so that it falls in 
         # the bounding box search space in order for qvina2.1 to work
         pocket_center = get_pocket_center(str(pkt_pdb_file))
+        
         # Center ligand around (0, 0, 0) first
         mol_trans = copy.deepcopy(rdmols[i])
         mol_trans, ligand_original_center = center_ligand(mol_trans)
+        
         # Translate ligand to the pocket center
         mol_trans = translate_ligand_to_pocket_center(mol_trans, pocket_center)
         pocket_center = pocket_center.tolist()
@@ -173,7 +174,6 @@ def compute_qvina2_score(
         os.popen(f'obabel {lg_sdf_file} -O {lg_pdb_file}').read()
         
         # LG: .pdbqt (add charges and torsions)
-        # subprocess.run(prep_lg_cmd, shell=True)
         cd_cmd = f"cd {os.path.dirname(lg_pdb_file)}"
         prep_lg_cmd = f"{cd_cmd} && conda run -n {mgltools_env_name} prepare_ligand4.py -l {os.path.basename(lg_pdb_file)} -o {os.path.basename(lg_pdbqt_file)}"
         prep_lg_cmd += " -A hydrogens" if ligand_add_H else ""
@@ -375,9 +375,16 @@ def main():
     assert eval_args.num_samples_per_pocket > 0
 
 
+
     # Load pickled Config object
     with open(os.path.join(eval_args.model_path, 'args.pickle'), 'rb') as f:
         args = pickle.load(f)
+
+    # Create output dir
+    output_dir = Path(eval_args.save_path, args.exp_name)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    eval_args.save_path = str(output_dir)
 
     # Set random seed
     torch.manual_seed(eval_args.random_seed)
@@ -455,9 +462,10 @@ def main():
 
 
     # Read pocket files to construct conditional pocket data
-    error_count = 0
+    # TODO: this script doesn't take into account filtering residues that are say 10 Angstroms away from the ligands
     pocket_data_list = []
     pocket_filename_list = []
+    error_filename_list = []
     pdb_files = sorted([i for i in os.listdir(eval_args.pocket_pdb_dir) if i.endswith('.pdb')])
 
     for pdb_file in tqdm(pdb_files):
@@ -495,9 +503,9 @@ def main():
                 processed = True
         if not processed:
             print(f"Error pocessing pocket file: {pdb_file}")
-            error_count += 1
+            error_filename_list.append(pdb_file)
 
-    print(f">> Read {len(pdb_files)} pocket files, got {error_count} errors while procesing, resulting in {len(pocket_data_list)} processed pockets.")
+    print(f">> Read {len(pdb_files)} pocket files, got {len(error_filename_list)} errors while procesing, resulting in {len(pocket_data_list)} processed pockets.")
 
 
     # ['positions'], ['one_hot'], ['charges'], ['atom_mask'] are added here
@@ -520,11 +528,6 @@ def main():
     print(f">> {len(pocket_data_list)} processed pockets x {eval_args.num_samples_per_pocket} samples per pocket = {len(processed_pocket_data_list)} samples to generate.")
 
 
-
-    output_dir = Path(eval_args.save_path, args.exp_name)
-    
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
     
     
     start  = time.time()
@@ -562,7 +565,7 @@ def main():
             print(*args, **kwargs)          # print to console
             print(*args, file=f, **kwargs)  # pint to file
         
-        print_multi(f"No. Samples      : {metrics_dict['num_samples_generated']}")
+        print_multi(f"No. Samples Total: {metrics_dict['num_samples_generated']}")
         print_multi(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         print_multi(f"Mol Stability    : {metrics_dict['mol_stable']}")
         print_multi(f"Atom Stability   : {metrics_dict['atm_stable']}")
@@ -580,7 +583,19 @@ def main():
         print_multi(f"──────────────────────────────────────────")
         print_multi(f"Qvina            : {metrics_dict['Qvina2']}")
         print_multi(f"Qvina No. Docked : {metrics_dict['Qvina2_Num_Docked']}")
-
+        print_multi(f"──────────────────────────────────────────")
+        print_multi(f"\n\n")
+        print_multi(f"Pocket Data Dir:")
+        print_multi(f"{eval_args.pocket_pdb_dir}")
+        print_multi(f"")
+        print_multi(f"Pocket files with issues: {len(error_filename_list)}")
+        for file in error_filename_list:
+            print_multi(f"  - {file}")
+        print_multi(f"\n\n")
+        print_multi(f"Sampling Configs")
+        print_multi(f"──────────────────────────────────────────")
+        for key, value in vars(eval_args).items():
+            print_multi(f"{key:<22} : {value}")
 
 if __name__ == "__main__":
     main()
