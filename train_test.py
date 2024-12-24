@@ -817,6 +817,7 @@ def analyze_and_save_controlnet(epoch, model_sample, nodes_dist, args, device, d
             remove_nonstd_resi=args.pocket_remove_nonstd_resi,
             size=args.qvina_search_size,
             exhaustiveness=args.qvina_exhaustiveness,
+            seed=args.qvina_seed,
             cleanup_files=args.qvina_cleanup_files,
             save_csv=args.qvina_save_csv
         )

@@ -72,6 +72,7 @@ data_splitted: true
 compute_qvina: true
 qvina_search_size: 20               # search size (all 3 axes) in Angstroms around ligand center
 qvina_exhaustiveness: 16
+qvina_seed: 42
 qvina_cleanup_files: false          # cleanup tmp pdb, pdbqt files
 qvina_save_csv: true                # save results in csv
 pocket_pdb_dir: ./data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/test_val_paired_files/val_pocket

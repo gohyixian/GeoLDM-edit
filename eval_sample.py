@@ -6,7 +6,7 @@ except ModuleNotFoundError:
 
 import utils
 import argparse
-from configs.datasets_config import qm9_with_h, qm9_without_h
+from configs.dataset_configs.datasets_config import qm9_with_h, qm9_without_h
 from qm9 import dataset
 from qm9.models import get_model, get_autoencoder, get_latent_diffusion
 
@@ -17,7 +17,7 @@ import qm9.visualizer as vis
 from qm9.analyze import check_stability
 from os.path import join
 from qm9.sampling import sample_chain, sample
-from configs.datasets_config import get_dataset_info
+from configs.dataset_configs.datasets_config import get_dataset_info
 
 
 def check_mask_correct(variables, node_mask):

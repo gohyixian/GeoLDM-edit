@@ -38,7 +38,7 @@ def retrieve_dataloaders(cfg):
     # elif 'geom' in cfg.dataset:
     else:  # GEOM | PDBBind | BindingMOAD | Cross-Docked
         import build_geom_dataset
-        from configs.datasets_config import get_dataset_info
+        from configs.dataset_configs.datasets_config import get_dataset_info
         if hasattr(cfg, 'data_file') and cfg.data_file is not None:
             data_file = cfg.data_file
         else:

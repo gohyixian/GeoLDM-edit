@@ -13,7 +13,7 @@ from equivariant_diffusion.utils import assert_mean_zero_with_mask, remove_mean_
 import torch
 import time
 import pickle
-from configs.datasets_config import get_dataset_info
+from configs.dataset_configs.datasets_config import get_dataset_info
 from os.path import join
 from qm9.sampling import sample
 from qm9.analyze import compute_molecule_metrics, analyze_node_distribution

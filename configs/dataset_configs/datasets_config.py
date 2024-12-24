@@ -1,11 +1,11 @@
 import pickle
-from configs.constants_colors_radius import get_radius, get_colors
-from configs.dataset_config_QM9 import *
-from configs.dataset_config_GEOM import *
-from configs.dataset_config_GEOM_PDBB_combined import *
-from configs.dataset_config_GEOM_CrossDocked import *
-from configs.dataset_config_CrossDocked import *
-from configs.dataset_config_BindingMOAD import *
+from configs.dataset_configs.constants_colors_radius import get_radius, get_colors
+from configs.dataset_configs.dataset_config_QM9 import *
+from configs.dataset_configs.dataset_config_GEOM import *
+from configs.dataset_configs.dataset_config_GEOM_PDBB_combined import *
+from configs.dataset_configs.dataset_config_GEOM_CrossDocked import *
+from configs.dataset_configs.dataset_config_CrossDocked import *
+from configs.dataset_configs.dataset_config_BindingMOAD import *
 
 
 

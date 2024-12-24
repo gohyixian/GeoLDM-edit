@@ -173,15 +173,15 @@ def add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_data
         args.time_noisy = False
 
 
-    # [ControlNet] match ligand & pocket raw files by ids
-    if not hasattr(args, 'match_raw_file_by_id'):
-        args.match_raw_file_by_id = False
+    # [ControlNet] Qvina score computation
     if not hasattr(args, 'compute_qvina'):
         args.compute_qvina = False
     if not hasattr(args, 'qvina_search_size'):
         args.qvina_search_size = 20
     if not hasattr(args, 'qvina_exhaustiveness'):
         args.qvina_exhaustiveness = 16
+    if not hasattr(args, 'qvina_seed'):
+        args.qvina_seed = 42
     if not hasattr(args, 'qvina_cleanup_files'):
         args.qvina_cleanup_files = True
     if not hasattr(args, 'qvina_save_csv'):

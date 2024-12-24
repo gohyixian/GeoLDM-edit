@@ -4,7 +4,7 @@ try:
 except ModuleNotFoundError:
     pass
 import build_geom_dataset
-from configs.datasets_config import geom_with_h, get_dataset_info
+from configs.dataset_configs.datasets_config import geom_with_h, get_dataset_info
 import copy
 import utils
 import yaml
@@ -33,7 +33,7 @@ from global_registry import PARAM_REGISTRY, Config
 
 def main():
     parser = argparse.ArgumentParser(description='e3_diffusion')
-    parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
+    parser.add_argument('--config_file', type=str, default='configs/model_configs/base_geom_config.yaml')
     opt = parser.parse_args()
 
     with open(opt.config_file, 'r') as file:

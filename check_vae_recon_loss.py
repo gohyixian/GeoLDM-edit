@@ -4,7 +4,7 @@ try:
 except ModuleNotFoundError:
     pass
 import build_geom_dataset
-from configs.datasets_config import geom_with_h, get_dataset_info
+from configs.dataset_configs.datasets_config import geom_with_h, get_dataset_info
 import utils
 import yaml
 import os

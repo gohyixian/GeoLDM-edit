@@ -8,7 +8,7 @@ import utils
 import yaml
 import argparse
 import wandb
-from configs.datasets_config import get_dataset_info
+from configs.dataset_configs.datasets_config import get_dataset_info
 from os.path import join
 from qm9 import dataset
 from qm9.models import get_optim, get_model, get_autoencoder, get_latent_diffusion
@@ -29,7 +29,7 @@ class Config:
 
 
 parser = argparse.ArgumentParser(description='E3Diffusion')
-parser.add_argument('--config_file', type=str, default='custom_config/base_qm9_config.yaml')
+parser.add_argument('--config_file', type=str, default='configs/model_configs/base_qm9_config.yaml')
 opt = parser.parse_args()
 
 with open(opt.config_file, 'r') as file:

@@ -30,4 +30,4 @@ conda activate geoldm
 
 cd /home/user/yixian.goh/geoldm-edit
 python check_gpu.py
-python main_geom_drugs.py --config_file custom_config/CrossDocked/20240623__10A/full/AMP/ldm/best/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_ds500_epoch200_bs64_lr1e-4_NoEMA__20240623__10A.yaml
+python main_geom_drugs.py --config_file configs/model_configs/CrossDocked/20240623__10A/full/AMP/ldm/best/AMP__02_LDM_vaenorm_True10__float32__latent8_nf128_ds500_epoch200_bs64_lr1e-4_NoEMA__20240623__10A.yaml

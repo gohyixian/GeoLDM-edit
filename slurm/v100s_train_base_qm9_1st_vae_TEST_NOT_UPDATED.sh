@@ -24,4 +24,4 @@ conda activate geoldm
 
 cd /home/user/yixian.goh/geoldm-edit
 python check_gpu.py
-python main_qm9.py --config_file custom_config/base_qm9_vae_config.yaml
+python main_qm9.py --config_file configs/model_configs/base_qm9_vae_config.yaml

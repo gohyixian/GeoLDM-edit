@@ -454,6 +454,7 @@ def compute_qvina2_score(
         remove_nonstd_resi=False,
         size=20,
         exhaustiveness=16,
+        seed=42,
         cleanup_files=True,
         save_csv=True
     ):
@@ -579,6 +580,7 @@ def compute_qvina2_score(
             f'--center_x {cx:.4f} --center_y {cy:.4f} --center_z {cz:.4f} '
             f'--size_x {size} --size_y {size} --size_z {size} '
             f'--exhaustiveness {exhaustiveness}'
+            f'--seed {seed}'
         ).read()
         print(out)
         with open(str(qvina_out_file), 'w') as f:

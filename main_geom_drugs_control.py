@@ -19,7 +19,7 @@ from os.path import join
 import utils
 import train_test
 import build_geom_dataset
-from configs.datasets_config import get_dataset_info
+from configs.dataset_configs.datasets_config import get_dataset_info
 from equivariant_diffusion import utils as diffusion_utils
 from equivariant_diffusion import en_diffusion, control_en_diffusion
 from qm9.models import get_optim, get_controlled_latent_diffusion
@@ -31,7 +31,7 @@ MMSEQ2_SPLIT = "MMseq2_split"
 
 def main():
     parser = argparse.ArgumentParser(description='e3_diffusion')
-    parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
+    parser.add_argument('--config_file', type=str, default='configs/model_configs/base_geom_config.yaml')
     opt = parser.parse_args()
 
     with open(opt.config_file, 'r') as file:

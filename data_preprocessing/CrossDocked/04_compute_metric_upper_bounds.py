@@ -13,7 +13,7 @@ from tqdm import tqdm
 from prettytable import PrettyTable
 from data_preprocessing.CrossDocked.constants import get_periodictable_list
 from data_preprocessing.CrossDocked.metrics import compute_molecule_metrics
-from configs.datasets_config import get_dataset_info
+from configs.dataset_configs.datasets_config import get_dataset_info
 
 # path to .npy file containing the combined/processed conformations/molecules,
 # all stored in a single array of the format below. Atoms of the same molecule

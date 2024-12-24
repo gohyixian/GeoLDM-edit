@@ -3,7 +3,7 @@ from os.path import join
 import torch
 import pickle
 from qm9.models import get_model, get_autoencoder, get_latent_diffusion
-from configs.datasets_config import get_dataset_info
+from configs.dataset_configs.datasets_config import get_dataset_info
 from qm9 import dataset
 from qm9.utils import compute_mean_mad
 from qm9.sampling import sample

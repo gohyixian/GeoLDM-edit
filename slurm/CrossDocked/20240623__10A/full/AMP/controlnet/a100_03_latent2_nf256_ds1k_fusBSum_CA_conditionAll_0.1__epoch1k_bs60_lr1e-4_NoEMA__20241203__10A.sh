@@ -27,4 +27,4 @@ conda activate geoldm-a100
 cd /home/user/yixian.goh/geoldm-edit
 chmod +x analysis/qvina/qvina2.1
 python check_gpu.py
-python main_geom_drugs_control.py --config_file custom_config/CrossDocked/20240623__10A/full/AMP/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.1__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A.yaml
+python main_geom_drugs_control.py --config_file configs/model_configs/CrossDocked/20240623__10A/full/AMP/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.1__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A.yaml

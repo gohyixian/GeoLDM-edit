@@ -25,4 +25,4 @@ conda activate geoldm
 
 cd /home/user/yixian.goh/geoldm-edit
 python check_gpu.py
-python main_geom_drugs.py --config_file custom_config/geomPDBB/base_geomPDBB_frc_LG_PKT_vae_config_AMP__.yaml
+python main_geom_drugs.py --config_file configs/model_configs/geomPDBB/base_geomPDBB_frc_LG_PKT_vae_config_AMP__.yaml

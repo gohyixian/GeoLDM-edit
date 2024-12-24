@@ -1,5 +1,7 @@
 proj_name: Control-GeoLDM
-exp_name: ControlNet_new_test
+# exp_name: 03_latent2_nf256_ds1k_fusBSum_conditionBlocks34_0.1__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A
+# exp_name: 03_latent2_nf256_ds1k_fusBSum_conditionBlocks34_0.1__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A_1x
+exp_name: 03_latent2_nf256_ds1k_fusBSum_conditionBlocks34_0.1__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A_2x
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -12,26 +14,28 @@ loss_analysis: false
 
 # Specify ligand & pocket VAE weights path, set to null for random initialisation
 # set checkpoint (ckpt) to null to automatically select best
-ligand_ae_path: null
-ligand_ae_ckpt: null
-pocket_ae_path: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only
-pocket_ae_ckpt: generative_model_4_iter_95080.npy
+ligand_ae_path: outputs_selected/vae_ligands/AMP__01_VAE_vaenorm_True10__bfloat16__latent2_nf256_epoch100_bs36_lr1e-4_InvClassFreq_Smooth0.25_x10_h5_NoEMA__DecOnly_KL-0__20240623__10A__LG_Only
+ligand_ae_ckpt: generative_model_2_iter_6336.npy
+pocket_ae_path: outputs_selected/vae_pockets/AMP__01_VAE_vaenorm_True10__float32__latent2_nf256_epoch100_bs4_lr1e-5_InvClassFreq_Smooth0.25_XH_x30_h15_NoEMA__20240623__10A__PKT_Only_2x_resume
+pocket_ae_ckpt: generative_model_3_iter_76064.npy
 
 # Specify LDM weights path, set to null for random initialisation
-ldm_path: outputs_selected/ldm/ori_drugs_latent2
-ldm_ckpt: generative_model_ema.npy
+ldm_path: outputs_selected/ldm/AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_9x_resume
+ldm_ckpt: generative_model_108_iter_230208.npy
 
 # Zero out all weights of fusion blocks instead of randomly instantiated
 zero_fusion_block_weights: false
 
 
-# Train first stage AutoEncoder model (no effect if train_diffusion=False)
+# Train 1st stage AutoEncoder model (no effect if train_diffusion=False)
 trainable_ligand_ae_encoder: false
 trainable_ligand_ae_decoder: false
 trainable_pocket_ae_encoder: false
 
-# ControlNet specific settings
+# Train 2nd stage LDM model
 trainable_ldm: false
+
+# Train 3rd stage ControlNet
 trainable_controlnet: true
 trainable_fusion_blocks: true
 
@@ -45,8 +49,8 @@ include_charges: false   # true for qm9
 # only works for ldm, not for VAE
 condition_time: true
 
-# Time Noisy, t/2 for main network, adopted from [https://arxiv.org/abs/2405.06659]
-time_noisy: true
+# Time Noisy, t/2, adopted from [https://arxiv.org/abs/2405.06659]
+time_noisy: false
 
 vis_activations: false
 vis_activations_batch_samples: 5
@@ -59,19 +63,17 @@ random_seed: 42
 # ========================================================================================================== Dataset
 
 # pre-computed dataset stats
-# dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND
-dataset: d_20241115_GEOM_LDM_CrossDocked_LG_PKT_MMseq2_split__10A__LIGAND
+dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND
 
 # pre-computed training dataset
 data_file: ./data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/d_20241115_CrossDocked_LG_PKT_MMseq2_split__10.0A.npz
-# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A_split_811.npz
-# data_file: ./data/d_20240623_CrossDocked_LG_PKT/d_20240623_CrossDocked_LG_PKT__10.0A__subset_0.01_split_811.npz
 data_splitted: true
 
 # Quick Vina 2.1
 compute_qvina: true
 qvina_search_size: 20               # search size (all 3 axes) in Angstroms around ligand center
 qvina_exhaustiveness: 16
+qvina_seed: 42
 qvina_cleanup_files: false          # cleanup tmp pdb, pdbqt files
 qvina_save_csv: true                # save results in csv
 pocket_pdb_dir: ./data/d_20241115_CrossDocked_LG_PKT_MMseq2_split/test_val_paired_files/val_pocket
@@ -107,7 +109,7 @@ filter_pocket_size: 600   # refer EDA
 sequential: false
 
 # Number of worker for the dataloader
-num_workers: 4
+num_workers: 60   # match cpu count
 
 # use data augmentation (i.e. random rotation of x atom coordinates)
 data_augmentation: false
@@ -123,12 +125,12 @@ start_epoch: 0
 test_epochs: 1  # 4
 
 
-n_epochs: 200  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
-batch_size: 2    # 14
+n_epochs: 1000  # 3000    takes 20 epoches on paper (bs:32), hence 80 epochs for bs:8
+batch_size: 10    # 14
 lr: 1.0e-4
 
 # weight of KL term in ELBO, default 0.01
-kl_weight: 0.01
+kl_weight: 0.0
 
 # ode_regularization weightage, default 1e-3
 ode_regularization: 0.001
@@ -147,8 +149,8 @@ ema_decay: 0   # 0.99
 augment_noise: 0
 
 # Number of samples to compute the stability, default 500
-n_stability_samples: 4  # 98, 50
-n_stability_samples_batch_size: 2  # 7, 14
+n_stability_samples: 90  # 98, 50
+n_stability_samples_batch_size: 10  # 7, 14
 
 # Dataset partition where pocket samples will be drawn from for analyzing 
 # generated ligands' stability: train | test | val
@@ -167,7 +169,7 @@ verbose: false
 dtype: torch.float32
 
 # enable mixed precision training (fp32, fp16)
-mixed_precision_training: false
+mixed_precision_training: true
 mixed_precision_autocast_dtype: torch.bfloat16
 
 # use model checkpointing during training to reduce GPU memory usage
@@ -260,7 +262,7 @@ aggregation_method: sum
 
 
 # Fusion Block specific settings
-fusion_weights: [0.5, 0.5, 0.5, 0.5]    # [0.25, 0.5, 0.75, 1]
+fusion_weights: [0, 0, 0.1, 0.1]    # [0.25, 0.5, 0.75, 1]
 # Condition fusion method:
 #  - scaled_sum   : (h1_i,x1_i) = (h1_i,x1_i) + w_i * (f_h1_i,f_x1_i)
 #  - balanced_sum : (h1_i,x1_i) = [(1 - w_i) * (h1_i,x1_i)] + [w_i * (f_h1_i,f_x1_i)]
@@ -286,18 +288,21 @@ n_report_steps: 50
 
 
 # ========================================================================================================== Saving & Resuming
-# resume: outputs/AMP__03_CONTROL_latent8_nf128_ds500_fusBalancedSum__ConFus_epoch200_bs14_lr1e-4_NoEMA__20240623__10A
-# resume_model_ckpt: generative_model_10_iter_74624.npy
-# resume_optim_ckpt: optim_10_iter_74624.npy
+# resume: null
+# resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_conditionBlocks34_0.1__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A
+# resume_model_ckpt: generative_model_5_iter_56988.npy
+# resume_optim_ckpt: optim_5_iter_56988.npy
+resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_conditionBlocks34_0.1__epoch1k_bs10_lr1e-4_NoEMA__20241115__10A_1x_resume
+resume_model_ckpt: generative_model_6_iter_66486.npy
+resume_optim_ckpt: optim_6_iter_66486.npy
 
-resume: null
 save_model: true
 
 
 
 # ========================================================================================================== Wandb
 # disable wandb
-no_wandb: true
+no_wandb: false
 wandb_usr: gohyixian456
 # True = wandb online -- False = wandb offline
 online: true
@@ -309,6 +314,7 @@ pocket_vae:
     dataset: d_20240623_CrossDocked_LG_PKT__10A__LIGAND+POCKET
     vae_data_mode: pocket
     remove_h: false
+    ca_only: false
 
     # can contain multiple: homo | onehot | lumo | num_atoms | etc
     conditioning: []

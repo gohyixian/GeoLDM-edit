@@ -4,7 +4,7 @@ try:
 except ModuleNotFoundError:
     pass
 import build_geom_dataset
-from configs.datasets_config import geom_with_h, get_dataset_info
+from configs.dataset_configs.datasets_config import geom_with_h, get_dataset_info
 import utils
 import yaml
 import os
@@ -57,7 +57,7 @@ def save_xyz_file(path, one_hot, charges, positions, dataset_info, id_from=0, na
 
 def main():
     parser = argparse.ArgumentParser(description='e3_diffusion')
-    parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
+    parser.add_argument('--config_file', type=str, default='configs/model_configs/base_geom_config.yaml')
     parser.add_argument('--load_last', action='store_true', help='load weights of model of last epoch')
     parser.add_argument('--data_size', type=float, default=0.1, help='portion of val data split to use for test')
     parser.add_argument('--store_samples', action='store_true', help='keeps samples from the same model in previous runs, else deleted')

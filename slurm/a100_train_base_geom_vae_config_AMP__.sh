@@ -20,4 +20,4 @@ conda activate geoldm-a100
 
 cd /home/user/yixian.goh/geoldm-edit
 python check_gpu.py
-python main_geom_drugs.py --config_file custom_config/geom/base_geom_vae_config_AMP__.yaml
+python main_geom_drugs.py --config_file configs/model_configs/geom/base_geom_vae_config_AMP__.yaml

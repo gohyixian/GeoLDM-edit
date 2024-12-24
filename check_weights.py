@@ -1,4 +1,4 @@
-from configs.datasets_config import geom_with_h, get_dataset_info
+from configs.dataset_configs.datasets_config import geom_with_h, get_dataset_info
 import yaml
 import argparse
 from os.path import join
@@ -15,7 +15,7 @@ CONTROLNET_WEIGHTS_PATH = '/Users/gohyixian/Downloads/CrossDocked_base_03_CONTRO
 
 def main():
     parser = argparse.ArgumentParser(description='e3_diffusion')
-    parser.add_argument('--config_file', type=str, default='custom_config/base_geom_config.yaml')
+    parser.add_argument('--config_file', type=str, default='configs/model_configs/base_geom_config.yaml')
     opt = parser.parse_args()
 
     with open(opt.config_file, 'r') as file:

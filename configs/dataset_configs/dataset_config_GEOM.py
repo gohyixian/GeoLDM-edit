@@ -1,5 +1,5 @@
 import pickle
-from configs.constants_colors_radius import get_radius, get_colors
+from configs.dataset_configs.constants_colors_radius import get_radius, get_colors
 
 
 geom_with_h_atom_decoder = ['H', 'B', 'C', 'N', 'O', 'F', 'Al', 'Si', 'P', 'S', 'Cl', 'As', 'Br', 'I', 'Hg', 'Bi']
