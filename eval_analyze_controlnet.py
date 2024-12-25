@@ -266,36 +266,39 @@ def analyze_and_save_controlnet(
     n_samples = len(pocket_data_list)
     molecules = {'one_hot': [], 'x': [], 'node_mask': []}
     batch_id = 0
-    for _ in tqdm(range(math.ceil(n_samples/batch_size))):
-        
-        current_batch_size = min(batch_size, n_samples - batch_id)
-        
-        # this returns the number of nodes. i.e. n_samples=3, return=tensor([16, 17, 15]) / tensor([14, 15, 19]) / tensor([17, 27, 18])
-        nodesxsample = nodes_dist.sample(current_batch_size)
-        
-        # apply adjustment to the sampled number of atoms
-        nodesxsample += nodes_dist_delta
+    
+    model.eval()
+    with torch.no_grad():
+        for _ in tqdm(range(math.ceil(n_samples/batch_size))):
+            
+            current_batch_size = min(batch_size, n_samples - batch_id)
+            
+            # this returns the number of nodes. i.e. n_samples=3, return=tensor([16, 17, 15]) / tensor([14, 15, 19]) / tensor([17, 27, 18])
+            nodesxsample = nodes_dist.sample(current_batch_size)
+            
+            # apply adjustment to the sampled number of atoms
+            nodesxsample += nodes_dist_delta
 
-        pocket_dict_list = []
-        for j in range(current_batch_size):
-            pocket_dict_list.append(pocket_data_list[j + batch_id])
+            pocket_dict_list = []
+            for j in range(current_batch_size):
+                pocket_dict_list.append(pocket_data_list[j + batch_id])
 
-        one_hot, charges, x, node_mask = \
-            sample_controlnet(
-                args, 
-                device, 
-                model, 
-                dataset_info,
-                nodesxsample=nodesxsample, 
-                context=None, 
-                fix_noise=False, 
-                pocket_dict_list=pocket_dict_list
-            )
+            one_hot, charges, x, node_mask = \
+                sample_controlnet(
+                    args, 
+                    device, 
+                    model, 
+                    dataset_info,
+                    nodesxsample=nodesxsample, 
+                    context=None, 
+                    fix_noise=False, 
+                    pocket_dict_list=pocket_dict_list
+                )
 
-        molecules['one_hot'].append(one_hot.detach().cpu())
-        molecules['x'].append(x.detach().cpu())
-        molecules['node_mask'].append(node_mask.detach().cpu())
-        batch_id += current_batch_size
+            molecules['one_hot'].append(one_hot.detach().cpu())
+            molecules['x'].append(x.detach().cpu())
+            molecules['node_mask'].append(node_mask.detach().cpu())
+            batch_id += current_batch_size
 
     assert len(pocket_id_lists) == batch_id
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}

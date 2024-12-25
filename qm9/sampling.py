@@ -213,31 +213,35 @@ def sample_controlnet(args, device, generative_model, dataset_info,
     else:
         context = None
 
-    if args.probabilistic_model == 'diffusion':
-        x, h = generative_model.sample(n_samples=batch_size, 
-                                       n_nodes=max_n_nodes, 
-                                       x2=pkt_x, 
-                                       h2=pkt_h, 
-                                       node_mask_1=lg_node_mask, 
-                                       node_mask_2=pkt_node_mask, 
-                                       edge_mask_1=lg_edge_mask, 
-                                       edge_mask_2=pkt_edge_mask, 
-                                       joint_edge_mask=joint_edge_mask, 
-                                       context=context, 
-                                       fix_noise=fix_noise)
+    # set model to eval mode
+    generative_model.eval()
+    
+    with torch.no_grad():
+        if args.probabilistic_model == 'diffusion':
+            x, h = generative_model.sample(n_samples=batch_size, 
+                                        n_nodes=max_n_nodes, 
+                                        x2=pkt_x, 
+                                        h2=pkt_h, 
+                                        node_mask_1=lg_node_mask, 
+                                        node_mask_2=pkt_node_mask, 
+                                        edge_mask_1=lg_edge_mask, 
+                                        edge_mask_2=pkt_edge_mask, 
+                                        joint_edge_mask=joint_edge_mask, 
+                                        context=context, 
+                                        fix_noise=fix_noise)
 
-        assert_correctly_masked(x, lg_node_mask)
-        assert_mean_zero_with_mask(x, lg_node_mask)
+            assert_correctly_masked(x, lg_node_mask)
+            assert_mean_zero_with_mask(x, lg_node_mask)
 
-        one_hot = h['categorical']
-        charges = h['integer']
+            one_hot = h['categorical']
+            charges = h['integer']
 
-        assert_correctly_masked(one_hot.float(), lg_node_mask)
-        if args.include_charges:
-            assert_correctly_masked(charges.float(), lg_node_mask)
+            assert_correctly_masked(one_hot.float(), lg_node_mask)
+            if args.include_charges:
+                assert_correctly_masked(charges.float(), lg_node_mask)
 
-    else:
-        raise ValueError(args.probabilistic_model)
+        else:
+            raise ValueError(args.probabilistic_model)
 
     return one_hot, charges, x, lg_node_mask
 
