@@ -442,6 +442,9 @@ def main():
     print(f">> Loading model weights from {os.path.join(eval_args.model_path, fn)}")
     state_dict = torch.load(os.path.join(eval_args.model_path, fn), map_location=device)
     model.load_state_dict(state_dict)
+    
+    # set to eval mode
+    model.eval()
 
 
     # Model details logging

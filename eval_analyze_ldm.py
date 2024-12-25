@@ -277,6 +277,9 @@ def main():
     print(f">> Loading model weights from {join(eval_args.model_path, fn)}")
     flow_state_dict = torch.load(join(eval_args.model_path, fn), map_location=device)
     generative_model.load_state_dict(flow_state_dict)
+    
+    # set to eval mode
+    generative_model.eval()
 
     # Analyze stability, validity, uniqueness and novelty
     metrics_dict = analyze_and_save(

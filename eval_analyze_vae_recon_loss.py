@@ -228,6 +228,9 @@ def main():
 
     model = model.to(args.device)
     
+    # set to eval mode
+    model.eval()
+    
 
     if opt.load_last:
         if args.ema_decay > 0:
