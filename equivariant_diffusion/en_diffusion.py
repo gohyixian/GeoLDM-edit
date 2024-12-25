@@ -693,6 +693,12 @@ class EnVariationalDiffusion(torch.nn.Module):
             SNR_weight = (self.SNR(gamma_s - gamma_t) - 1).squeeze(1).squeeze(1)
         assert error.size() == SNR_weight.size()
         loss_t_larger_than_zero = 0.5 * SNR_weight * error
+        
+        # ~!wt
+        print(f"=================================================")
+        print(f"SNR_weight              : {SNR_weight.mean().item()}")
+        print(f"error                   : {error.mean().item()}")
+        print(f"loss_t_larger_than_zero : {loss_t_larger_than_zero.mean().item()}")
 
         # The _constants_ depending on sigma_0 from the
         # cross entropy term E_q(z0 | x) [log p(x | z0)].
@@ -731,6 +737,12 @@ class EnVariationalDiffusion(torch.nn.Module):
             assert kl_prior.size() == estimator_loss_terms.size()
             assert kl_prior.size() == neg_log_constants.size()
             assert kl_prior.size() == loss_term_0.size()
+            
+            # ~!wt
+            print(f"[EVAL] kl_prior             : {kl_prior.mean().item()}")
+            print(f"[EVAL] estimator_loss_terms : {estimator_loss_terms.mean().item()}")
+            print(f"[EVAL] neg_log_constants    : {neg_log_constants.mean().item()}")
+            print(f"[EVAL] loss_term_0          : {loss_term_0.mean().item()}")
 
             loss = kl_prior + estimator_loss_terms + neg_log_constants + loss_term_0
 
@@ -755,6 +767,11 @@ class EnVariationalDiffusion(torch.nn.Module):
             assert kl_prior.size() == neg_log_constants.size()
 
             loss = kl_prior + estimator_loss_terms + neg_log_constants
+
+            # ~!wt
+            print(f"[TRAIN] kl_prior             : {kl_prior.mean().item()}")
+            print(f"[TRAIN] estimator_loss_terms : {estimator_loss_terms.mean().item()}")
+            print(f"[TRAIN] neg_log_constants    : {neg_log_constants.mean().item()}")
 
         assert len(loss.shape) == 1, f'{loss.shape} has more than only batch dim.'
 
