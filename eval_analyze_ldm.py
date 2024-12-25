@@ -41,26 +41,29 @@ def analyze_and_save(args, eval_args, device, generative_model,
     assert n_samples % batch_size == 0
     molecules = {'one_hot': [], 'x': [], 'node_mask': []}
     start_time = time.time()
-    for i in range(int(n_samples/batch_size)):
-        nodesxsample = nodes_dist.sample(batch_size)
-        one_hot, charges, x, node_mask = sample(
-            args, device, generative_model, dataset_info, prop_dist=prop_dist, nodesxsample=nodesxsample)
+    
+    generative_model.eval()
+    with torch.no_grad():
+        for i in range(int(n_samples/batch_size)):
+            nodesxsample = nodes_dist.sample(batch_size)
+            one_hot, charges, x, node_mask = sample(
+                args, device, generative_model, dataset_info, prop_dist=prop_dist, nodesxsample=nodesxsample)
 
-        molecules['one_hot'].append(one_hot.detach().cpu())
-        molecules['x'].append(x.detach().cpu())
-        molecules['node_mask'].append(node_mask.detach().cpu())
+            molecules['one_hot'].append(one_hot.detach().cpu())
+            molecules['x'].append(x.detach().cpu())
+            molecules['node_mask'].append(node_mask.detach().cpu())
 
-        current_num_samples = (i+1) * batch_size
-        secs_per_sample = (time.time() - start_time) / current_num_samples
-        print('\t %d/%d Molecules generated at %.2f secs/sample' % (
-            current_num_samples, n_samples, secs_per_sample))
+            current_num_samples = (i+1) * batch_size
+            secs_per_sample = (time.time() - start_time) / current_num_samples
+            print('\t %d/%d Molecules generated at %.2f secs/sample' % (
+                current_num_samples, n_samples, secs_per_sample))
 
-        if save_to_xyz:
-            id_from = i * batch_size
-            qm9_visualizer.save_xyz_file(
-                join(eval_args.save_path, os.path.basename(eval_args.model_path), 'analyzed_molecules/'),
-                one_hot, charges, x, dataset_info, id_from, name='molecule',
-                node_mask=node_mask)
+            if save_to_xyz:
+                id_from = i * batch_size
+                qm9_visualizer.save_xyz_file(
+                    join(eval_args.save_path, os.path.basename(eval_args.model_path), 'analyzed_molecules/'),
+                    one_hot, charges, x, dataset_info, id_from, name='molecule',
+                    node_mask=node_mask)
 
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}
     print(f"one_hot: {molecules['one_hot'].shape}")
@@ -281,12 +284,13 @@ def main():
     # set to eval mode
     generative_model.eval()
 
-    # Analyze stability, validity, uniqueness and novelty
-    metrics_dict = analyze_and_save(
-        args, eval_args, device, generative_model, nodes_dist,
-        prop_dist, dataset_info, n_samples=eval_args.n_samples,
-        batch_size=eval_args.batch_size_gen, save_to_xyz=eval_args.save_to_xyz)
-    print(metrics_dict)
+    with torch.no_grad():
+        # Analyze stability, validity, uniqueness and novelty
+        metrics_dict = analyze_and_save(
+            args, eval_args, device, generative_model, nodes_dist,
+            prop_dist, dataset_info, n_samples=eval_args.n_samples,
+            batch_size=eval_args.batch_size_gen, save_to_xyz=eval_args.save_to_xyz)
+        print(metrics_dict)
 
     with open(join(eval_args.save_path, os.path.basename(eval_args.model_path), 'eval_log.txt'), 'w') as f:
         text = \

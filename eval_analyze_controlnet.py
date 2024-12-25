@@ -540,29 +540,30 @@ def main():
     start  = time.time()
     print(">> Entering Analyze & Save")
     
-    metrics_dict = analyze_and_save_controlnet(
-        model=model,
-        nodes_dist=nodes_dist, 
-        nodes_dist_delta=eval_args.delta_num_atoms,
-        args=args, 
-        device=device, 
-        dataset_info=ligand_dataset_info,
-        batch_size=eval_args.batch_size, 
-        pocket_data_list=processed_pocket_data_list, 
-        pocket_id_lists=processed_pocket_id,
-        pocket_pdb_dir=eval_args.pocket_pdb_dir,
-        output_dir=output_dir,
-        disable_qvina=eval_args.disable_qvina,
-        mgltools_env_name=eval_args.mgltools_env_name,
-        connectivity_thres=eval_args.connectivity_thres,
-        ligand_add_H=eval_args.ligand_add_H,
-        receptor_add_H=eval_args.receptor_add_H,
-        remove_nonstd_resi=eval_args.remove_nonstd_resi,
-        qvina_size=eval_args.size,
-        qvina_exhaustiveness=eval_args.exhaustiveness,
-        qvina_seed=eval_args.seed,
-        qvina_cleanup_files=eval_args.cleanup_files
-    )
+    with torch.no_grad():
+        metrics_dict = analyze_and_save_controlnet(
+            model=model,
+            nodes_dist=nodes_dist, 
+            nodes_dist_delta=eval_args.delta_num_atoms,
+            args=args, 
+            device=device, 
+            dataset_info=ligand_dataset_info,
+            batch_size=eval_args.batch_size, 
+            pocket_data_list=processed_pocket_data_list, 
+            pocket_id_lists=processed_pocket_id,
+            pocket_pdb_dir=eval_args.pocket_pdb_dir,
+            output_dir=output_dir,
+            disable_qvina=eval_args.disable_qvina,
+            mgltools_env_name=eval_args.mgltools_env_name,
+            connectivity_thres=eval_args.connectivity_thres,
+            ligand_add_H=eval_args.ligand_add_H,
+            receptor_add_H=eval_args.receptor_add_H,
+            remove_nonstd_resi=eval_args.remove_nonstd_resi,
+            qvina_size=eval_args.size,
+            qvina_exhaustiveness=eval_args.exhaustiveness,
+            qvina_seed=eval_args.seed,
+            qvina_cleanup_files=eval_args.cleanup_files
+        )
     print(f">> Analyze & Save took {time.time() - start:.1f} seconds.")
 
     # print metrics to log file and console
