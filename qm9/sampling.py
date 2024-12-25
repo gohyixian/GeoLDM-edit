@@ -136,21 +136,23 @@ def sample(args, device, generative_model, dataset_info,
     else:
         context = None
 
-    if args.probabilistic_model == 'diffusion':
-        x, h = generative_model.sample(batch_size, max_n_nodes, node_mask, edge_mask, context, fix_noise=fix_noise)
+    generative_model.eval()
+    with torch.no_grad():
+        if args.probabilistic_model == 'diffusion':
+            x, h = generative_model.sample(batch_size, max_n_nodes, node_mask, edge_mask, context, fix_noise=fix_noise)
 
-        assert_correctly_masked(x, node_mask)
-        assert_mean_zero_with_mask(x, node_mask)
+            assert_correctly_masked(x, node_mask)
+            assert_mean_zero_with_mask(x, node_mask)
 
-        one_hot = h['categorical']
-        charges = h['integer']
+            one_hot = h['categorical']
+            charges = h['integer']
 
-        assert_correctly_masked(one_hot.float(), node_mask)
-        if args.include_charges:
-            assert_correctly_masked(charges.float(), node_mask)
+            assert_correctly_masked(one_hot.float(), node_mask)
+            if args.include_charges:
+                assert_correctly_masked(charges.float(), node_mask)
 
-    else:
-        raise ValueError(args.probabilistic_model)
+        else:
+            raise ValueError(args.probabilistic_model)
 
     return one_hot, charges, x, node_mask
 
