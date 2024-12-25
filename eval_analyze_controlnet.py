@@ -150,6 +150,8 @@ def compute_qvina2_score(
         pkt_pdbqt_file = Path(output_dir, id, f"{unique_id}_PKT.pdbqt")
         qvina_out_file = Path(output_dir, id, f"{unique_id}_Qvina.txt")
         
+        if not os.path.exists(Path(output_dir, id)):
+            os.makedirs(Path(output_dir, id))
         
         # Move ligand's center (x,y,z) to pocket's center (x,y,z) so that it falls in 
         # the bounding box search space in order for qvina2.1 to work
