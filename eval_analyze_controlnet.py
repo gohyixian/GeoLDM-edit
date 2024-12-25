@@ -186,14 +186,15 @@ def compute_qvina2_score(
         subprocess.run(prep_pkt_cmd, shell=True)
 
         # run QuickVina 2
-        out = os.popen(
-            f'./analysis/qvina/qvina2.1 --receptor {pkt_pdbqt_file} '
-            f'--ligand {lg_pdbqt_file} '
-            f'--center_x {cx:.4f} --center_y {cy:.4f} --center_z {cz:.4f} '
-            f'--size_x {size} --size_y {size} --size_z {size} '
-            f'--exhaustiveness {exhaustiveness}'
+        qvina_cmd = \
+            f'./analysis/qvina/qvina2.1 --receptor {pkt_pdbqt_file} ' + \
+            f'--ligand {lg_pdbqt_file} ' + \
+            f'--center_x {cx:.4f} --center_y {cy:.4f} --center_z {cz:.4f} ' + \
+            f'--size_x {size} --size_y {size} --size_z {size} ' + \
+            f'--exhaustiveness {exhaustiveness} ' + \
             f'--seed {seed}'
-        ).read()
+        print(qvina_cmd)
+        out = os.popen(qvina_cmd).read()
         print(out)
         with open(str(qvina_out_file), 'w') as f:
             print(out, file=f)
@@ -307,7 +308,7 @@ def analyze_and_save_controlnet(
         qvina_scores_dict = compute_qvina2_score(
             molecules, 
             dataset_info, 
-            pocket_ids=pocket_id_lists, 
+            pocket_filenames=pocket_id_lists, 
             pocket_pdb_dir=pocket_pdb_dir, 
             output_dir=output_dir,
             mgltools_env_name=mgltools_env_name,
@@ -387,9 +388,9 @@ def main():
     eval_args.save_path = str(output_dir)
 
     # Set random seed
-    torch.manual_seed(eval_args.random_seed)
-    random.seed(eval_args.random_seed)
-    np.random.seed(eval_args.random_seed)
+    torch.manual_seed(eval_args.seed)
+    random.seed(eval_args.seed)
+    np.random.seed(eval_args.seed)
 
     # Load pre-computed dataset configs
     ligand_dataset_info = get_dataset_info(dataset_name=args.dataset, remove_h=args.remove_h)
@@ -402,13 +403,10 @@ def main():
     args.device_ = "cuda" if args.cuda else "cpu"
 
     # Set dtype
-    _, dtype_name = args.dtype.split('.')
-    dtype = getattr(torch, dtype_name)
-    args.dtype = dtype
-    torch.set_default_dtype(dtype)
+    torch.set_default_dtype(args.dtype)
 
     # Add missing configs with default values
-    args = utils.add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_dataset_info)
+    args = utils.add_missing_configs_controlnet(args, args.dtype, ligand_dataset_info, pocket_dataset_info)
 
     # Create params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
@@ -497,7 +495,7 @@ def main():
 
         processed = False
         if len(list(pocket_atom_charge_positions.shape)) == 2:
-            if pocket_atom_charge_positions.shape[0] > 0 and pocket_atom_charge_positions.shape[1] == 5:
+            if pocket_atom_charge_positions.shape[0] > 0 and pocket_atom_charge_positions.shape[1] == 4:
                 pocket_data_list.append(pocket_atom_charge_positions)
                 pocket_filename_list.append(Path(pdb_file).stem)
                 processed = True

@@ -11,9 +11,12 @@ def add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_data
 
     # mp autocast dtype
     if args.mixed_precision_training == True:
-        _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
-        mp_dtype = getattr(torch, mp_dtype_name)
-        args.mixed_precision_autocast_dtype = mp_dtype
+        if not isinstance(args.mixed_precision_autocast_dtype, torch.dtype):
+            _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
+            mp_dtype = getattr(torch, mp_dtype_name)
+            args.mixed_precision_autocast_dtype = mp_dtype
+        else:
+            args.mixed_precision_autocast_dtype = dtype
     else:
         args.mixed_precision_autocast_dtype = dtype
 

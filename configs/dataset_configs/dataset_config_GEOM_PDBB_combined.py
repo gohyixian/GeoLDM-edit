@@ -3,7 +3,7 @@ from configs.dataset_configs.constants_colors_radius import get_radius, get_colo
 
 
 # too large to put in script
-with open('configs/n_nodes__d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT.pkl', 'rb') as file:
+with open('configs/dataset_configs/n_nodes__d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT.pkl', 'rb') as file:
     d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_n_nodes_dict = pickle.load(file)
 
 d_20240428_combined_geom_PDBB_full_refined_core_LG_PKT_atom_decoder = \
