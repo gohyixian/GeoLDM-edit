@@ -143,12 +143,12 @@ def compute_qvina2_score(
             continue
         
         unique_id = str(time.time_ns())
-        lg_sdf_file    = Path(output_dir, f"{id}_LG_{unique_id}.sdf")
-        lg_pdb_file    = Path(output_dir, f"{id}_LG_{unique_id}.pdb")
-        lg_pdbqt_file  = Path(output_dir, f"{id}_LG_{unique_id}.pdbqt")
+        lg_sdf_file    = Path(output_dir, id, f"{unique_id}_LG.sdf")
+        lg_pdb_file    = Path(output_dir, id, f"{unique_id}_LG.pdb")
+        lg_pdbqt_file  = Path(output_dir, id, f"{unique_id}_LG.pdbqt")
         pkt_pdb_file   = Path(pkt_file)
-        pkt_pdbqt_file = Path(output_dir, f"{id}_PKT_{unique_id}.pdbqt")
-        qvina_out_file = Path(output_dir, f"{id}_Qvina_{unique_id}.txt")
+        pkt_pdbqt_file = Path(output_dir, id, f"{unique_id}_PKT.pdbqt")
+        qvina_out_file = Path(output_dir, id, f"{unique_id}_Qvina.txt")
         
         
         # Move ligand's center (x,y,z) to pocket's center (x,y,z) so that it falls in 
@@ -329,7 +329,8 @@ def analyze_and_save_controlnet(
     return metrics_dict
 
 
-
+# python eval_analyze_controlnet.py --model_path outputs_selected/controlnet/03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A --load_last --pocket_pdb_dir /mnt/c/Users/PC/Desktop/test_dataset/test_val_paired_files/val_pocket --num_samples_per_pocket 1 --delta_num_atoms 5 --batch_size 2
+# python eval_analyze_controlnet.py --model_path outputs_selected/controlnet/03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A --load_last --pocket_pdb_dir /mnt/c/Users/PC/Desktop/test_dataset/test_val_paired_files/val_pocket --num_samples_per_pocket 3 --delta_num_atoms 5 --batch_size 3 --connectivity_thres 0.7
 
 def main():
     parser = argparse.ArgumentParser()

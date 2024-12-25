@@ -568,14 +568,15 @@ def compute_qvina2_score(
         subprocess.run(prep_pkt_cmd, shell=True)
 
         # run QuickVina 2
-        out = os.popen(
-            f'./analysis/qvina/qvina2.1 --receptor {pkt_pdbqt_file} '
-            f'--ligand {lg_pdbqt_file} '
-            f'--center_x {cx:.4f} --center_y {cy:.4f} --center_z {cz:.4f} '
-            f'--size_x {size} --size_y {size} --size_z {size} '
-            f'--exhaustiveness {exhaustiveness}'
+        qvina_cmd = \
+            f'./analysis/qvina/qvina2.1 --receptor {pkt_pdbqt_file} ' + \
+            f'--ligand {lg_pdbqt_file} ' + \
+            f'--center_x {cx:.4f} --center_y {cy:.4f} --center_z {cz:.4f} ' + \
+            f'--size_x {size} --size_y {size} --size_z {size} ' + \
+            f'--exhaustiveness {exhaustiveness} ' + \
             f'--seed {seed}'
-        ).read()
+        print(qvina_cmd)
+        out = os.popen(qvina_cmd).read()
         print(out)
         with open(str(qvina_out_file), 'w') as f:
             print(out, file=f)
