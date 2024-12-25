@@ -10,6 +10,8 @@ proj_name: Control-GeoLDM
 # exp_name: AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_8x
 # exp_name: AMP__02_LDM_vaenorm_True10__float32__latent2_nf256_epoch200_bs36_lr1e-4_NoEMA__VAE_DecOnly_KL-0__20240623__10A_9x
 exp_name: test_20241225
+# wandb reference run:
+# https://wandb.ai/gohyixian456/Control-GeoLDM/runs/md0fv673?nw=nwusergohyixian456
 
 
 
