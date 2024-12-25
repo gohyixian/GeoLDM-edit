@@ -1711,7 +1711,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         print(f"[LDM] loss_ld           : {loss_ld.mean().item()}")
         print(f"[LDM] loss_recon        : {torch.tensor(float(loss_recon)).mean().item()}")
         print(f"[LDM] neg_log_constants : {neg_log_constants.mean().item()}")
-        print(f"neg_log_pxh             : {neg_log_pxh.mean().item()}")
+        print(f"[LDM] neg_log_pxh       : {neg_log_pxh.mean().item()}")
 
         if loss_analysis:
             return neg_log_pxh, loss_dict   # negatve log likelihood

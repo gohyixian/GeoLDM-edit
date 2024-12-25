@@ -38,6 +38,10 @@ def compute_loss_and_nll(args, generative_model, nodes_dist, x, h, node_mask, ed
 
         assert nll.size() == log_pN.size()
         nll = nll - log_pN
+        
+        # ~!wt
+        print(f"[LOSS] log_pN : {torch.tensor(float(log_pN)).mean().item()}")
+        print(f"[LOSS] nll    : {nll.mean().item()}")
 
         # Average over batch.
         nll = nll.mean(0)
