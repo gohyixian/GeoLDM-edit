@@ -398,6 +398,9 @@ def main():
             if (args.training_mode in args.loss_analysis_modes) and args.loss_analysis:
                 wandb.log(test_dict, commit=True)
                 wandb.log(val_dict, commit=True)
+        
+        # ~!wt
+        break
 
 
 if __name__ == "__main__":
