@@ -220,7 +220,7 @@ def compute_qvina2_score(
         if cleanup_files:
             lg_pdb_file.unlink()
             lg_pdbqt_file.unlink()
-            pkt_pdbqt_file.unlink()
+            # pkt_pdbqt_file.unlink()
     
     filtered_scores = [score for score in scores if not np.isnan(score)]
     scores_average = sum(filtered_scores) / len(filtered_scores) if filtered_scores else float('nan')
