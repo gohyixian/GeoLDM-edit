@@ -166,6 +166,10 @@ def get_latent_diffusion(args, device, dataset_info):
             flow_state_dict = torch.load(join(args.ae_path, fn),
                                             map_location=device)
             first_stage_model.load_state_dict(flow_state_dict)
+        else:
+            print(f"[No VAE weights given, please load manually!]")
+    else:
+        print(f"[No VAE weights given, please load manually!]")
 
     # Create the second stage model (Latent Diffusions).
     args.latent_nf = first_stage_args.latent_nf
@@ -393,6 +397,10 @@ def get_ligand_autoencoder(args, device, ligand_dataset_info):
             flow_state_dict = torch.load(join(args.ligand_ae_path, fn),
                                             map_location=device)
             ligand_ae_model.load_state_dict(flow_state_dict)
+        else:
+            print(f"[No Ligand VAE weights given, please load manually!]")
+    else:
+        print(f"[No Ligand VAE weights given, please load manually!]")
 
     return ligand_ae_model, ligand_nodes_dist, ligand_prop_dist
 
@@ -430,6 +438,10 @@ def get_pocket_autoencoder(args, device, pocket_dataset_info, ae_path=None, ae_c
             flow_state_dict = torch.load(join(ae_path, fn),
                                             map_location=device)
             pocket_ae_model.load_state_dict(flow_state_dict)
+        else:
+            print(f"[No Pocket VAE weights given, please load manually!]")
+    else:
+        print(f"[No Pocket VAE weights given, please load manually!]")
 
     return pocket_ae_model, pocket_nodes_dist, pocket_prop_dist
 
