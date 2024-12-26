@@ -198,6 +198,7 @@ def compute_qvina2_score(
         
         # clean up
         if cleanup_files:
+            lg_sdf_file.unlink()
             lg_pdb_file.unlink()
             lg_pdbqt_file.unlink()
             # pkt_pdbqt_file.unlink()
