@@ -132,7 +132,10 @@ def add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_data
     if not hasattr(args, 'error_h_weight'):
         args.error_h_weight = None
 
-
+    # [Pocket VAE] model
+    if not hasattr(args.pocket_vae, 'model'):
+        args.pocket_vae.model = "egnn_dynamics"
+    
     # [Pocket VAE] scaling of coordinates/x
     if not hasattr(args.pocket_vae, 'vae_normalize_x'):
         args.pocket_vae.vae_normalize_x = False
