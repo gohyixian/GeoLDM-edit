@@ -314,6 +314,9 @@ pocket_vae:
     # can contain multiple: homo | onehot | lumo | num_atoms | etc
     conditioning: []
 
+    # egnn_dynamics
+    model: egnn_dynamics
+
     # include atom charge, according to periodic table
     include_charges: false
 
