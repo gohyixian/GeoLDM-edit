@@ -1,5 +1,4 @@
 import numpy as np
-import getpass
 import os
 import re
 import torch

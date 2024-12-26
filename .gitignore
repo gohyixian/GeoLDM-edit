@@ -79,3 +79,8 @@ deployment/**/*.pdb
 deployment/**/*.pdbqt
 
 deployment/models/controlnet/*
+
+deployment/tmp/*
+
+.gradio
+.gradio/*

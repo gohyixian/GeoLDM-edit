@@ -71,3 +71,12 @@ Information (optional):
   --help_advanced                       display usage summary with advanced 
                                         options
   --version                             display program version
+
+
+
+## OS & Architecture Support
+============================
+>> file ./analysis/qvina/qvina2.1
+
+./analysis/qvina/qvina2.1: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, 
+for GNU/Linux 2.6.32, BuildID[sha1]=2df3f7c728efdcb2985dff5db6a2286f3265a8fd, with debug_info, not stripped
