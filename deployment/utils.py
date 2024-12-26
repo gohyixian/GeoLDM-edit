@@ -67,7 +67,7 @@ def approximate_max_batch_size(
         smi_txt = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE).stdout.decode('utf-8')
         gpu_info = get_nvidia_smi_usage(smi_txt)
         
-        available_mem = min([d['total_mem'] for d in gpu_info])
+        available_mem = min([gpu_info[d]['total_mem'] for d in gpu_info.keys()])
     # cpu
     else:
         available_mem = 10000  # assume 10GB (in MiB)

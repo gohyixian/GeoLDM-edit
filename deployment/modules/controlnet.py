@@ -307,11 +307,11 @@ def analyze_and_save_controlnet(
     
     # save raw molecules to sdf
     saved_mols = save_mols_to_sdf(molecules, dataset_info, sdf_filenames)
-    metrics_dict['num_samples_generated'] = len(saved_mols)
     
     # compute basic metrics
     metrics_dict = compute_molecule_metrics(molecules, dataset_info)
-    
+    metrics_dict['num_samples_generated'] = len(saved_mols)
+  
     if not disable_qvina:
         # create folder to save docked molecules
         docked_output_dir = str(Path(output_dir, "docked"))
@@ -567,9 +567,10 @@ def init_model_and_sample(
         print_multi(f"LogP             : {metrics_dict['logP']}")
         print_multi(f"Lipinski         : {metrics_dict['lipinski']}")
         print_multi(f"──────────────────────────────────────────")
-        print_multi(f"Qvina            : {metrics_dict['Qvina2']}")
-        print_multi(f"Qvina No. Docked : {metrics_dict['Qvina2_Num_Docked']}")
-        print_multi(f"──────────────────────────────────────────")
+        if compute_qvina:
+            print_multi(f"Qvina            : {metrics_dict['Qvina2']}")
+            print_multi(f"Qvina No. Docked : {metrics_dict['Qvina2_Num_Docked']}")
+            print_multi(f"──────────────────────────────────────────")
         print_multi(f"\n\n")
         print_multi(f"Pocket Data Dir:")
         print_multi(f"{pocket_pdb_dir}")
@@ -619,24 +620,24 @@ def init_model_and_sample(
             "Lipinski"
         ],
         "Values": [
-            metrics_dict['num_samples_generated'],
-            metrics_dict['mol_stable'],
-            metrics_dict['atm_stable'],
-            metrics_dict['validity'],
-            metrics_dict['uniqueness'],
-            metrics_dict['diversity'],
-            metrics_dict['connectivity'],
-            metrics_dict['QED'],
-            metrics_dict['SA'],
-            metrics_dict['logP'],
-            metrics_dict['lipinski']
+            f"{metrics_dict['num_samples_generated']}",
+            f"{metrics_dict['mol_stable']:.4f}",
+            f"{metrics_dict['atm_stable']:.4f}",
+            f"{metrics_dict['validity']:.4f}",
+            f"{metrics_dict['uniqueness']:.4f}",
+            f"{metrics_dict['diversity']:.4f}",
+            f"{metrics_dict['connectivity']:.4f}",
+            f"{metrics_dict['QED']:.4f}",
+            f"{metrics_dict['SA']:.4f}",
+            f"{metrics_dict['logP']:.4f}",
+            f"{metrics_dict['lipinski']:.4f}"
         ]
     }
     if compute_qvina:
         metrics_df["Metrics"].append("Qvina")
         metrics_df["Metrics"].append("Qvina No. Docked")
-        metrics_df["Values"].append(metrics_dict['Qvina2'])
-        metrics_df["Values"].append(metrics_dict['Qvina2_Num_Docked'])
+        metrics_df["Values"].append(f"{metrics_dict['Qvina2']:.4f}")
+        metrics_df["Values"].append(f"{metrics_dict['Qvina2_Num_Docked']}")
     
     metrics_df = pd.DataFrame(metrics_df)
     

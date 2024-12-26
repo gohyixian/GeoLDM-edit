@@ -1,6 +1,7 @@
 import os
 import time
 import shutil
+import argparse
 import gradio as gr
 from pathlib import Path
 import plotly.graph_objects as go
@@ -8,6 +9,10 @@ import plotly.graph_objects as go
 from deployment.modules.controlnet import init_model_and_sample
 from deployment.utils import get_available_models, approximate_max_batch_size, get_model_n_nodes_distribution, zip_folder, get_empty_metrics_df
 
+
+parser = argparse.ArgumentParser(description='Control-GeoLDM Deployment')
+parser.add_argument('-p', '--public', action='store_true',help='Spits out a public URL that can be accessed for 72 hours.')
+opt = parser.parse_args()
 
 # model directory
 MODEL_ZOO = "./deployment/models/controlnet"
@@ -263,7 +268,7 @@ with gr.Blocks(title=TAB_TITLE) as app:
         with gr.Row():
             delta_atoms = gr.Slider(minimum=0, maximum=MAX_DELTA_NUM_ATOMS, step=1, value=5, label="Delta Number of Atoms per Ligand", visible=True)
         with gr.Row():
-            specific_atoms = gr.Slider(minimum=1, maximum=MAX_NUM_ATOMS_PER_LIGAND, value=30, label="Number of Atoms per Ligand", visible=False)
+            specific_atoms = gr.Slider(minimum=1, maximum=MAX_NUM_ATOMS_PER_LIGAND, value=30, step=1, label="Number of Atoms per Ligand", visible=False)
 
 
         # </br>
@@ -358,5 +363,6 @@ with gr.Blocks(title=TAB_TITLE) as app:
         pass
 
 app.launch(
-    favicon_path=TAB_FAVICON
+    favicon_path=TAB_FAVICON,
+    share=opt.public
 )
