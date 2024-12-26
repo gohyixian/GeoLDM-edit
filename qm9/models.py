@@ -1,15 +1,16 @@
+import os
+import pickle
+from os.path import join
+from copy import deepcopy
+
 import torch
+import numpy as np
 from torch.distributions.categorical import Categorical
 
-import numpy as np
 from egnn.models import EGNN_dynamics_QM9, EGNN_encoder_QM9, EGNN_decoder_QM9, EGNN_dynamics_fusion, ControlNet_Module_Wrapper
-
 from equivariant_diffusion.en_diffusion import EnVariationalDiffusion, EnHierarchicalVAE, EnLatentDiffusion
 from equivariant_diffusion.control_en_diffusion import ControlEnLatentDiffusion
 
-from copy import deepcopy
-import pickle
-from os.path import join
 
 def get_model(args, device, dataset_info, dataloader_train):
     histogram = dataset_info['n_nodes']
@@ -152,18 +153,19 @@ def get_latent_diffusion(args, device, dataset_info):
     first_stage_model.to(device)
 
     if args.ae_path is not None:   # null
-        if hasattr(args, 'ae_ckpt'):
-            if args.ae_ckpt is not None:
-                fn = str(args.ae_ckpt)
+        if os.path.exists(args.ae_path):
+            if hasattr(args, 'ae_ckpt'):
+                if args.ae_ckpt is not None:
+                    fn = str(args.ae_ckpt)
+                else:
+                    fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
             else:
                 fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
-        else:
-            fn = 'generative_model_ema.npy' if first_stage_args.ema_decay > 0 else 'generative_model.npy'
 
-        print(f"[Loading VAE weights from {join(args.ae_path, fn)} ]")
-        flow_state_dict = torch.load(join(args.ae_path, fn),
-                                        map_location=device)
-        first_stage_model.load_state_dict(flow_state_dict)
+            print(f"[Loading VAE weights from {join(args.ae_path, fn)} ]")
+            flow_state_dict = torch.load(join(args.ae_path, fn),
+                                            map_location=device)
+            first_stage_model.load_state_dict(flow_state_dict)
 
     # Create the second stage model (Latent Diffusions).
     args.latent_nf = first_stage_args.latent_nf
@@ -272,17 +274,20 @@ def get_controlled_latent_diffusion(args, device, ligand_dataset_info, pocket_da
         if hasattr(args, 'ldm_path'):
             # controlnet training: load trained LDM weights
             if args.ldm_path is not None:
-                if hasattr(args, 'ldm_ckpt'):
-                    if args.ldm_ckpt is not None:
-                        fn = str(args.ldm_ckpt)
+                if os.path.exists(args.ldm_path):
+                    if hasattr(args, 'ldm_ckpt'):
+                        if args.ldm_ckpt is not None:
+                            fn = str(args.ldm_ckpt)
+                        else:
+                            fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
                     else:
                         fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
-                else:
-                    fn = 'generative_model_ema.npy' if args.ema_decay > 0 else 'generative_model.npy'
 
-                print(f"[Loading LDM weights from {join(args.ldm_path, fn)} ]")
-                flow_state_dict = torch.load(join(args.ldm_path, fn), map_location=device)
-                vdm.load_state_dict(flow_state_dict)
+                    print(f"[Loading LDM weights from {join(args.ldm_path, fn)} ]")
+                    flow_state_dict = torch.load(join(args.ldm_path, fn), map_location=device)
+                    vdm.load_state_dict(flow_state_dict)
+                else:
+                    print(f"[No LDM weights given, please load manually!]")
             else:
                 print(f"[No LDM weights given, please load manually!]")
         else:
@@ -356,8 +361,11 @@ def get_controlled_latent_diffusion(args, device, ligand_dataset_info, pocket_da
 def get_ligand_autoencoder(args, device, ligand_dataset_info):
     # Create (and load) the first stage model (Autoencoder).
     if args.ligand_ae_path is not None:
-        with open(join(args.ligand_ae_path, 'args.pickle'), 'rb') as f:
-            ligand_ae_args = pickle.load(f)
+        if os.path.exists(args.ligand_ae_path):
+            with open(join(args.ligand_ae_path, 'args.pickle'), 'rb') as f:
+                ligand_ae_args = pickle.load(f)
+        else:
+            ligand_ae_args = args
     else:
         ligand_ae_args = args
     
@@ -372,18 +380,19 @@ def get_ligand_autoencoder(args, device, ligand_dataset_info):
     ligand_ae_model.to(device)
 
     if args.ligand_ae_path is not None:   # null
-        if hasattr(args, 'ligand_ae_ckpt'):
-            if args.ligand_ae_ckpt is not None:
-                fn = str(args.ligand_ae_ckpt)
+        if os.path.exists(args.ligand_ae_path):
+            if hasattr(args, 'ligand_ae_ckpt'):
+                if args.ligand_ae_ckpt is not None:
+                    fn = str(args.ligand_ae_ckpt)
+                else:
+                    fn = 'generative_model_ema.npy' if ligand_ae_args.ema_decay > 0 else 'generative_model.npy'
             else:
                 fn = 'generative_model_ema.npy' if ligand_ae_args.ema_decay > 0 else 'generative_model.npy'
-        else:
-            fn = 'generative_model_ema.npy' if ligand_ae_args.ema_decay > 0 else 'generative_model.npy'
 
-        print(f"[Loading Ligand VAE weights from {join(args.ligand_ae_path, fn)} ]")
-        flow_state_dict = torch.load(join(args.ligand_ae_path, fn),
-                                        map_location=device)
-        ligand_ae_model.load_state_dict(flow_state_dict)
+            print(f"[Loading Ligand VAE weights from {join(args.ligand_ae_path, fn)} ]")
+            flow_state_dict = torch.load(join(args.ligand_ae_path, fn),
+                                            map_location=device)
+            ligand_ae_model.load_state_dict(flow_state_dict)
 
     return ligand_ae_model, ligand_nodes_dist, ligand_prop_dist
 
@@ -392,8 +401,11 @@ def get_ligand_autoencoder(args, device, ligand_dataset_info):
 def get_pocket_autoencoder(args, device, pocket_dataset_info, ae_path=None, ae_ckpt=None):
     # Create (and load) the first stage model (Autoencoder).
     if ae_path is not None:
-        with open(join(ae_path, 'args.pickle'), 'rb') as f:
-            pocket_ae_args = pickle.load(f)
+        if os.path.exists(ae_path):
+            with open(join(ae_path, 'args.pickle'), 'rb') as f:
+                pocket_ae_args = pickle.load(f)
+        else:
+            pocket_ae_args = args
     else:
         pocket_ae_args = args
     
@@ -408,15 +420,16 @@ def get_pocket_autoencoder(args, device, pocket_dataset_info, ae_path=None, ae_c
     pocket_ae_model.to(device)
 
     if ae_path is not None:
-        if ae_ckpt is not None:
-            fn = str(ae_ckpt)
-        else:
-            fn = 'generative_model_ema.npy' if pocket_ae_args.ema_decay > 0 else 'generative_model.npy'
+        if os.path.exists(ae_path):
+            if ae_ckpt is not None:
+                fn = str(ae_ckpt)
+            else:
+                fn = 'generative_model_ema.npy' if pocket_ae_args.ema_decay > 0 else 'generative_model.npy'
 
-        print(f"[Loading Pocket VAE weights from {join(ae_path, fn)} ]")
-        flow_state_dict = torch.load(join(ae_path, fn),
-                                        map_location=device)
-        pocket_ae_model.load_state_dict(flow_state_dict)
+            print(f"[Loading Pocket VAE weights from {join(ae_path, fn)} ]")
+            flow_state_dict = torch.load(join(ae_path, fn),
+                                            map_location=device)
+            pocket_ae_model.load_state_dict(flow_state_dict)
 
     return pocket_ae_model, pocket_nodes_dist, pocket_prop_dist
 
