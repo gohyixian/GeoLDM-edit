@@ -1,7 +1,6 @@
 import os
 import time
 import shutil
-import pandas as pd
 import gradio as gr
 from pathlib import Path
 import plotly.graph_objects as go
