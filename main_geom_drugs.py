@@ -399,8 +399,8 @@ def main():
                 wandb.log(test_dict, commit=True)
                 wandb.log(val_dict, commit=True)
         
-        # ~!wt
-        break
+        # # ~!wt
+        # break
 
 
 if __name__ == "__main__":

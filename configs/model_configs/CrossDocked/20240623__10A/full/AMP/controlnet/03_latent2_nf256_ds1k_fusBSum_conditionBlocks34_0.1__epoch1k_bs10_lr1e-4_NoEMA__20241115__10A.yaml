@@ -210,19 +210,18 @@ diffusion_loss_type: l2
 # number of latent features, default 4
 latent_nf: 2
 
-# VAE configs below will be overriden by the original VAE's configs (.pkl file)
 # normalize factors for [x, h_cat/categorical/one-hot, h_int/integer/charges]
 normalize_factors: [1, 4, 10]
 
-# vae_normalize_x: true
-# vae_normalize_method: scale     # scale | linear
-# vae_normalize_factors: [10, 1, 1]
+vae_normalize_x: true
+vae_normalize_method: scale     # scale | linear
+vae_normalize_factors: [10, 1, 1]
 
-# reweight_class_loss: null  # "inv_class_freq"
-# smoothing_factor: 1.0      # [0.1 - 1.0) 1.0 is essentially disabling
+reweight_class_loss: "inv_class_freq"
+smoothing_factor: 0.25     # [0.1 - 1.0) 1.0 is essentially disabling
 
-# error_x_weight: null    # error_x custom weighting
-# error_h_weight: null
+error_x_weight: 10    # error_x custom weighting
+error_h_weight: 5
 
 
 # ========================================================================================================== Network Architecture

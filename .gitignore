@@ -61,3 +61,21 @@ eval_ldm/*
 eval_controlnet/*
 
 *.xyz
+
+
+
+deployment/**/*.pickle
+deployment/**/*.pkl
+deployment/**/*.npy
+deployment/**/*.npz
+deployment/**/*.pth
+deployment/**/*.pt
+
+deployment/**/*.csv
+deployment/**/*.zip
+deployment/**/*.xyz
+deployment/**/*.sdf
+deployment/**/*.pdb
+deployment/**/*.pdbqt
+
+deployment/models/controlnet/*

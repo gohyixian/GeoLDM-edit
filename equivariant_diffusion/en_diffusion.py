@@ -694,11 +694,11 @@ class EnVariationalDiffusion(torch.nn.Module):
         assert error.size() == SNR_weight.size()
         loss_t_larger_than_zero = 0.5 * SNR_weight * error
         
-        # ~!wt
-        print(f"=================================================")
-        print(f"SNR_weight              : {SNR_weight.mean().item()}")
-        print(f"error                   : {error.mean().item()}")
-        print(f"loss_t_larger_than_zero : {loss_t_larger_than_zero.mean().item()}")
+        # # ~!wt
+        # print(f"=================================================")
+        # print(f"SNR_weight              : {SNR_weight.mean().item()}")
+        # print(f"error                   : {error.mean().item()}")
+        # print(f"loss_t_larger_than_zero : {loss_t_larger_than_zero.mean().item()}")
 
         # The _constants_ depending on sigma_0 from the
         # cross entropy term E_q(z0 | x) [log p(x | z0)].
@@ -740,12 +740,12 @@ class EnVariationalDiffusion(torch.nn.Module):
 
             loss = kl_prior + estimator_loss_terms + neg_log_constants + loss_term_0
 
-            # ~!wt
-            print(f"[EVAL] kl_prior             : {kl_prior.mean().item()}")
-            print(f"[EVAL] estimator_loss_terms : {estimator_loss_terms.mean().item()}")
-            print(f"[EVAL] neg_log_constants    : {neg_log_constants.mean().item()}")
-            print(f"[EVAL] loss_term_0          : {loss_term_0.mean().item()}")
-            print(f"[EVAL] loss                 : {loss.mean().item()}")
+            # # ~!wt
+            # print(f"[EVAL] kl_prior             : {kl_prior.mean().item()}")
+            # print(f"[EVAL] estimator_loss_terms : {estimator_loss_terms.mean().item()}")
+            # print(f"[EVAL] neg_log_constants    : {neg_log_constants.mean().item()}")
+            # print(f"[EVAL] loss_term_0          : {loss_term_0.mean().item()}")
+            # print(f"[EVAL] loss                 : {loss.mean().item()}")
 
         else:
             # Computes the L_0 term (even if gamma_t is not actually gamma_0)
@@ -769,11 +769,11 @@ class EnVariationalDiffusion(torch.nn.Module):
 
             loss = kl_prior + estimator_loss_terms + neg_log_constants
 
-            # ~!wt
-            print(f"[TRAIN] kl_prior             : {kl_prior.mean().item()}")
-            print(f"[TRAIN] estimator_loss_terms : {estimator_loss_terms.mean().item()}")
-            print(f"[TRAIN] neg_log_constants    : {neg_log_constants.mean().item()}")
-            print(f"[TRAIN] loss                 : {loss.mean().item()}")
+            # # ~!wt
+            # print(f"[TRAIN] kl_prior             : {kl_prior.mean().item()}")
+            # print(f"[TRAIN] estimator_loss_terms : {estimator_loss_terms.mean().item()}")
+            # print(f"[TRAIN] neg_log_constants    : {neg_log_constants.mean().item()}")
+            # print(f"[TRAIN] loss                 : {loss.mean().item()}")
 
         assert len(loss.shape) == 1, f'{loss.shape} has more than only batch dim.'
 
@@ -1707,11 +1707,11 @@ class EnLatentDiffusion(EnVariationalDiffusion):
 
         neg_log_pxh = loss_ld + loss_recon + neg_log_constants
         
-        # ~!wt
-        print(f"[LDM] loss_ld           : {loss_ld.mean().item()}")
-        print(f"[LDM] loss_recon        : {torch.tensor(float(loss_recon)).mean().item()}")
-        print(f"[LDM] neg_log_constants : {neg_log_constants.mean().item()}")
-        print(f"[LDM] neg_log_pxh       : {neg_log_pxh.mean().item()}")
+        # # ~!wt
+        # print(f"[LDM] loss_ld           : {loss_ld.mean().item()}")
+        # print(f"[LDM] loss_recon        : {torch.tensor(float(loss_recon)).mean().item()}")
+        # print(f"[LDM] neg_log_constants : {neg_log_constants.mean().item()}")
+        # print(f"[LDM] neg_log_pxh       : {neg_log_pxh.mean().item()}")
 
         if loss_analysis:
             return neg_log_pxh, loss_dict   # negatve log likelihood
