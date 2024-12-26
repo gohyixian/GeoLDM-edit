@@ -70,5 +70,5 @@ def main():
     # add missing configs with default values
     args = utils.add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_dataset_info)
 
-    with open('args.pickle', 'wb') as f:
+    with open('./args.pickle', 'wb') as f:
         pickle.dump(args, f)
