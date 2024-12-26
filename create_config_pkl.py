@@ -72,3 +72,7 @@ def main():
 
     with open('./args.pickle', 'wb') as f:
         pickle.dump(args, f)
+
+
+if __name__ == "__main__":
+    main()
