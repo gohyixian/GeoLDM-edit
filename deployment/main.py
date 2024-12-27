@@ -187,7 +187,7 @@ def main_script(
     )
     
     # zip_results
-    zip_filename = str(Path(results_temp_dir, f"{run_name}.zip"))
+    zip_filename = str(Path(TEMP_DIR, f"{run_name}.zip"))
     zip_folder(results_temp_dir, zip_filename)
     
     return zip_filename, METRICS_DF
