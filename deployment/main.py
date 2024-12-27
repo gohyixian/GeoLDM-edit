@@ -202,7 +202,7 @@ with gr.Blocks(title=TAB_TITLE) as app:
             with gr.Column(scale=3, min_width=3*ELEMENT_MIN_WIDTH_PX):
                 with gr.Row():
                     pdb_files = gr.File(label="Upload Protein Pocket PDB Files", file_count="multiple")
-                    output_zip_file = gr.File(label="Download Result", interactive=True)
+                    output_zip_file = gr.File(label="Download Result Files", interactive=True)
             
                 with gr.Row():
                     generate_button = gr.Button("Generate")
