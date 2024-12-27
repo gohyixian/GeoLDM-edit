@@ -239,7 +239,7 @@ with gr.Blocks(title=TAB_TITLE) as app:
                     label="Select Model"
                 )
             with gr.Column(scale=1, min_width=ELEMENT_MIN_WIDTH_PX):
-                model_seed = gr.Number(label="Random Seed (Integer)", value=42)
+                model_seed = gr.Number(label="Random Seed (Integer)", minimum=0, maximum=2**32 - 1, value=42)
             with gr.Column(scale=1, min_width=ELEMENT_MIN_WIDTH_PX):
                 batch_size = gr.Slider(
                     minimum=1, 
@@ -298,7 +298,7 @@ with gr.Blocks(title=TAB_TITLE) as app:
                 remove_nonstd_resi = gr.Checkbox(value=False, label="Removes Non-Standard Amino Acid Residuals from Receptor before Docking", visible=True)
         
         with gr.Row():
-            qvina_seed = gr.Number(label="Random Seed (Integer)", value=42)
+            qvina_seed = gr.Number(label="Random Seed (Integer)", minimum=0, maximum=2**32 - 1, value=42)
             
         with gr.Row():
             with gr.Column(scale=1, min_width=ELEMENT_MIN_WIDTH_PX):
