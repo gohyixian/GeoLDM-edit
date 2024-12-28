@@ -78,7 +78,7 @@ deployment/**/*.sdf
 deployment/**/*.pdb
 deployment/**/*.pdbqt
 
-# deployment/models/controlnet/*
+deployment/models/controlnet/*
 
 deployment/tmp/*
 
