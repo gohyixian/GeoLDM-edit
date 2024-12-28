@@ -82,4 +82,5 @@ WORKDIR ${GITHUB_LOCAL_PATH}
 
 # Set up the container to start Jupyter Notebook server
 # CMD ["/bin/bash"]
-CMD ["/bin/bash", "-c", "source /opt/conda/etc/profile.d/conda.sh && conda activate ${CONDA_ENV_MAIN}"]
+# CMD ["/bin/bash", "-c", "source /opt/conda/etc/profile.d/conda.sh && conda activate ${CONDA_ENV_MAIN}"]
+CMD ["/bin/bash"]
