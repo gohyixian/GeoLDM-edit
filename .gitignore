@@ -78,15 +78,7 @@ deployment/**/*.sdf
 deployment/**/*.pdb
 deployment/**/*.pdbqt
 
-# deployment/models/controlnet/*
-deployment/models/controlnet/**/*.yaml
-deployment/models/controlnet/**/*.yml
-deployment/models/controlnet/**/*.pickle
-deployment/models/controlnet/**/*.pkl
-deployment/models/controlnet/**/*.npy
-deployment/models/controlnet/**/*.npz
-deployment/models/controlnet/**/*.pth
-deployment/models/controlnet/**/*.pt
+deployment/models/controlnet/*
 
 deployment/tmp/*
 
