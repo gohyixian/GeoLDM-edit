@@ -1,1 +1,0 @@
-Place downloaded model weights and configs here
