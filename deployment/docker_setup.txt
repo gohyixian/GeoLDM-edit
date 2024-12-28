@@ -1,0 +1,8 @@
+1. Build Docker Image
+
+cd <here>
+docker build -t geoldm-image .
+
+2. Create new Container based on built Image
+
+docker run --gpus all -it --rm geoldm-image
