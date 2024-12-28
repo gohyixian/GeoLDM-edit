@@ -12,6 +12,7 @@ from deployment.utils import get_available_models, approximate_max_batch_size, g
 
 parser = argparse.ArgumentParser(description='Control-GeoLDM Deployment')
 parser.add_argument('-p', '--public', action='store_true',help='Spits out a public URL that can be accessed for 72 hours.')
+parser.add_argument('-s', '--server_port', type=int, default=7860 ,help='Server port')
 opt = parser.parse_args()
 
 # model directory
@@ -364,5 +365,6 @@ with gr.Blocks(title=TAB_TITLE) as app:
 
 app.launch(
     favicon_path=TAB_FAVICON,
-    share=opt.public
+    share=opt.public,
+    server_port=opt.server_port
 )
