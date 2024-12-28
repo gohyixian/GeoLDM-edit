@@ -1,7 +1,7 @@
-# Use an official NVIDIA CUDA image as a base for PyTorch with CUDA support
+# Use official NVIDIA CUDA image as base
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 
-# Define environment variables
+# Environment variables
 ENV GITHUB_REPO=https://github.com/PIEthonista/GeoLDM-edit
 ENV GITHUB_LOCAL_PATH=/usr/src/geoldm-edit
 ENV HUGGINGFACE_REPO=https://huggingface.co/PIEthonista/control-geoldm-deployment
@@ -10,7 +10,7 @@ ENV CONDA_ENV_MAIN=geoldm
 ENV CONDA_ENV_MGLTOOLS=mgltools-python2
 
 
-# Ensure the system is up-to-date and install required packages
+# Ensure system is up-to-date
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     wget \
@@ -27,18 +27,12 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 # Modify .bashrc to enable conda in non-interactive shells
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
 
-# Create and activate the conda environment
+# Create main conda env and set bash terminal to activate it by default
 RUN conda create -n ${CONDA_ENV_MAIN} python=3.10.13 -y && \
     conda init bash && \
     echo "conda activate ${CONDA_ENV_MAIN}" >> ~/.bashrc
 
-# Initialize conda in bash
-# RUN conda init bash
-
-# RUN conda init
-
-# Install required packages in the conda environment
-# RUN /bin/bash -c "source ~/.bashrc && \
+# Install required packages in the main conda environment
 RUN /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh && \
     conda activate ${CONDA_ENV_MAIN} && \
     conda install -c conda-forge rdkit biopython openbabel -y && \
@@ -48,30 +42,23 @@ RUN /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh && \
         prettytable seaborn scikit-learn==1.5.1 gdown gradio==5.9 plotly==5.24 huggingface && \
     pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
 
-# Create and activate the conda environment
+# Create helper conda env
 RUN conda create -n ${CONDA_ENV_MGLTOOLS} python=2.7 -y && \
     conda init bash
 
-# RUN /bin/bash -c "source ~/.bashrc && \
+# Install required packages in the helper conda environment
 RUN /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh && \
     conda activate ${CONDA_ENV_MGLTOOLS} && \
     conda install -c bioconda mgltools -y"
 
-# Clone the repository
-# RUN git clone https://github.com/PIEthonista/GeoLDM-edit /usr/src/geoldm-edit
+# Clone the code repository
 RUN git clone ${GITHUB_REPO} ${GITHUB_LOCAL_PATH}
 
-# Change directory, make the file executable, and return to the base directory
-# RUN cd /usr/src/geoldm-edit/analysis/qvina && \
-#     chmod +x qvina2.1
+# Modify QuickVina2.1 binaries' permissions to executable
 RUN cd ${GITHUB_LOCAL_PATH}/analysis/qvina && \
     chmod +x qvina2.1
 
-# Clone the huggingface weights (you might need to configure git-lfs for large files)
-# RUN apt-get update && \
-#     apt-get install -y git-lfs && \
-#     git lfs install && \
-#     git clone https://huggingface.co/PIEthonista/control-geoldm-deployment /usr/src/geoldm-edit/deployment/models/controlnet
+# Clone model weights from huggingface
 RUN apt-get update && \
     apt-get install -y git-lfs && \
     git lfs install && \
@@ -80,7 +67,5 @@ RUN apt-get update && \
 # Set working directory
 WORKDIR ${GITHUB_LOCAL_PATH}
 
-# Set up the container to start Jupyter Notebook server
-# CMD ["/bin/bash"]
-# CMD ["/bin/bash", "-c", "source /opt/conda/etc/profile.d/conda.sh && conda activate ${CONDA_ENV_MAIN}"]
+# Set up the container to start with bash terminal
 CMD ["/bin/bash"]
