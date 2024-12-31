@@ -1,8 +1,7 @@
 proj_name: Control-GeoLDM
-# exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
-# exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_1x
-# exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_2x
-exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_3x
+# exp_name: 03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
+# exp_name: 03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_1x
+exp_name: FT_03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_2x
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -34,7 +33,8 @@ trainable_ligand_ae_decoder: false
 trainable_pocket_ae_encoder: false
 
 # Train 2nd stage LDM model
-trainable_ldm: false
+# trainable_ldm: false
+trainable_ldm: true
 
 # Train 3rd stage ControlNet
 trainable_controlnet: true
@@ -263,12 +263,12 @@ aggregation_method: sum
 
 
 # Fusion Block specific settings
-fusion_weights: [0.9, 0.9, 0.9, 0.9]    # [0.25, 0.5, 0.75, 1]
+fusion_weights: [1.0, 1.0, 1.0, 1.0]    # [0.25, 0.5, 0.75, 1]
 # Condition fusion method:
 #  - scaled_sum   : (h1_i,x1_i) = (h1_i,x1_i) + w_i * (f_h1_i,f_x1_i)
 #  - balanced_sum : (h1_i,x1_i) = [(1 - w_i) * (h1_i,x1_i)] + [w_i * (f_h1_i,f_x1_i)]
 #  - replace      : (h1_i,x1_i) = (f_h1_i,f_x1_i)
-fusion_mode: balanced_sum
+fusion_mode: replace
 
 # Initial Noise Injection / Feedback Mechanism
 noise_injection_weights: [0.5, 0.5]       # pkt = w[0]*lg + w[1]*pkt
@@ -290,15 +290,12 @@ n_report_steps: 50
 
 # ========================================================================================================== Saving & Resuming
 # resume: null
-# resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
-# resume_model_ckpt: generative_model_80_iter_133893.npy
-# resume_optim_ckpt: optim_80_iter_133893.npy
-# resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_1x_resume
-# resume_model_ckpt: generative_model_75_iter_125628.npy
-# resume_optim_ckpt: optim_75_iter_125628.npy
-resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_2x_resume
-resume_model_ckpt: generative_model_80_iter_133893.npy
-resume_optim_ckpt: optim_80_iter_133893.npy
+# resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
+# resume_model_ckpt: generative_model_135_iter_224808.npy
+# resume_optim_ckpt: optim_135_iter_224808.npy
+resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_1x_resume
+resume_model_ckpt: generative_model_105_iter_175218.npy
+resume_optim_ckpt: optim_105_iter_175218.npy
 
 save_model: true
 
