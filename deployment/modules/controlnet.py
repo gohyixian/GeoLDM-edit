@@ -163,7 +163,8 @@ def compute_qvina2_score(
         
         # PKT: .pdbqt
         prep_pkt_cmd = f"conda run -n {mgltools_env_name} prepare_receptor4.py -r {pkt_pdb_file} -o {pkt_pdbqt_file}"
-        prep_pkt_cmd += " -A checkhydrogens" if receptor_add_H else ""
+        # prep_pkt_cmd += " -A checkhydrogens" if receptor_add_H else ""
+        prep_pkt_cmd += " -A hydrogens" if receptor_add_H else ""
         prep_pkt_cmd += " -e" if remove_nonstd_resi else ""
         subprocess.run(prep_pkt_cmd, shell=True)
 
@@ -636,7 +637,7 @@ def init_model_and_sample(
     }
     if compute_qvina:
         metrics_df["Metrics"].append("Qvina")
-        metrics_df["Metrics"].append("Qvina No. Docked")
+        metrics_df["Metrics"].append("Qvina No. Docked Samples")
         metrics_df["Values"].append(f"{metrics_dict['Qvina2']:.4f}")
         metrics_df["Values"].append(f"{metrics_dict['Qvina2_Num_Docked']}")
     

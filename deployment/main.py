@@ -37,6 +37,18 @@ MAX_NUM_ATOMS_PER_LIGAND   = 100
 MAX_QVINA_SEARCH_SIZE      = 40
 MAX_QVINA_EXHAUSTIVITY     = 40
 
+# allowed pocket file formats
+ALLOWED_POCKET_FORMATS = [".pdb"]
+
+# uder guideline markdown
+UG_MARKDOWN = "./deployment/README.md"
+
+# override gradio's default LaTeX delimiters for math equations
+MARKDOWN_LATEX_DELIMITERS = \
+    [
+        {"left": "$$", "right": "$$", "display": True},  # center
+        {"left": "$", "right": "$", "display": False}    # inline
+    ]
 
 
 # get available models, approximate maximum batch size 
@@ -195,34 +207,22 @@ def main_script(
     return zip_filename, METRICS_DF
 
 
-
 with gr.Blocks(title=TAB_TITLE) as app:
     gr.Markdown("# Control-GeoLDM")
     
     with gr.Tab("Generation"):
         with gr.Row():
-            with gr.Column(scale=3, min_width=3*ELEMENT_MIN_WIDTH_PX):
+            with gr.Column(scale=4, min_width=4*ELEMENT_MIN_WIDTH_PX):
                 with gr.Row():
-                    pdb_files = gr.File(label="Upload Protein Pocket PDB Files", file_count="multiple")
+                    pdb_files = gr.File(label="Upload Protein Pocket PDB Files", file_count="multiple", file_types=ALLOWED_POCKET_FORMATS)
                     output_zip_file = gr.File(label="Download Result Files", interactive=True)
             
                 with gr.Row():
                     generate_button = gr.Button("Generate")
             
-            with gr.Column(scale=1, min_width=ELEMENT_MIN_WIDTH_PX):
                 with gr.Row():
-                    results_table = gr.DataFrame(value=METRICS_DF, label="Results")
-                    
-                    # def update_table():
-                    #     new_data = {
-                    #         "Name": ["John", "Alice", "Bob", "Eve", "Charlie"],
-                    #         "Age": [28, 24, 35, 29, 23],
-                    #         "City": ["New York", "Los Angeles", "Chicago", "Houston", "Dallas"]
-                    #     }
-                    #     return pd.DataFrame(new_data)
-                    
-                    # update_button = gr.Button("Update Table")
-                    # update_button.click(fn=update_table, outputs=table)
+                    results_table = gr.DataFrame(value=METRICS_DF, label="")
+
 
         # </br>
         with gr.Row():
@@ -362,7 +362,11 @@ with gr.Blocks(title=TAB_TITLE) as app:
         )
 
     with gr.Tab("User Guidelines"):
-        pass
+        with open(UG_MARKDOWN, "r") as f:
+            md_content = f.read()
+        
+        gr.Markdown(md_content, latex_delimiters=MARKDOWN_LATEX_DELIMITERS)
+
 
 app.launch(
     favicon_path=TAB_FAVICON,

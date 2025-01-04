@@ -185,7 +185,7 @@ def get_empty_metrics_df():
                 "LogP",
                 "Lipinski",
                 "Qvina",
-                "Qvina No. Docked"
+                "Qvina No. Docked Samples"
             ],
             "Values": ["-"] * 13
         }
