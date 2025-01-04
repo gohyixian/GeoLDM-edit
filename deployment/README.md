@@ -2,21 +2,70 @@
 
 Welcome to the Control-GeoLDM model interface. Below are some guidelines to help you get started:
 
-### 1. **Upload Protein Pocket Files**: 
+### 1. **Upload Protein Pocket Files**
 - You can upload multiple protein pocket PDB files at once.
 
 </br>
 
-### 2. **Download Results**: 
+### 2. **Download Results**
 - After generation is done, you may download the generated ligand SDF files via the provided zip file. If Docking is performed, the docked ligand and pocket PDBQT files will also be available.
 
 </br>
 
-### 3. **View Metrics**: 
+### 3. **View Metrics**
 - Multiple metrics will also be computed for the generated ligands. You may view them in the <code>Metrics</code> tab. They will also be available in the results zip file.
 
+---
 
 </br>
+
+## Model Configurations
+
+### Model Selection
+- You may select the model to use from the dropdown section. 
+- Models that contain <code>CA</code> in their names are models that will extract the Alpha Carbon atom of each residue in the protein pockets and use them as representation of the pocket during generation. 
+- Models that DO NOT contain <code>CA</code> in their names will use the full atom representation of the pocket during generation.
+
+</br>
+
+### Random Seed
+- Random seed sets the initial seed value for all randomizers used throughout the program. 
+- Different seeds can result in different variations of the generated ligands, even if the same model and protein pocket files are used. 
+- Random seed is strictly a positive integer no larger than <code>4,294,967,295</code>.
+
+</br>
+
+### Batch Size
+- Batch Size controls the number of ligand generations that the model will execute generally. A larger batch size allows for faster computation and has zero effect on the generated ligands. 
+- The maximum batch size allowed for each model differs and depends on the size of the available GPU.
+
+---
+
+</br>
+
+## Ligand Generation Configurations
+
+### Number of Ligand Samples to Generate per Pocket
+- This sets the number of ligand samples to generate for each provided protein pocket.
+
+</br>
+
+### Randomly Sample Number of Atoms per Ligand from Pre-computed Distribution
+- When enabled (set to True), the number of atoms in each generated ligand (not inclusive of Hydrogen atoms) will be sampled from a distribution that was pre-computed based on the model's training dataset. 
+- This distribution provides insights into the typical atom count observed during training, and is visualized as a plot for better understanding.
+
+</br>
+
+### Delta Number of Atoms per Ligand
+- When the random sampling of number of atoms is activated (as described above), the Delta Number of Atoms per Ligand allows you to modify the sampled atom count. 
+- Specifically, this parameter gives you the flexibility to fine-tune the atom count for each generated ligand by applying an increase to the sampled value. The formula for the final number of atoms is given by:
+
+$$N_{final} = N_{sampled} + N_{delta}$$
+​
+
+### Number of Atoms per Ligand
+- This option is only available when the random sampling of number of atoms is deactivated. 
+- This will allow you to manually set the number of atoms for each generated ligand (not inclusive of Hydrogen atoms).
 
 
 ### Math Equations

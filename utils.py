@@ -6,10 +6,10 @@ from torch import nn
 from global_registry import PARAM_REGISTRY
 
 
-def add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_dataset_info):
+def add_missing_configs_controlnet(args, dtype, ligand_dataset_info, pocket_dataset_info, ignore_mixed_precision=False):
 
     # mp autocast dtype
-    if args.mixed_precision_training == True:
+    if (args.mixed_precision_training == True) and not (ignore_mixed_precision):
         if not isinstance(args.mixed_precision_autocast_dtype, torch.dtype):
             _, mp_dtype_name = args.mixed_precision_autocast_dtype.split('.')
             mp_dtype = getattr(torch, mp_dtype_name)

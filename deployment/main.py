@@ -6,8 +6,15 @@ import gradio as gr
 from pathlib import Path
 import plotly.graph_objects as go
 
+from deployment.styles import MARKDOWN_CSS
 from deployment.modules.controlnet import init_model_and_sample
-from deployment.utils import get_available_models, approximate_max_batch_size, get_model_n_nodes_distribution, zip_folder, get_empty_metrics_df
+from deployment.utils import (
+    zip_folder, 
+    get_empty_metrics_df,
+    get_available_models, 
+    approximate_max_batch_size, 
+    get_model_n_nodes_distribution
+)
 
 
 parser = argparse.ArgumentParser(description='Control-GeoLDM Deployment')
@@ -207,7 +214,7 @@ def main_script(
     return zip_filename, METRICS_DF
 
 
-with gr.Blocks(title=TAB_TITLE) as app:
+with gr.Blocks(title=TAB_TITLE, css=MARKDOWN_CSS) as app:
     gr.Markdown("# Control-GeoLDM")
     
     with gr.Tab("Generation"):
@@ -320,7 +327,7 @@ with gr.Blocks(title=TAB_TITLE) as app:
         with open(UG_MARKDOWN, "r") as f:
             md_content = f.read()
         
-        gr.Markdown(md_content, latex_delimiters=MARKDOWN_LATEX_DELIMITERS)
+        gr.Markdown(md_content, latex_delimiters=MARKDOWN_LATEX_DELIMITERS, elem_id="custom-markdown")
 
     # run on app load
     app.load(fn=update_bs_n_nodes_plot, inputs=[selected_model, delta_atoms, batch_size], outputs=[n_nodes_plot, batch_size])
