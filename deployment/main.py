@@ -220,8 +220,8 @@ with gr.Blocks(title=TAB_TITLE) as app:
                 with gr.Row():
                     generate_button = gr.Button("Generate")
             
-                with gr.Row():
-                    results_table = gr.DataFrame(value=METRICS_DF, label="")
+                # with gr.Row():
+                #     results_table = gr.DataFrame(value=METRICS_DF, label="")
 
 
         # </br>
@@ -311,61 +311,66 @@ with gr.Blocks(title=TAB_TITLE) as app:
                 pass
 
 
-        # run on app load
-        app.load(fn=update_bs_n_nodes_plot, inputs=[selected_model, delta_atoms, batch_size], outputs=[n_nodes_plot, batch_size])
-        
-        # run on toggle change
-        delta_atoms.change(
-            fn=update_bs_n_nodes_plot, 
-            inputs=[selected_model, delta_atoms, batch_size], 
-            outputs=[n_nodes_plot, batch_size]
-        )
-        selected_model.change(
-            fn=update_bs_n_nodes_plot, 
-            inputs=[selected_model, delta_atoms, batch_size], 
-            outputs=[n_nodes_plot, batch_size]
-        )
-        random_atoms.change(
-            fn=toggle_random_num_gen_visibility,
-            inputs=random_atoms,
-            outputs=[n_nodes_plot, delta_atoms, specific_atoms]
-        )
-        do_docking_analysis.change(
-            fn=toggle_docking_analysis_visibility,
-            inputs=do_docking_analysis,
-            outputs=[connectivity_threshold, ligand_add_h, receptor_add_h, remove_nonstd_resi, qvina_size, qvina_exhaustiveness, qvina_seed, cleanup_files]
-        )
+    with gr.Tab("Metrics"):
+        with gr.Row():
+            results_table = gr.DataFrame(value=METRICS_DF, label="", max_height=1000)
 
-        # run main script
-        generate_button.click(
-            main_script,
-            inputs=[
-                pdb_files,
-                selected_model,
-                model_seed,
-                batch_size,
-                num_samples_per_pocket,
-                random_atoms,
-                delta_atoms,
-                specific_atoms,
-                do_docking_analysis,
-                connectivity_threshold,
-                qvina_size,
-                qvina_exhaustiveness,
-                ligand_add_h,
-                receptor_add_h,
-                remove_nonstd_resi,
-                qvina_seed,
-                cleanup_files
-            ],
-            outputs=[output_zip_file, results_table]
-        )
 
     with gr.Tab("User Guidelines"):
         with open(UG_MARKDOWN, "r") as f:
             md_content = f.read()
         
         gr.Markdown(md_content, latex_delimiters=MARKDOWN_LATEX_DELIMITERS)
+
+    # run on app load
+    app.load(fn=update_bs_n_nodes_plot, inputs=[selected_model, delta_atoms, batch_size], outputs=[n_nodes_plot, batch_size])
+    
+    # run on toggle change
+    delta_atoms.change(
+        fn=update_bs_n_nodes_plot, 
+        inputs=[selected_model, delta_atoms, batch_size], 
+        outputs=[n_nodes_plot, batch_size]
+    )
+    selected_model.change(
+        fn=update_bs_n_nodes_plot, 
+        inputs=[selected_model, delta_atoms, batch_size], 
+        outputs=[n_nodes_plot, batch_size]
+    )
+    random_atoms.change(
+        fn=toggle_random_num_gen_visibility,
+        inputs=random_atoms,
+        outputs=[n_nodes_plot, delta_atoms, specific_atoms]
+    )
+    do_docking_analysis.change(
+        fn=toggle_docking_analysis_visibility,
+        inputs=do_docking_analysis,
+        outputs=[connectivity_threshold, ligand_add_h, receptor_add_h, remove_nonstd_resi, qvina_size, qvina_exhaustiveness, qvina_seed, cleanup_files]
+    )
+
+    # run main script
+    generate_button.click(
+        main_script,
+        inputs=[
+            pdb_files,
+            selected_model,
+            model_seed,
+            batch_size,
+            num_samples_per_pocket,
+            random_atoms,
+            delta_atoms,
+            specific_atoms,
+            do_docking_analysis,
+            connectivity_threshold,
+            qvina_size,
+            qvina_exhaustiveness,
+            ligand_add_h,
+            receptor_add_h,
+            remove_nonstd_resi,
+            qvina_seed,
+            cleanup_files
+        ],
+        outputs=[output_zip_file, results_table]
+    )
 
 
 app.launch(

@@ -37,7 +37,7 @@ RUN /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh && \
     conda activate ${CONDA_ENV_MAIN} && \
     conda install -c conda-forge rdkit biopython openbabel -y && \
     conda install pathtools==0.1.2 -y && \
-    pip install imageio numpy==1.23.3 scipy tqdm wandb==0.13.4 msgpack rdkit \
+    pip install imageio numpy==1.23.3 scipy tqdm wandb==0.13.4 msgpack rdkit networkx \
         matplotlib==3.5.2 matplotlib-inline==0.1.6 chardet periodictable ipykernel jupyter notebook \
         prettytable seaborn scikit-learn==1.5.1 gdown gradio==5.9 plotly==5.24 huggingface && \
     pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu113"

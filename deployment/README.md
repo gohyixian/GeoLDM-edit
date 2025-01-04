@@ -2,8 +2,22 @@
 
 Welcome to the Control-GeoLDM model interface. Below are some guidelines to help you get started:
 
-1. **Upload Protein Pocket Files**: You can upload multiple PDB files at once.
-2. **Download Results**: After generating the results, download them via the link below.
+### 1. **Upload Protein Pocket Files**: 
+- You can upload multiple protein pocket PDB files at once.
+
+</br>
+
+### 2. **Download Results**: 
+- After generation is done, you may download the generated ligand SDF files via the provided zip file. If Docking is performed, the docked ligand and pocket PDBQT files will also be available.
+
+</br>
+
+### 3. **View Metrics**: 
+- Multiple metrics will also be computed for the generated ligands. You may view them in the <code>Metrics</code> tab. They will also be available in the results zip file.
+
+
+</br>
+
 
 ### Math Equations
 
