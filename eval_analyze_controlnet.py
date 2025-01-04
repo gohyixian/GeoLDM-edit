@@ -183,7 +183,8 @@ def compute_qvina2_score(
         
         # PKT: .pdbqt
         prep_pkt_cmd = f"conda run -n {mgltools_env_name} prepare_receptor4.py -r {pkt_pdb_file} -o {pkt_pdbqt_file}"
-        prep_pkt_cmd += " -A checkhydrogens" if receptor_add_H else ""
+        # prep_pkt_cmd += " -A checkhydrogens" if receptor_add_H else ""
+        prep_pkt_cmd += " -A hydrogens" if receptor_add_H else ""
         prep_pkt_cmd += " -e" if remove_nonstd_resi else ""
         subprocess.run(prep_pkt_cmd, shell=True)
 
@@ -361,9 +362,9 @@ def main():
     parser.add_argument('--connectivity_thres', type=float, default=1.,
                         help='Size of largest fragment in molecule for the molecule to be considered connected')
     parser.add_argument('--ligand_add_H', action='store_true',
-                        help='Adds Hydrogen atoms to ligands before docking with Qvina2.1')
+                        help='Adds Polar Hydrogen atoms to ligands before docking with Qvina2.1')
     parser.add_argument('--receptor_add_H', action='store_true',
-                        help='Adds Hydrogen atoms to pocket / receptor before docking with Qvina2.1')
+                        help='Adds Polar Hydrogen atoms to pocket / receptor before docking with Qvina2.1')
     parser.add_argument('--remove_nonstd_resi', action='store_true',
                         help='Removes any non-standard pocket residues')
     parser.add_argument('--size', type=int, default=20,

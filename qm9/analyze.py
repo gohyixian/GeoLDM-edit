@@ -563,7 +563,8 @@ def compute_qvina2_score(
         
         # PKT: .pdbqt
         prep_pkt_cmd = f"conda run -n {mgltools_env_name} prepare_receptor4.py -r {pkt_pdb_file} -o {pkt_pdbqt_file}"
-        prep_pkt_cmd += " -A checkhydrogens" if receptor_add_H else ""
+        # prep_pkt_cmd += " -A checkhydrogens" if receptor_add_H else ""
+        prep_pkt_cmd += " -A hydrogens" if receptor_add_H else ""
         prep_pkt_cmd += " -e" if remove_nonstd_resi else ""
         subprocess.run(prep_pkt_cmd, shell=True)
 
