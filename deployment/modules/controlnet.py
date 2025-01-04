@@ -158,13 +158,13 @@ def compute_qvina2_score(
         # LG: .pdbqt (add charges and torsions)
         cd_cmd = f"cd {os.path.dirname(lg_pdb_file)}"
         prep_lg_cmd = f"{cd_cmd} && conda run -n {mgltools_env_name} prepare_ligand4.py -l {os.path.basename(lg_pdb_file)} -o {os.path.basename(lg_pdbqt_file)}"
-        prep_lg_cmd += " -A hydrogens -U waters_nonstdres" if ligand_add_H else ""
+        prep_lg_cmd += " -A hydrogens" if ligand_add_H else ""
         subprocess.run(prep_lg_cmd, shell=True)
         
         # PKT: .pdbqt
         prep_pkt_cmd = f"conda run -n {mgltools_env_name} prepare_receptor4.py -r {pkt_pdb_file} -o {pkt_pdbqt_file}"
         # prep_pkt_cmd += " -A checkhydrogens" if receptor_add_H else ""
-        prep_pkt_cmd += " -A hydrogens -U waters_nonstdres" if receptor_add_H else ""
+        prep_pkt_cmd += " -A hydrogens" if receptor_add_H else ""
         prep_pkt_cmd += " -e" if remove_nonstd_resi else ""
         subprocess.run(prep_pkt_cmd, shell=True)
 
