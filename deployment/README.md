@@ -29,7 +29,7 @@ Welcome to the Control-GeoLDM model interface. Below are some guidelines to help
 </br>
 
 ### Random Seed
-- Random seed sets the initial seed value for all randomizers used throughout the program. 
+- Random seed sets the initial seed value for all randomizers used throughout the program other than Docking Analysis. 
 - Different seeds can result in different variations of the generated ligands, even if the same model and protein pocket files are used. 
 - Random seed is strictly a positive integer no larger than <code>4,294,967,295</code>.
 
@@ -58,7 +58,7 @@ Welcome to the Control-GeoLDM model interface. Below are some guidelines to help
 
 ### Delta Number of Atoms per Ligand
 - When the random sampling of number of atoms is activated (as described above), the Delta Number of Atoms per Ligand allows you to modify the sampled atom count. 
-- Specifically, this parameter gives you the flexibility to fine-tune the atom count for each generated ligand by applying an increase to the sampled value. The formula for the final number of atoms is given by:
+- Specifically, this parameter gives you the flexibility to fine-tune the atom count for each generated ligand by applying an increase to the sampled value. The final number of atoms is given by:
 
 $$N_{final} = N_{sampled} + N_{delta}$$
 ​
@@ -67,6 +67,63 @@ $$N_{final} = N_{sampled} + N_{delta}$$
 - This option is only available when the random sampling of number of atoms is deactivated. 
 - This will allow you to manually set the number of atoms for each generated ligand (not inclusive of Hydrogen atoms).
 
+---
+
+</br>
+
+## Docking Analysis Configurations
+
+Docking Analysis will be performed using [QuickVina2.1](https://github.com/QVina/qvina/raw/master/bin/)
+
+</br>
+
+### Molecule Fragment Size
+- This threshold filters and retains generated ligands that have the largest fully connected fragments equal to or above this connectivity threshold for docking analysis.
+
+</br>
+
+### Search Space XYZ Dimensions (Angstroms)
+- Dimensions of the docking search space (cuboid) in Angstroms.
+
+</br>
+
+### Search Exhaustiveness
+- Exhaustiveness of the docking global search, roughly proportional to computation time.
+
+</br>
+
+### Add Polar Hydrogens to Ligand / Receptor before Docking
+- If enabled, this step will add Polar Hydrogens to the ligands / protein pockets before docking. Gasteiger charges will also be applied.
+
+</br>
+
+### Remove Non-Standard Amino Acid Residuals from Receptor before Docking
+- If enabled, this step will remove any residue from any chain in the protein pockets before docking if its name is not in the below:
+
+| CYS | ILE | SER | VAL |
+|-----|-----|-----|-----|
+| GLN | LYS | ASN | PRO |
+| THR | PHE | ALA | HIS |
+| GLY | ASP | LEU | ARG |
+| TRP | GLU | TYR | MET |
+| HID | HSP | HIE | HIP |
+| CYX | CSS |     |     |
+
+</br>
+
+### Random Seed
+- Sets the initial seed value for randomizers used in the Docking Analysis. 
+- Different seeds can result in different variations of the docked ligand poses, even if the same model and protein pocket files are used. 
+- Random seed is strictly a positive integer no larger than <code>4,294,967,295</code>.
+
+</br>
+
+### Cleanup Intermediate Files after Docking
+- If enabled, cleans up the ligand and protein pockets' intermediate conversion files during preprocessing for Docking Analysis.
+
+</br>
+
+---
 
 ### Math Equations
 

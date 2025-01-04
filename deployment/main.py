@@ -304,7 +304,7 @@ with gr.Blocks(title=TAB_TITLE, css=MARKDOWN_CSS) as app:
             with gr.Column(scale=1, min_width=ELEMENT_MIN_WIDTH_PX):
                 ligand_add_h = gr.Checkbox(value=True, label="Add Polar Hydrogens to Ligand before Docking", visible=True)
                 receptor_add_h = gr.Checkbox(value=True, label="Add Polar Hydrogens to Receptor before Docking", visible=True)
-                remove_nonstd_resi = gr.Checkbox(value=False, label="Removes Non-Standard Amino Acid Residuals from Receptor before Docking", visible=True)
+                remove_nonstd_resi = gr.Checkbox(value=False, label="Remove Non-Standard Amino Acid Residuals from Receptor before Docking", visible=True)
         
         with gr.Row():
             qvina_seed = gr.Number(label="Random Seed (Integer)", minimum=0, maximum=2**32 - 1, value=42)
