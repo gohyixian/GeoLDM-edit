@@ -413,7 +413,7 @@ def main():
     torch.set_default_dtype(args.dtype)
 
     # Add missing configs with default values
-    args = utils.add_missing_configs_controlnet(args, args.dtype, ligand_dataset_info, pocket_dataset_info)
+    args = utils.add_missing_configs_controlnet(args, args.dtype, ligand_dataset_info, pocket_dataset_info, ignore_mixed_precision=True)
 
     # Create params global registry for easy access
     PARAM_REGISTRY.update_from_config(args)
