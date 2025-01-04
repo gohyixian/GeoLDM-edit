@@ -22,9 +22,9 @@
 ```bash
 docker login
 
-docker tag control-geoldm yixian02/control-geoldm:latest
+docker tag control-geoldm yixian02/control-geoldm:cu118
 
-docker push yixian02/control-geoldm:latest
+docker push yixian02/control-geoldm:cu118
 ```
 Verify your push <a href='https://hub.docker.com/u/yixian02'>here</a>.
 
@@ -32,9 +32,9 @@ Verify your push <a href='https://hub.docker.com/u/yixian02'>here</a>.
 
 # Pulling and Running the built image from DockerHub
 ```bash
-docker pull yixian02/control-geoldm:latest
+docker pull yixian02/control-geoldm:cu118
 
-docker run --gpus all -it --rm -p 7860:7860 yixian02/control-geoldm /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate geoldm && python -m deployment.main -u -a 0.0.0.0 -p 7860"
+docker run --gpus all -it --rm -p 7860:7860 yixian02/control-geoldm:cu118 /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate geoldm && python -m deployment.main -u -a 0.0.0.0 -p 7860"
 ```
 
 </br>
