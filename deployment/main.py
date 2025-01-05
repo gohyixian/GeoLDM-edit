@@ -34,7 +34,7 @@ MGLTOOLS_ENV_NAME = "mgltools-python2"
 # UI elements
 ELEMENT_MIN_WIDTH_PX = 150
 TAB_TITLE   = "Control-GeoLDM"
-TAB_FAVICON = "./deployment/assets/pacman.png"
+TAB_FAVICON = "./deployment/assets/images/pacman.png"
 
 # maximums
 MAX_NUM_LIGANDS_PER_POCKET = 150
@@ -47,11 +47,11 @@ MAX_QVINA_EXHAUSTIVITY     = 40
 ALLOWED_POCKET_FORMATS = [".pdb"]
 
 # user guideline markdown
-UG_GENERAL_MD           = "./deployment/markdown/UG_General.md"
-UG_MODEL_CONFIG_MD      = "./deployment/markdown/UG_Model_Config.md"
-UG_LIGAND_GENERATION_MD = "./deployment/markdown/UG_Ligand_Generation.md"
-UG_DOCKING_ANALYSIS_MD  = "./deployment/markdown/UG_Docking_Analysis.md"
-MT_QEUATIONS_MD         = "./deployment/markdown/MT_Equations.md"
+UG_GENERAL_MD           = "./deployment/assets/markdown/UG_General.md"
+UG_MODEL_CONFIG_MD      = "./deployment/assets/markdown/UG_Model_Config.md"
+UG_LIGAND_GENERATION_MD = "./deployment/assets/markdown/UG_Ligand_Generation.md"
+UG_DOCKING_ANALYSIS_MD  = "./deployment/assets/markdown/UG_Docking_Analysis.md"
+MT_QEUATIONS_MD         = "./deployment/assets/markdown/MT_Equations.md"
 
 # override gradio's default LaTeX delimiters for math equations
 LATEX_DELIMITERS = \
