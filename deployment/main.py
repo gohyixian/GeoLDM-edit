@@ -51,9 +51,7 @@ UG_GENERAL_MD           = "./deployment/markdown/UG_General.md"
 UG_MODEL_CONFIG_MD      = "./deployment/markdown/UG_Model_Config.md"
 UG_LIGAND_GENERATION_MD = "./deployment/markdown/UG_Ligand_Generation.md"
 UG_DOCKING_ANALYSIS_MD  = "./deployment/markdown/UG_Docking_Analysis.md"
-
-
-MT_MARKDOWN = "./deployment/METRICS.md"
+MT_QEUATIONS_MD         = "./deployment/markdown/MT_Equations.md"
 
 # override gradio's default LaTeX delimiters for math equations
 LATEX_DELIMITERS = \
@@ -83,7 +81,8 @@ with open(UG_LIGAND_GENERATION_MD, "r") as f:
     ug_ligand_generation_content = f.read()
 with open(UG_DOCKING_ANALYSIS_MD, "r") as f:
     ug_docking_analysis_content = f.read()
-
+with open(MT_QEUATIONS_MD, "r") as f:
+    mt_equations_content = f.read()
 
 
 def plot_histogram(
@@ -231,7 +230,6 @@ def main_script(
 
 with gr.Blocks(title=TAB_TITLE) as app:
     gr.Markdown("# Control-GeoLDM")
-    
     with gr.Tab("Generation"):
         with gr.Row():
             with gr.Column(scale=4, min_width=4*ELEMENT_MIN_WIDTH_PX):
@@ -241,10 +239,7 @@ with gr.Blocks(title=TAB_TITLE) as app:
             
                 with gr.Row():
                     generate_button = gr.Button("Generate")
-            
-                # with gr.Row():
-                #     results_table = gr.DataFrame(value=METRICS_DF, label="")
-
+                    
 
         # </br>
         with gr.Row():
@@ -254,7 +249,6 @@ with gr.Blocks(title=TAB_TITLE) as app:
 
 
         gr.Markdown("## Model Configurations")
-        
         with gr.Row():
             with gr.Column(scale=2, min_width=2*ELEMENT_MIN_WIDTH_PX):
                 selected_model = gr.Dropdown(
@@ -282,7 +276,6 @@ with gr.Blocks(title=TAB_TITLE) as app:
 
 
         gr.Markdown("## Ligand Generation Configurations")
-
         with gr.Row():
             num_samples_per_pocket = gr.Slider(minimum=1, maximum=MAX_NUM_LIGANDS_PER_POCKET, step=1, value=1, label="Number of Ligand Samples to Generate per Pocket")
         with gr.Row():
@@ -303,10 +296,9 @@ with gr.Blocks(title=TAB_TITLE) as app:
 
 
         gr.Markdown("## Docking Analysis Configurations")
-
         with gr.Row():
             do_docking_analysis = gr.Checkbox(value=True, label="Perform Docking Analysis")
-
+        
         with gr.Row():
             with gr.Column(scale=1, min_width=ELEMENT_MIN_WIDTH_PX):
                 connectivity_threshold = gr.Slider(minimum=0, maximum=1, step=0.01, value=0.0, label="Ligand Fragment Size", visible=True)
@@ -323,7 +315,7 @@ with gr.Blocks(title=TAB_TITLE) as app:
         
         with gr.Row():
             qvina_seed = gr.Number(label="Random Seed (Integer)", minimum=0, maximum=2**32 - 1, value=42)
-            
+        
         with gr.Row():
             with gr.Column(scale=1, min_width=ELEMENT_MIN_WIDTH_PX):
                 cleanup_files = gr.Checkbox(value=True, label="Cleanup Intermediate Files after Docking", visible=True)
@@ -336,16 +328,18 @@ with gr.Blocks(title=TAB_TITLE) as app:
     with gr.Tab("Metrics"):
         with gr.Row():
             results_table = gr.DataFrame(value=METRICS_DF, label="", max_height=1000)
-        
-        with gr.Row():
-            with open(MT_MARKDOWN, "r") as f:
-                mt_content = f.read()
-            
-            gr.Markdown(mt_content, latex_delimiters=LATEX_DELIMITERS)
+        gr.Markdown(
+            """
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <h1 style="color:#f97315; font-size: 36px;">Metrics' Definitions</h1>
+            </div>
+            """,
+            latex_delimiters=LATEX_DELIMITERS
+        )
+        gr.Markdown(mt_equations_content, latex_delimiters=LATEX_DELIMITERS)
 
 
     with gr.Tab("User Guidelines"):
-        
         gr.Markdown("<h1><b style='color:#f97315; font-size: 36px;'>User Guidelines</b></h1>", latex_delimiters=LATEX_DELIMITERS)
         gr.Markdown(ug_general_content, latex_delimiters=LATEX_DELIMITERS)
         gr.Markdown(
@@ -358,7 +352,6 @@ with gr.Blocks(title=TAB_TITLE) as app:
             latex_delimiters=LATEX_DELIMITERS
         )
         gr.Markdown(ug_model_config_content, latex_delimiters=LATEX_DELIMITERS)
-
         gr.Markdown(
             """
             <div style="display: flex; justify-content: space-between; align-items: baseline;">
@@ -369,7 +362,6 @@ with gr.Blocks(title=TAB_TITLE) as app:
             latex_delimiters=LATEX_DELIMITERS
         )
         gr.Markdown(ug_ligand_generation_content, latex_delimiters=LATEX_DELIMITERS)
-
         gr.Markdown(
             """
             <div style="display: flex; justify-content: space-between; align-items: baseline;">

@@ -5,7 +5,7 @@
 ```
 Preprocessing Details
 
-Ligand: 
+Ligands:
 - Apply Gasteiger charges.
 - Merge charges and remove non-polar hydrogens.
 - Merge charges and remove lone pairs.

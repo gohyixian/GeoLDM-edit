@@ -555,8 +555,8 @@ def init_model_and_sample(
         
         print_multi(f"No. Samples Total: {metrics_dict['num_samples_generated']}")
         print_multi(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print_multi(f"Mol Stability    : {metrics_dict['mol_stable']}")
         print_multi(f"Atom Stability   : {metrics_dict['atm_stable']}")
+        print_multi(f"Mol Stability    : {metrics_dict['mol_stable']}")
         print_multi(f"──────────────────────────────────────────")
         print_multi(f"Validity         : {metrics_dict['validity']}")
         print_multi(f"Uniqueness       : {metrics_dict['uniqueness']}")
@@ -610,8 +610,8 @@ def init_model_and_sample(
     metrics_df = {
         "Metrics": [
             "No. Samples Total",
-            "Mol Stability",
             "Atom Stability",
+            "Mol Stability",
             "Validity",
             "Uniqueness",
             "Diversity",
@@ -623,8 +623,8 @@ def init_model_and_sample(
         ],
         "Values": [
             f"{metrics_dict['num_samples_generated']}",
-            f"{metrics_dict['mol_stable']:.4f}",
             f"{metrics_dict['atm_stable']:.4f}",
+            f"{metrics_dict['mol_stable']:.4f}",
             f"{metrics_dict['validity']:.4f}",
             f"{metrics_dict['uniqueness']:.4f}",
             f"{metrics_dict['diversity']:.4f}",

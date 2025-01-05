@@ -174,8 +174,8 @@ def get_empty_metrics_df():
         {
             "Metrics": [
                 "No. Samples Total",
-                "Mol Stability",
                 "Atom Stability",
+                "Mol Stability",
                 "Validity",
                 "Uniqueness",
                 "Diversity",
