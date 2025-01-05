@@ -111,12 +111,14 @@ def plot_histogram(
         yaxis_title="Frequency",
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
+        font=dict(color='rgb(128,128,128)'),
         xaxis=dict(
+            linecolor='rgb(128,128,128)',
             gridcolor='rgba(128,128,128,0.25)',
             range=[0, max(list(data_dict.keys())) + MAX_DELTA_NUM_ATOMS]
         ),
         yaxis=dict(
+            linecolor='rgb(128,128,128)',
             gridcolor='rgba(128,128,128,0.25)',
         ),
         autosize=True,
