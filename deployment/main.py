@@ -6,7 +6,6 @@ import gradio as gr
 from pathlib import Path
 import plotly.graph_objects as go
 
-from deployment.styles import MARKDOWN_CSS
 from deployment.modules.controlnet import init_model_and_sample
 from deployment.utils import (
     zip_folder, 
@@ -47,11 +46,17 @@ MAX_QVINA_EXHAUSTIVITY     = 40
 # allowed pocket file formats
 ALLOWED_POCKET_FORMATS = [".pdb"]
 
-# uder guideline markdown
-UG_MARKDOWN = "./deployment/README.md"
+# user guideline markdown
+UG_GENERAL_MD           = "./deployment/markdown/UG_General.md"
+UG_MODEL_CONFIG_MD      = "./deployment/markdown/UG_Model_Config.md"
+UG_LIGAND_GENERATION_MD = "./deployment/markdown/UG_Ligand_Generation.md"
+UG_DOCKING_ANALYSIS_MD  = "./deployment/markdown/UG_Docking_Analysis.md"
+
+
+MT_MARKDOWN = "./deployment/METRICS.md"
 
 # override gradio's default LaTeX delimiters for math equations
-MARKDOWN_LATEX_DELIMITERS = \
+LATEX_DELIMITERS = \
     [
         {"left": "$$", "right": "$$", "display": True},  # center
         {"left": "$", "right": "$", "display": False}    # inline
@@ -68,6 +73,16 @@ AVAILABLE_MODELS = get_model_n_nodes_distribution(AVAILABLE_MODELS)
 # metrics df
 METRICS_DF = get_empty_metrics_df()
 
+
+# pre-read markdown content
+with open(UG_GENERAL_MD, "r") as f:
+    ug_general_content = f.read()
+with open(UG_MODEL_CONFIG_MD, "r") as f:
+    ug_model_config_content = f.read()
+with open(UG_LIGAND_GENERATION_MD, "r") as f:
+    ug_ligand_generation_content = f.read()
+with open(UG_DOCKING_ANALYSIS_MD, "r") as f:
+    ug_docking_analysis_content = f.read()
 
 
 
@@ -214,7 +229,7 @@ def main_script(
     return zip_filename, METRICS_DF
 
 
-with gr.Blocks(title=TAB_TITLE, css=MARKDOWN_CSS) as app:
+with gr.Blocks(title=TAB_TITLE) as app:
     gr.Markdown("# Control-GeoLDM")
     
     with gr.Tab("Generation"):
@@ -294,7 +309,7 @@ with gr.Blocks(title=TAB_TITLE, css=MARKDOWN_CSS) as app:
 
         with gr.Row():
             with gr.Column(scale=1, min_width=ELEMENT_MIN_WIDTH_PX):
-                connectivity_threshold = gr.Slider(minimum=0, maximum=1, step=0.01, value=1.0, label="Molecule Fragment Size", visible=True)
+                connectivity_threshold = gr.Slider(minimum=0, maximum=1, step=0.01, value=0.0, label="Ligand Fragment Size", visible=True)
             with gr.Column(scale=2, min_width=2*ELEMENT_MIN_WIDTH_PX):
                 with gr.Row():
                     qvina_size = gr.Slider(minimum=1, maximum=MAX_QVINA_SEARCH_SIZE, value=20, label="Search Space XYZ Dimensions (Angstroms)", visible=True)
@@ -321,13 +336,51 @@ with gr.Blocks(title=TAB_TITLE, css=MARKDOWN_CSS) as app:
     with gr.Tab("Metrics"):
         with gr.Row():
             results_table = gr.DataFrame(value=METRICS_DF, label="", max_height=1000)
+        
+        with gr.Row():
+            with open(MT_MARKDOWN, "r") as f:
+                mt_content = f.read()
+            
+            gr.Markdown(mt_content, latex_delimiters=LATEX_DELIMITERS)
 
 
     with gr.Tab("User Guidelines"):
-        with open(UG_MARKDOWN, "r") as f:
-            md_content = f.read()
         
-        gr.Markdown(md_content, latex_delimiters=MARKDOWN_LATEX_DELIMITERS, elem_id="custom-markdown")
+        gr.Markdown("<h1><b style='color:#f97315; font-size: 36px;'>User Guidelines</b></h1>", latex_delimiters=LATEX_DELIMITERS)
+        gr.Markdown(ug_general_content, latex_delimiters=LATEX_DELIMITERS)
+        gr.Markdown(
+            """
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <h1 style="color:#f97315; font-size: 36px;">Model Configurations</h1>
+                <h1 style="color:rgba(249,115,21,0.5); font-size: 75px;">01</h1>
+            </div>
+            """,
+            latex_delimiters=LATEX_DELIMITERS
+        )
+        gr.Markdown(ug_model_config_content, latex_delimiters=LATEX_DELIMITERS)
+
+        gr.Markdown(
+            """
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <h1 style="color:#f97315; font-size: 36px;">Ligand Generation Configurations</h1>
+                <h1 style="color:rgba(249,115,21,0.5); font-size: 75px;">02</h1>
+            </div>
+            """,
+            latex_delimiters=LATEX_DELIMITERS
+        )
+        gr.Markdown(ug_ligand_generation_content, latex_delimiters=LATEX_DELIMITERS)
+
+        gr.Markdown(
+            """
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <h1 style="color:#f97315; font-size: 36px;">Docking Analysis Configurations</h1>
+                <h1 style="color:rgba(249,115,21,0.5); font-size: 75px;">03</h1>
+            </div>
+            """,
+            latex_delimiters=LATEX_DELIMITERS
+        )
+        gr.Markdown(ug_docking_analysis_content, latex_delimiters=LATEX_DELIMITERS)
+
 
     # run on app load
     app.load(fn=update_bs_n_nodes_plot, inputs=[selected_model, delta_atoms, batch_size], outputs=[n_nodes_plot, batch_size])
