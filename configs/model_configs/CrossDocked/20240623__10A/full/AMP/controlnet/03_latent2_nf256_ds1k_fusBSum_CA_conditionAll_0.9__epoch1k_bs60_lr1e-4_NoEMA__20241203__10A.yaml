@@ -2,7 +2,8 @@ proj_name: Control-GeoLDM
 # exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
 # exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_1x
 # exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_2x
-exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_3x
+# exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_3x
+exp_name: 03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_4x
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -296,9 +297,12 @@ n_report_steps: 50
 # resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_1x_resume
 # resume_model_ckpt: generative_model_75_iter_125628.npy
 # resume_optim_ckpt: optim_75_iter_125628.npy
-resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_2x_resume
-resume_model_ckpt: generative_model_80_iter_133893.npy
-resume_optim_ckpt: optim_80_iter_133893.npy
+# resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_2x_resume
+# resume_model_ckpt: generative_model_80_iter_133893.npy
+# resume_optim_ckpt: optim_80_iter_133893.npy
+resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusBSum_CA_conditionAll_0.9__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_3x_resume
+resume_model_ckpt: generative_model_100_iter_166953.npy
+resume_optim_ckpt: optim_100_iter_166953.npy
 
 save_model: true
 

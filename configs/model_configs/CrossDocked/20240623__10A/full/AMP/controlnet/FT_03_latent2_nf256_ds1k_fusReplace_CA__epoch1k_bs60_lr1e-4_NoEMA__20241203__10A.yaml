@@ -1,7 +1,8 @@
 proj_name: Control-GeoLDM
 # exp_name: 03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
 # exp_name: 03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_1x
-exp_name: FT_03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_2x
+# exp_name: FT_03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_2x
+exp_name: FT_03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_3x
 
 
 # ========================================================================================================== Training Mode (ldm/vae/both)
@@ -293,9 +294,12 @@ n_report_steps: 50
 # resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A
 # resume_model_ckpt: generative_model_135_iter_224808.npy
 # resume_optim_ckpt: optim_135_iter_224808.npy
-resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_1x_resume
-resume_model_ckpt: generative_model_105_iter_175218.npy
-resume_optim_ckpt: optim_105_iter_175218.npy
+# resume: outputs_selected/controlnet/03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_1x_resume
+# resume_model_ckpt: generative_model_105_iter_175218.npy
+# resume_optim_ckpt: optim_105_iter_175218.npy
+resume: outputs_selected/controlnet/FT_03_latent2_nf256_ds1k_fusReplace_CA__epoch1k_bs60_lr1e-4_NoEMA__20241203__10A_2x_resume
+resume_model_ckpt: generative_model_95_iter_158688.npy
+resume_optim_ckpt: optim_95_iter_158688.npy
 
 save_model: true
 
