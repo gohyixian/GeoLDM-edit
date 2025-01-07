@@ -75,8 +75,8 @@ deployment/**/*.csv
 deployment/**/*.zip
 deployment/**/*.xyz
 deployment/**/*.sdf
-deployment/**/*.pdb
-deployment/**/*.pdbqt
+# deployment/**/*.pdb
+# deployment/**/*.pdbqt
 
 deployment/models/controlnet/*
 
