@@ -239,7 +239,7 @@ def main_script(
     except ModelGenerationError as e:
         return None, get_empty_metrics_df(), "💡 Model Generation Error!"
     except MetricError as e:
-        return None, get_empty_metrics_df(), "💡 Metric Computation / Docking Analysis Error!"
+        return None, get_empty_metrics_df(), "💡 Metrics' Computation / Docking Analysis Error!"
     except Exception as e:
         return None, get_empty_metrics_df(), "💡 General Error!"
     
