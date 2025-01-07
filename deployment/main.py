@@ -7,6 +7,12 @@ from pathlib import Path
 import plotly.graph_objects as go
 
 from deployment.modules.controlnet import init_model_and_sample
+from deployment.modules.errors import (
+    InvalidInputError,
+    ModelInitialisationError,
+    ModelGenerationError,
+    MetricError
+)
 from deployment.utils import (
     zip_folder, 
     get_empty_metrics_df,
@@ -196,43 +202,61 @@ def main_script(
     if not os.path.exists(results_temp_dir):
         os.makedirs(results_temp_dir)
     
-    # copy pocket files
-    for file in pdb_files:
-        shutil.copy(file, str(Path(pocket_temp_dir, Path(file).name)))
+    try:
+        # copy pocket files
+        for file in pdb_files:
+            shutil.copy(file, str(Path(pocket_temp_dir, Path(file).name)))
+    except:
+        return None, get_empty_metrics_df(), "No Input Files Provided!"
     
-    # load model, sample, and compute metrics
-    METRICS_DF = init_model_and_sample(
-        pocket_pdb_dir=pocket_temp_dir,
-        results_path=results_temp_dir,
-        model_dict=AVAILABLE_MODELS[model_selected],
-        model_seed=model_seed,
-        model_batch_size=model_batch_size,
-        num_ligands_per_pocket=num_ligands_per_pocket,
-        sample_num_atoms_per_ligand=sample_num_atoms_per_ligand,
-        delta_num_atoms_per_ligand=delta_num_atoms_per_ligand,
-        specific_num_atoms_per_ligand=specific_num_atoms_per_ligand,
-        compute_qvina=compute_qvina,
-        qvina_connectivity_thres=qvina_connectivity_thres,
-        qvina_size=qvina_size,
-        qvina_exhaustiveness=qvina_exhaustiveness,
-        qvina_ligand_add_H=qvina_ligand_add_H,
-        qvina_receptor_add_H=qvina_receptor_add_H,
-        qvina_remove_nonstd_resi=qvina_remove_nonstd_resi,
-        qvina_seed=qvina_seed,
-        qvina_cleanup_files=qvina_cleanup_files,
-        mgltools_env_name=MGLTOOLS_ENV_NAME
-    )
+    try:
+        # load model, sample, and compute metrics
+        METRICS_DF = init_model_and_sample(
+            pocket_pdb_dir=pocket_temp_dir,
+            results_path=results_temp_dir,
+            model_dict=AVAILABLE_MODELS[model_selected],
+            model_seed=model_seed,
+            model_batch_size=model_batch_size,
+            num_ligands_per_pocket=num_ligands_per_pocket,
+            sample_num_atoms_per_ligand=sample_num_atoms_per_ligand,
+            delta_num_atoms_per_ligand=delta_num_atoms_per_ligand,
+            specific_num_atoms_per_ligand=specific_num_atoms_per_ligand,
+            compute_qvina=compute_qvina,
+            qvina_connectivity_thres=qvina_connectivity_thres,
+            qvina_size=qvina_size,
+            qvina_exhaustiveness=qvina_exhaustiveness,
+            qvina_ligand_add_H=qvina_ligand_add_H,
+            qvina_receptor_add_H=qvina_receptor_add_H,
+            qvina_remove_nonstd_resi=qvina_remove_nonstd_resi,
+            qvina_seed=qvina_seed,
+            qvina_cleanup_files=qvina_cleanup_files,
+            mgltools_env_name=MGLTOOLS_ENV_NAME
+        )
+    except InvalidInputError as e:
+        return None, get_empty_metrics_df(), "Invalid Input Files!"
+    except ModelInitialisationError as e:
+        return None, get_empty_metrics_df(), "Model Initialisation Error!"
+    except ModelGenerationError as e:
+        return None, get_empty_metrics_df(), "Model Generation Error!"
+    except MetricError as e:
+        return None, get_empty_metrics_df(), "Metric Computation / Docking Analysis Error!"
+    except Exception as e:
+        return None, get_empty_metrics_df(), "General Error!"
     
     # zip_results
     zip_filename = str(Path(TEMP_DIR, f"{run_name}.zip"))
     zip_folder(results_temp_dir, zip_filename)
     
-    return zip_filename, METRICS_DF
+    return zip_filename, METRICS_DF, ""
 
 
 with gr.Blocks(title=TAB_TITLE) as app:
     gr.Markdown("# Control-GeoLDM")
     with gr.Tab("Generation"):
+        
+        # Error message component
+        error_popup = gr.Textbox(visible=False, label="Error", interactive=False, container=True)
+        
         with gr.Row():
             with gr.Column(scale=4, min_width=4*ELEMENT_MIN_WIDTH_PX):
                 with gr.Row():
@@ -401,9 +425,16 @@ with gr.Blocks(title=TAB_TITLE) as app:
         outputs=[connectivity_threshold, ligand_add_h, receptor_add_h, remove_nonstd_resi, qvina_size, qvina_exhaustiveness, qvina_seed, cleanup_files]
     )
 
+
+    def on_generate_click_handler(*args):
+        zip_file, table, error = main_script(*args)
+        error_visibility = bool(error)
+        return zip_file, table, gr.update(visible=error_visibility, value=error)
+
+
     # run main script
     generate_button.click(
-        main_script,
+        on_generate_click_handler,
         inputs=[
             pdb_files,
             selected_model,
@@ -423,7 +454,7 @@ with gr.Blocks(title=TAB_TITLE) as app:
             qvina_seed,
             cleanup_files
         ],
-        outputs=[output_zip_file, results_table]
+        outputs=[output_zip_file, results_table, error_popup]
     )
 
 
