@@ -207,7 +207,7 @@ def main_script(
         for file in pdb_files:
             shutil.copy(file, str(Path(pocket_temp_dir, Path(file).name)))
     except:
-        return None, get_empty_metrics_df(), "No Input Files Provided!"
+        return None, get_empty_metrics_df(), "💡 No Input Files Provided!"
     
     try:
         # load model, sample, and compute metrics
@@ -233,15 +233,15 @@ def main_script(
             mgltools_env_name=MGLTOOLS_ENV_NAME
         )
     except InvalidInputError as e:
-        return None, get_empty_metrics_df(), "Invalid Input Files!"
+        return None, get_empty_metrics_df(), "💡 Invalid Input Files!"
     except ModelInitialisationError as e:
-        return None, get_empty_metrics_df(), "Model Initialisation Error!"
+        return None, get_empty_metrics_df(), "💡 Model Initialisation Error!"
     except ModelGenerationError as e:
-        return None, get_empty_metrics_df(), "Model Generation Error!"
+        return None, get_empty_metrics_df(), "💡 Model Generation Error!"
     except MetricError as e:
-        return None, get_empty_metrics_df(), "Metric Computation / Docking Analysis Error!"
+        return None, get_empty_metrics_df(), "💡 Metric Computation / Docking Analysis Error!"
     except Exception as e:
-        return None, get_empty_metrics_df(), "General Error!"
+        return None, get_empty_metrics_df(), "💡 General Error!"
     
     # zip_results
     zip_filename = str(Path(TEMP_DIR, f"{run_name}.zip"))
