@@ -42,7 +42,7 @@ docker run --gpus all -it --rm -p 7860:7860 yixian02/control-geoldm:cu118 /bin/b
 # Accessing the Inferencing UI
 There are 2 ways to access the UI:
 - Locally via <a href='http://127.0.0.1:7860'>http://localhost:7860</a>.
-- Public URL hosted by gradio for 72 hours. The URL will be in the form of <code>some-unique-id.gradio.live</code> and will be printer on the terminal when the docker image is run.
+- Public URL hosted by gradio for 72 hours. The URL will be in the form of <code>some-unique-id.gradio.live</code> and will be printed on the terminal when the docker image is run.
 
 </br>
 
