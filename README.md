@@ -35,7 +35,7 @@ More details about setting up / building the Docker Images can be found in the <
 
 # 🤗 Huggingface Spaces
 
-We also host a copy of the Gradio Interface on Huggingface Spaces. The demo can be accessed [here](https://huggingface.co/spaces/PIEthonista/Control-GeoLDM-demo). Due to billing constraints, the demo will be paused if unused. You may contact us via email at [gohyixian456@gamil.com](mailto:gohyixian456@gmail.com) to request for the demo to be restarted should you wish to explore it. Optionally, you can also host it on your own Huggingface Space. We provide the Dockerfile to create the space as below:
+We also host a copy of the Gradio Interface on Huggingface Spaces. The demo can be accessed [here](https://huggingface.co/spaces/PIEthonista/Control-GeoLDM-demo). Due to billing constraints, the demo will be paused if unused. You may reach out to us via email at [gohyixian456@gamil.com](mailto:gohyixian456@gmail.com) to request for the demo to be restarted should you wish to explore it. Optionally, you can also host it on your own Huggingface Space. We provide the Dockerfile to create the space as follows:
 
 ```bash
 # Prebuilt CUDA-11.8 Docker image
@@ -58,10 +58,10 @@ CMD ["/bin/bash", "-c", "source /opt/conda/etc/profile.d/conda.sh && conda activ
 
 This repository requires 2 environments to operate. Please set them up as below.
 
-Setup of the main environment as as follows (run them sequentially!):
+Setup of the main environment as follows (run them sequentially!):
 
 ```bash
-conda create -n geoldm python=3.10.13
+conda create -n geoldm python=3.10.13 -y
 
 conda activate geoldm
 
